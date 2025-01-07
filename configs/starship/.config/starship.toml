@@ -1,0 +1,48 @@
+add_newline = true
+format = """
+$all$shlvl$time$cmd_duration$status$line_break\
+$character"""
+
+[character]
+success_symbol = '[>]()'
+error_symbol = '[>](red)'
+
+[directory]
+truncation_length = 8
+truncation_symbol = '…/'
+truncate_to_repo = false
+style = ''
+
+[cmd_duration]
+format = '⌛[$duration]($style) '
+style = 'bold 63'
+
+[git_branch]
+symbol = '🌱'
+format = '[$symbol$branch]($style) '
+style = 'bold 63'
+
+[git_commit]
+commit_hash_length = 4
+tag_symbol = '🔖'
+
+[git_state]
+format = '[\($state( $progress_current of $progress_total)\)]($style) '
+cherry_pick = '[🍒 PICKING](bold red)'
+
+[git_status]
+style = 'bold 105'
+
+[shlvl]
+disabled = false
+threshold = 3
+format = '[\[$symbol$shlvl\]]($style) '
+symbol = ''
+style = ''
+
+[status]
+disabled = false
+format = '[$symbol$status(:$common_meaning$signal_name$maybe_int)]($style) '
+symbol = '🔥'
+pipestatus = true
+map_symbol = true

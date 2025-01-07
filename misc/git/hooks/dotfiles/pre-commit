@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+script=$(basename "$0")
+failure=false
+
+error() {
+    printf "\033[31mERROR\033[0m: %s: config check error: %s\n" "$script" "$@" >&2
+    failure=true
+}
+
+printf "\033[1;32m>>>\033[1;39m Checking git configs...\033[0m\n"
+
+if username=$(git config --global user.name); then
+    echo "username: $username"
+else
+    error "user.name is not set"
+fi
+
+if email=$(git config --global user.email); then
+    echo "email: $email"
+else
+    error "user.email is not set"
+fi
+
+if "$failure"; then
+    exit 1
+else
+    printf '\033[1mConfig check OK!\033[m\n\n'
+fi
