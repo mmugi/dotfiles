@@ -356,7 +356,7 @@ appendline() {
         printf "%s: %s\n" "$(sgr bold "$BLUE")CREATE$(sgr)" "$dst"
     fi
 
-    if ! grep -Fxq "$line" "$dst" >/dev/null 2>&1; then
+    if ! grep -Fq "$line" "$dst" >/dev/null 2>&1; then
         if echo "$line" >>"$dst"; then
             printf "%s: echo \"%s\" >>%s\n" "$(sgr bold "$BLUE")APPEND$(sgr)" "$line" "$dst"
         else
