@@ -21,7 +21,7 @@ executing_user=$(whoami)
 [[ ! -t 0 ]] && abort "'stdin' is not a TTY."
 
 
-### functions ###
+###  functions  ###
 
 line() {
     local line_length=76
@@ -103,7 +103,7 @@ uninstall_complete() {
 }
 
 
-### main ###
+###  main  ###
 
 greet
 confirm_uninstall

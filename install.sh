@@ -63,7 +63,7 @@ FG_BASE="$CYAN"
 FG_ACCENT="$PURPLE"
 
 
-### functions ###
+###  functions  ###
 
 newline() { echo; }
 
@@ -970,7 +970,7 @@ dotfiles_installation_complete() {
 }
 
 
-###  main sequence  ###
+###  main  ###
 
 opt_all=false
 opt_deploy_configs=false
