@@ -341,6 +341,12 @@ deploy() {
 }
 
 appendline() {
+    # usage: dst_file line
+    #
+    # dst_file に line が含まれるかどうかをgrepで検索します。
+    # 見つからなかった場合、line で指定された行をファイルの末尾に追記します。
+    # grepで検索するため、前後の文字列は考慮されないので注意してください。
+
     if [[ $# -ne 2 ]]; then
         log.error 'invalid args: usage: appendline dst line'
         return 1
