@@ -348,7 +348,7 @@ appendline() {
     # grepで検索するため、前後の文字列は考慮されないので注意してください。
 
     if [[ $# -ne 2 ]]; then
-        log.error 'invalid args: usage: appendline dst line'
+        log.error 'invalid args'
         return 1
     fi
 
