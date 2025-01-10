@@ -45,6 +45,8 @@ configure-starship: ## Configure Starship.
 .PHONY: brew-list brew-diff
 brew-list: ## List all packages managed by the Brewfile in dotfiles.
 	@cat "$(BREWFILE)"
+brew-dump: ## Write all installed packages into a Brewfile in dotfiles.
+	@$(SCRIPT_DIR)/make/brew-dump.sh "$(BREWFILE)"
 brew-diff: ## Show differences between installed brew package and those in the dotfiles Brewfile.
 	@brew bundle dump --global --force
 	@if type git >/dev/null 2>&1; then \
