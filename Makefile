@@ -40,6 +40,12 @@ configure-git: ## Configure Git.
 configure-starship: ## Configure Starship.
 	@DOTFILES_INIT=true $(INSTALLER) --configure_starship
 
+# individual uninstaller tasks
+
+.PHONY: delete-configs
+delete-configs: ## Delete symlinks and directories for dotfiles.
+	@$(UNINSTALLER) --delete-configs
+
 
 ###  utils  ###
 

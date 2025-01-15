@@ -135,6 +135,10 @@ log.mkdir() {
     printf "%s: %s\n" "$(sgr bold "$BLUE")MKDIR$(sgr)" "$*"
 }
 
+log.remove() {
+    printf "%s: %s\n" "$(sgr bold "$BLUE")REMOVE$(sgr)" "$*"
+}
+
 draw.line() {
     # usage: draw.line [length]
 
