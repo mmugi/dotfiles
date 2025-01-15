@@ -17,6 +17,7 @@ help: ## Show this help message.
 
 ###  dotfiles  ###
 
+.PHONY: install uninstall
 install: ## Download and initialize dotfiles.
 #	@DOTFILES_INIT=true $(INSTALLER)
 	@$(INSTALLER)
@@ -25,7 +26,7 @@ uninstall: ## Uninstall dotfiles.
 
 # individual installer tasks
 
-.PHONY: initialize-package-manager install-packages deploy-configs configure_apps
+.PHONY: initialize-package-manager install-packages deploy-configs configure_apps configure-git configure-starship
 initialize-package-manager: ## Install and configure the package manager.
 	@DOTFILES_INIT=true $(INSTALLER) --initialize_package_manager
 install-packages: ## Install packages.
@@ -42,7 +43,7 @@ configure-starship: ## Configure Starship.
 
 ###  utils  ###
 
-.PHONY: brew-list brew-diff
+.PHONY: brew-list brew-dump brew-diff
 brew-list: ## List all packages managed by the Brewfile in dotfiles.
 	@cat "$(BREWFILE)"
 brew-dump: ## Write all installed packages into a Brewfile in dotfiles.
