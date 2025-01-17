@@ -18,8 +18,7 @@ help: ## Show this help message.
 ###  dotfiles  ###
 
 .PHONY: install uninstall
-install: ## Download and initialize dotfiles.
-#	@DOTFILES_INIT=true $(INSTALLER)
+install: ## Install dotfiles.
 	@$(INSTALLER)
 uninstall: ## Uninstall dotfiles.
 	@$(UNINSTALLER)
