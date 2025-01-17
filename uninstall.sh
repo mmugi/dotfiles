@@ -120,12 +120,12 @@ delete_configs() {
                 if [[ ! -e $target ]]; then
                     continue
                 elif [[ ! -L $target ]]; then
-                    log.warn "not a symlink: $target"
+                    log.skip "target is not owned by dotfiles: $target"
                     continue
                 else
                     if link_src=$(readlink "$target"); then
                         if [[ $link_src != "$src_file" ]]; then
-                            log.warn "target is not owned by dotfiles: $target"
+                            log.skip "target is not owned by dotfiles: $target"
                             continue
                         fi
                     else

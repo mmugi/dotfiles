@@ -139,6 +139,10 @@ log.remove() {
     printf "%s: %s\n" "$(sgr bold "$BLUE")REMOVE$(sgr)" "$*"
 }
 
+log.skip() {
+    printf "%s: %s\n" "$(sgr bold "$YELLOW")SKIP$(sgr)" "$*"
+}
+
 draw.line() {
     # usage: draw.line [length]
 
