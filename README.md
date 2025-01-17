@@ -44,9 +44,7 @@ You can customize the installation by setting environment variables.
     - Modification of OS settings
     - Installation of applications
     - Deployment of application configuration files
-  - You can also perform an installation with "DOTFILES_INIT=true" by running `make init`.
   - Example:
-    - `make init`
     - `export DOTFILES_INIT=true && ~/.dotfiles/install.sh`
     - `DOTFILES_INIT=true make install`
 
