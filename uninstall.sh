@@ -198,12 +198,6 @@ self_destruct() {
     fi
 }
 
-uninstall_complete() {
-    line
-    newline
-    printf "%s\n" "$(sgr bold "$PINK")GoodBye!👋$(sgr)"
-}
-
 
 ###  main  ###
 
@@ -227,7 +221,7 @@ if "$opt_all"; then
     confirm_uninstall
     delete_configs
     self_destruct
-    uninstall_complete
+    printf "  %s\n" "$(sgr bold "$PINK")GoodBye!👋$(sgr)"
 else
     "$opt_delete_configs" && delete_configs
     exit 0
