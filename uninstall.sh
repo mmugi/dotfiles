@@ -146,12 +146,16 @@ delete_configs() {
         if [[ -n $src_dirs ]]; then
             while read -r src_dirs; do
                 target="${HOME}/${src_dirs#"${DOTFILES_CONFIG_DIR}/$pkg/"}"
-                if [[ -z $(ls -A "$target") ]]; then
-                    if cmd_result=$(echo 'rm -r "$target"'); then
-                        log.remove "$target"
-                    else
-                        log.error "$cmd_result"
-                        delete_config_failed
+                if [[ ! -d $target ]]; then
+                    continue
+                else
+                    if [[ -z $(ls -A "$target") ]]; then
+                        if cmd_result=$(echo 'rm -r "$target"'); then
+                            log.remove "$target"
+                        else
+                            log.error "$cmd_result"
+                            delete_config_failed
+                        fi
                     fi
                 fi
             done < <(echo "$src_dirs")
