@@ -18,3 +18,4 @@ highlight NonText    ctermbg=None ctermfg=8
 highlight SpecialKey ctermbg=None ctermfg=9
 highlight StatusLine ctermbg=white ctermfg=63
 highlight StatusLine cterm=None ctermbg=63 ctermfg=15
+noremap <F12> <ESC>:set number!<CR>:exec &mouse!=""? "set mouse=" : "set mouse=a"<CR>
