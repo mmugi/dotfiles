@@ -132,7 +132,7 @@ delete_configs() {
                         log.error "$cmd_result"
                         delete_config_failed
                     fi
-                    if cmd_result=$(echo 'rm "$target"'); then
+                    if cmd_result=$(rm "$target"); then
                         log.remove "$target"
                     else
                         log.error "$cmd_result"
@@ -150,7 +150,7 @@ delete_configs() {
                     continue
                 else
                     if [[ -z $(ls -A "$target") ]]; then
-                        if cmd_result=$(echo 'rm -r "$target"'); then
+                        if cmd_result=$(rm -r "$target"); then
                             log.remove "$target"
                         else
                             log.error "$cmd_result"
