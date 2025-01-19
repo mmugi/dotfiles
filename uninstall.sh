@@ -188,7 +188,12 @@ self_destruct() {
     done
 
     echo -n "Deleting dotfiles..."
-    if cmd_result="$(echo rm -r "${DOTFILES_PATH:?}" 2>&1)"; then
+    cmd_result=$(basename "$DOTFILES_PATH")
+    if ! [[ $cmd_result = .dotfiles ]]; then
+        log.error "'DOTFILES_PATH' is not dotfiles directory"
+        uninstall_failed
+    fi
+    if cmd_result="$(rm -r "${DOTFILES_PATH:?}" 2>&1)"; then
         result.ok
         newline
     else
