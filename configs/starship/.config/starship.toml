@@ -1,7 +1,7 @@
 add_newline = true
 format = """
 $all$shlvl$time$cmd_duration$status$line_break\
-$character"""
+$username$character"""
 
 [character]
 success_symbol = '[>]()'
@@ -33,6 +33,9 @@ cherry_pick = '[🍒 PICKING](bold red)'
 [git_status]
 style = 'bold 105'
 
+[hostname]
+format = '[$ssh_symbol$hostname]($style) '
+
 [shlvl]
 disabled = false
 threshold = 3
@@ -46,3 +49,6 @@ format = '[$symbol$status(:$common_meaning$signal_name$maybe_int)]($style) '
 symbol = '🔥'
 pipestatus = true
 map_symbol = true
+
+[username]
+format = '[$user]()'
