@@ -17,6 +17,9 @@ style = ''
 format = '⌛[$duration]($style) '
 style = 'bold 63'
 
+[gcloud]
+disabled = true
+
 [git_branch]
 symbol = '🌱'
 format = '[$symbol$branch]($style) '
