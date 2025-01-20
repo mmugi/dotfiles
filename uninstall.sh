@@ -193,7 +193,7 @@ self_destruct() {
         log.error "'DOTFILES_PATH' is not dotfiles directory"
         uninstall_failed
     fi
-    if cmd_result="$(rm -r "${DOTFILES_PATH:?}" 2>&1)"; then
+    if cmd_result="$(rm -rf "${DOTFILES_PATH:?}" 2>&1)"; then
         result.ok
         newline
     else
