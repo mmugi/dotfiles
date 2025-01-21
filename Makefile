@@ -25,13 +25,13 @@ uninstall: ## Uninstall dotfiles.
 
 # individual installer tasks
 
-.PHONY: initialize-package-manager install-packages deploy-configs configure_apps configure-git configure-starship
+.PHONY: deploy-configs initialize-package-manager install-packages configure_apps configure-git configure-starship
+deploy-configs: ## Create symlinks and directories for dotfiles.
+	@$(INSTALLER) --deploy_configs
 initialize-package-manager: ## Install and configure the package manager.
 	@DOTFILES_INIT=true $(INSTALLER) --initialize_package_manager
 install-packages: ## Install packages.
 	@DOTFILES_INIT=true $(INSTALLER) --install_packages
-deploy-configs: ## Create symlinks and directories for dotfiles.
-	@DOTFILES_INIT=true $(INSTALLER) --deploy_configs
 configure-apps: ## Configure all applications.
 	@DOTFILES_INIT=true $(INSTALLER) --configure_apps_all
 configure-git: ## Configure Git.

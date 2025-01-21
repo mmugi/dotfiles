@@ -756,8 +756,6 @@ install_packages_mac() {
 }
 
 deploy_configs() {
-    [[ -z ${DOTFILES_INIT:-} ]] && return
-
     # DOTFILES_CONFIG_DIR に指定されたディレクトリ内のパッケージごとのディレクトリを参照し、
     # コンフィグファイルのシンボリックリンクを作成します。
     #
@@ -1002,21 +1000,22 @@ if "$opt_all"; then
     platform_detection
     download_dotfiles
     configure_dotfiles_repository
+    deploy_configs
 
     confirm_init
     initialize_os
     initialize_package_manager
     install_packages
-    deploy_configs
     configure_apps
 
     dotfiles_installation_complete
 else
     platform_detection
+    "$opt_deploy_configs" && deploy_configs
+
     confirm_init
     "$opt_initialize_package_manager" && initialize_package_manager
     "$opt_install_packages" && install_packages
-    "$opt_deploy_configs" && deploy_configs
     if "$opt_configure_apps_all"; then
         configure_apps
     else
