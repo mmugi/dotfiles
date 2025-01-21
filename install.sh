@@ -859,7 +859,6 @@ configure_apps() {
     [[ -z ${DOTFILES_INIT:-} ]] && return
 
     msg 'Starting application configuration.'
-    newline
     msg.attention 'Configuring the following applications:'
     newline
     echo '  * Git'
