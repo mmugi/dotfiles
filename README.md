@@ -42,8 +42,7 @@ You can customize the installation by setting environment variables.
   - The following processes will be executed:
     - Initial configuration of the package manager
     - Modification of OS settings
-    - Installation of applications
-    - Deployment of application configuration files
+    - Installation of applications and configuration updates
   - Example:
     - `export DOTFILES_INIT=true && ~/.dotfiles/install.sh`
     - `DOTFILES_INIT=true make install`
