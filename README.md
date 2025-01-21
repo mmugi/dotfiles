@@ -13,7 +13,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/mmugi/dotfiles/HEAD/inst
 You can "git clone" this repository to `~/.dotfiles` and run the installation script.
 
 ``` shell
-git clone https://github.com/mmugi/dotfiles.git ~/.dotfiles
+git clone git@github.com:mmugi/dotfiles.git ~/.dotfiles
 cd ~/.dotfiles && make install
 ```
 
