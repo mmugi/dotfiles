@@ -885,6 +885,11 @@ configure_git() {
 
     msg -p 'Configuring Git user settings'
 
+    if ! cmd_exists_check 'git'; then
+        msg.warn 'Skip git configuration:P'
+        return
+    fi
+
     echo -n 'Checking user.name...'
     if gitconfig_username=$(git config --global user.name); then
         result.ok
@@ -934,6 +939,11 @@ configure_starship() {
     local cmd
 
     msg -p 'Configuring Starship'
+
+    if ! cmd_exists_check 'starship'; then
+        msg.warn 'Skip starship configuration:P'
+        return
+    fi
 
     # shellcheck disable=SC2016
     case "$SHELL" in
