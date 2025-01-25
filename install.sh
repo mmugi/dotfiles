@@ -1034,7 +1034,7 @@ opt_all=false
 opt_deploy_configs=false
 opt_initialize_package_manager=false
 opt_install_packages=false
-opt_configure_apps_all=false
+opt_configure_all_apps=false
 opt_configure_git=false
 opt_configure_starship=false
 opt_configure_tpm=false
@@ -1045,12 +1045,12 @@ else
     while (($# > 0)); do
         case "$1" in
             --all) opt_all=true && break ;;
-            --initialize_package_manager) opt_initialize_package_manager=true ;;
-            --install_packages) opt_install_packages=true ;;
-            --deploy_configs) opt_deploy_configs=true ;;
-            --configure_apps_all) opt_configure_apps_all=true ;;
-            --configure_git) opt_configure_git=true ;;
-            --configure_starship) opt_configure_starship=true ;;
+            --initialize-package-manager) opt_initialize_package_manager=true ;;
+            --install-packages) opt_install_packages=true ;;
+            --deploy-configs) opt_deploy_configs=true ;;
+            --configure-all-apps) opt_configure_all_apps=true ;;
+            --configure-git) opt_configure_git=true ;;
+            --configure-starship) opt_configure_starship=true ;;
             --configure-tpm) opt_configure_tpm=true ;;
             *) abort 'invalid options;(' ;;
         esac
@@ -1083,7 +1083,7 @@ else
     confirm_init
     "$opt_initialize_package_manager" && initialize_package_manager
     "$opt_install_packages" && install_packages
-    if "$opt_configure_apps_all"; then
+    if "$opt_configure_all_apps"; then
         configure_apps
     else
         "$opt_configure_git" && configure_git
