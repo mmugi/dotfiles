@@ -1,6 +1,6 @@
 MAKEFILE      := $(firstword $(MAKEFILE_LIST))
 DOTFILES_ROOT := $(realpath $(dir $(MAKEFILE)))
-SHELL         := /usr/bin/env bash
+SHELL         = /usr/bin/env bash
 
 INSTALLER     := $(DOTFILES_ROOT)/install.sh
 UNINSTALLER   := $(DOTFILES_ROOT)/uninstall.sh
@@ -16,7 +16,6 @@ help: ## Show this help message.
 
 
 ###  dotfiles  ###
-
 .PHONY: install uninstall
 install: ## Install dotfiles.
 	@$(INSTALLER)
@@ -25,7 +24,7 @@ uninstall: ## Uninstall dotfiles.
 
 # individual installer tasks
 
-.PHONY: deploy-configs initialize-package-manager install-packages configure_apps configure-git configure-starship
+.PHONY: deploy-configs initialize-package-manager install-packages configure_apps configure-git configure-starship configure-tpm
 deploy-configs: ## Create symlinks and directories for dotfiles.
 	@$(INSTALLER) --deploy_configs
 initialize-package-manager: ## Install and configure the package manager.
@@ -38,6 +37,8 @@ configure-git: ## Configure Git.
 	@DOTFILES_INIT=true $(INSTALLER) --configure_git
 configure-starship: ## Configure Starship.
 	@DOTFILES_INIT=true $(INSTALLER) --configure_starship
+configure-tpm: ## Configure Tmux Plugin Manager.
+	@DOTFILES_INIT=true $(INSTALLER) --configure-tpm
 
 # individual uninstaller tasks
 

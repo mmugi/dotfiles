@@ -50,6 +50,7 @@ DOTFILES_BREWFILE="${DOTFILES_PATH:?}/misc/brew/Brewfile"
 
 PLATFORM=
 RELOAD_SHELL=false
+CONFIGURATION_FAILED=false
 
 # 256 color palette
 RED=166
@@ -117,6 +118,9 @@ msg.complete() {
 }
 msg.warn() {
     printf "%s⚠ %s%s\n\n" "$(sgr bold "$YELLOW")" "$*" "$(sgr)" >&2
+}
+msg.error() {
+    printf "🔥 %s\n\n" "$(sgr bold "$RED")$*$(sgr)" >&2
 }
 msg.nextstep() {
     printf "%s>>> %s\n" "$(sgr bold "$FG_ACCENT")" "$(sgr "$FG_BASE")Next Steps...$(sgr)"
@@ -861,11 +865,13 @@ configure_apps() {
     newline
     echo '  * Git'
     echo '  * Starship'
+    echo '  * Tmux Plugin Manager'
     newline
 
     if [[ $PLATFORM = mac ]]; then
         configure_git || abort 'Git configuration failed;('
         configure_starship || abort 'Starship configuration failed;('
+        configure_tpm
     else
         platform_not_support
     fi
@@ -961,6 +967,35 @@ configure_starship() {
     msg.complete 'Starship configuration complete!'
 }
 
+configure_tpm() {
+    skip_configuration() { msg.warn 'Skip tpm configuration:P'; }
+    failed_configuration() {
+        CONFIGURATION_FAILED=true
+        msg.error 'Tpm configuration failed;('
+    }
+
+    msg -p 'Checking tpm requirements'
+
+    if ! cmd_exists_check 'tmux'; then
+        skip_configuration
+        return
+    fi
+    if ! cmd_exists_check 'git'; then
+        log.error 'git command required'
+        failed_configuration
+        return
+    fi
+
+    if [[ -d ~/.tmux/plugins/tpm ]]; then
+        msg 'tpm already exists!'
+    else
+        msg -p 'Installing tpm'
+        git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm || return 1
+    fi
+
+    msg.complete 'Tpm configuration complete!'
+}
+
 dotfiles_installation_complete() {
     draw.line
     newline
@@ -976,6 +1011,22 @@ dotfiles_installation_complete() {
     fi
 }
 
+dotfiles_configuration_failed() {
+    draw.line
+    newline
+    printf "%s  🌟 DOTFILES INSTALLATION COMPLETE 🌟%s\n\n" "$(sgr bold "$YELLOW")" "$(sgr)"
+    msg.warn 'Some configuration steps have failed. Please check them as required.'
+    newline
+    if cmd_exists_check -q 'fastfetch'; then
+        fastfetch
+        newline
+    fi
+    if "$RELOAD_SHELL"; then
+        msg -p 'Reloading current shell'
+        newline
+        exec -l "${SHELL:?}"
+    fi
+}
 
 ###  main  ###
 
@@ -986,6 +1037,7 @@ opt_install_packages=false
 opt_configure_apps_all=false
 opt_configure_git=false
 opt_configure_starship=false
+opt_configure_tpm=false
 
 if [[ $# -eq 0 ]]; then
     opt_all=true
@@ -999,6 +1051,7 @@ else
             --configure_apps_all) opt_configure_apps_all=true ;;
             --configure_git) opt_configure_git=true ;;
             --configure_starship) opt_configure_starship=true ;;
+            --configure-tpm) opt_configure_tpm=true ;;
             *) abort 'invalid options;(' ;;
         esac
         shift
@@ -1018,7 +1071,11 @@ if "$opt_all"; then
     install_packages
     configure_apps
 
-    dotfiles_installation_complete
+    if "$CONFIGURATION_FAILED"; then
+        dotfiles_configuration_failed
+    else
+        dotfiles_installation_complete
+    fi
 else
     platform_detection
     "$opt_deploy_configs" && deploy_configs
@@ -1031,6 +1088,7 @@ else
     else
         "$opt_configure_git" && configure_git
         "$opt_configure_starship" && configure_starship
+        "$opt_configure_tpm" && configure_tpm
     fi
     exit 0
 fi
