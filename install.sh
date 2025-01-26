@@ -869,8 +869,8 @@ configure_apps() {
     newline
 
     if [[ $PLATFORM = mac ]]; then
-        configure_git || abort 'Git configuration failed;('
-        configure_starship || abort 'Starship configuration failed;('
+        configure_git
+        configure_starship
         configure_tpm
     else
         platform_not_support
@@ -884,6 +884,12 @@ configure_git() {
     # また、~/.config/git/ 配下の末尾が .dotfiles となっているコンフィグファイルを
     # インポートする設定をgit config --global で設定します。
 
+    skip_configuration() { msg.warn 'Skip git configuration:P'; }
+    failed_configuration() {
+        CONFIGURATION_FAILED=true
+        msg.error 'Git configuration failed;('
+    }
+
     local gitconfigs
     local config
     local gitconfig_username
@@ -892,7 +898,7 @@ configure_git() {
     msg -p 'Configuring Git user settings'
 
     if ! cmd_exists_check 'git'; then
-        msg.warn 'Skip git configuration:P'
+        skip_configuration
         return
     fi
 
@@ -926,7 +932,8 @@ configure_git() {
 
     if [[ -z $gitconfigs ]]; then
         log.error 'git config links not found'
-        return 1
+        failed_configuration
+        return
     fi
 
     local -r includes=$(git config --global include.path)
@@ -941,13 +948,19 @@ configure_git() {
 }
 
 configure_starship() {
+    skip_configuration() { msg.warn 'Skip starship configuration:P'; }
+    failed_configuration() {
+        CONFIGURATION_FAILED=true
+        msg.error 'Starship configuration failed;('
+    }
+
     local config_path
     local cmd
 
     msg -p 'Configuring Starship'
 
     if ! cmd_exists_check 'starship'; then
-        msg.warn 'Skip starship configuration:P'
+        skip_configuration
         return
     fi
 
@@ -959,7 +972,8 @@ configure_starship() {
             ;;
         *)
             log.error "not supported shell: $SHELL"
-            return 1
+            failed_configuration
+            return
             ;;
     esac
 
