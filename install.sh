@@ -884,6 +884,8 @@ configure_git() {
     # また、~/.config/git/ 配下の末尾が .dotfiles となっているコンフィグファイルを
     # インポートする設定をgit config --global で設定します。
 
+    [[ -z ${DOTFILES_INIT:-} ]] && return
+
     configuration_skip() { msg.warn 'Skip git configuration:P'; }
     configuration_failed() {
         CONFIGURATION_FAILED=true
@@ -948,6 +950,8 @@ configure_git() {
 }
 
 configure_starship() {
+    [[ -z ${DOTFILES_INIT:-} ]] && return
+
     configuration_skip() { msg.warn 'Skip starship configuration:P'; }
     configuration_failed() {
         CONFIGURATION_FAILED=true
@@ -982,6 +986,8 @@ configure_starship() {
 }
 
 configure_tpm() {
+    [[ -z ${DOTFILES_INIT:-} ]] && return
+
     configuration_skip() { msg.warn 'Skip tpm configuration:P'; }
     configuration_failed() {
         CONFIGURATION_FAILED=true
