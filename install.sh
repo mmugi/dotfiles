@@ -884,8 +884,8 @@ configure_git() {
     # また、~/.config/git/ 配下の末尾が .dotfiles となっているコンフィグファイルを
     # インポートする設定をgit config --global で設定します。
 
-    skip_configuration() { msg.warn 'Skip git configuration:P'; }
-    failed_configuration() {
+    configuration_skip() { msg.warn 'Skip git configuration:P'; }
+    configuration_failed() {
         CONFIGURATION_FAILED=true
         msg.error 'Git configuration failed;('
     }
@@ -898,7 +898,7 @@ configure_git() {
     msg -p 'Configuring Git user settings'
 
     if ! cmd_exists_check 'git'; then
-        skip_configuration
+        configuration_skip
         return
     fi
 
@@ -932,7 +932,7 @@ configure_git() {
 
     if [[ -z $gitconfigs ]]; then
         log.error 'git config links not found'
-        failed_configuration
+        configuration_failed
         return
     fi
 
@@ -948,8 +948,8 @@ configure_git() {
 }
 
 configure_starship() {
-    skip_configuration() { msg.warn 'Skip starship configuration:P'; }
-    failed_configuration() {
+    configuration_skip() { msg.warn 'Skip starship configuration:P'; }
+    configuration_failed() {
         CONFIGURATION_FAILED=true
         msg.error 'Starship configuration failed;('
     }
@@ -960,7 +960,7 @@ configure_starship() {
     msg -p 'Configuring Starship'
 
     if ! cmd_exists_check 'starship'; then
-        skip_configuration
+        configuration_skip
         return
     fi
 
@@ -972,7 +972,7 @@ configure_starship() {
             ;;
         *)
             log.error "not supported shell: $SHELL"
-            failed_configuration
+            configuration_failed
             return
             ;;
     esac
@@ -982,8 +982,8 @@ configure_starship() {
 }
 
 configure_tpm() {
-    skip_configuration() { msg.warn 'Skip tpm configuration:P'; }
-    failed_configuration() {
+    configuration_skip() { msg.warn 'Skip tpm configuration:P'; }
+    configuration_failed() {
         CONFIGURATION_FAILED=true
         msg.error 'Tpm configuration failed;('
     }
@@ -991,12 +991,12 @@ configure_tpm() {
     msg -p 'Checking tpm requirements'
 
     if ! cmd_exists_check 'tmux'; then
-        skip_configuration
+        configuration_skip
         return
     fi
     if ! cmd_exists_check 'git'; then
         log.error 'git command required'
-        failed_configuration
+        configuration_failed
         return
     fi
 
