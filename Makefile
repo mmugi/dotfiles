@@ -33,6 +33,8 @@ install-packages: ## Install packages.
 	@DOTFILES_INIT=true $(INSTALLER) --install-packages
 configure-apps: ## Configure all applications.
 	@DOTFILES_INIT=true $(INSTALLER) --configure-apps-all
+configure-fish: ## Configure Fish Shell.
+	@DOTFILES_INIT=true $(INSTALLER) --configure-fish
 configure-git: ## Configure Git.
 	@DOTFILES_INIT=true $(INSTALLER) --configure-git
 configure-starship: ## Configure Starship.

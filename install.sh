@@ -863,12 +863,14 @@ configure_apps() {
     msg 'Starting application configuration.'
     msg.attention 'Configuring the following applications:'
     newline
+    echo '  * Fish Shell'
     echo '  * Git'
     echo '  * Starship'
     echo '  * Tmux Plugin Manager'
     newline
 
     if [[ $PLATFORM = mac ]]; then
+        configure_fish
         configure_git
         configure_starship
         configure_tpm
@@ -877,6 +879,40 @@ configure_apps() {
     fi
 
     #msg.complete 'All application configuration complete;)'
+}
+
+configure_fish() {
+    [[ -z ${DOTFILES_INIT:-} ]] && return
+
+    configuration_skip() { msg.warn 'Skip fish configuration:P'; }
+    configuration_failed() {
+        CONFIGURATION_FAILED=true
+        msg.error 'Fish configuration failed;('
+    }
+
+    local fish_theme='Dracula'
+
+    msg 'Configuring Fish Shell.'
+
+    msg -p 'Checking requirements'
+    if ! cmd_exists_check 'fish' ||
+       ! cmd_exists_check 'curl' ||
+       ! cmd_exists_check 'fzf'
+    then
+        log.warn 'requirements are not met'
+        configuration_skip && return
+    fi
+
+    msg -p 'Configuring theme'
+    fish -c "fish_config theme choose '${fish_theme}'"
+
+    msg -p 'Installing fisher'
+    fish -c 'curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher' || return 1
+
+    msg -p 'Installing fish packages'
+    fish -c 'fisher update'
+
+    msg.complete 'Fish configuration complete!'
 }
 
 configure_git() {
@@ -1055,6 +1091,7 @@ opt_deploy_configs=false
 opt_initialize_package_manager=false
 opt_install_packages=false
 opt_configure_all_apps=false
+opt_configure_fish=false
 opt_configure_git=false
 opt_configure_starship=false
 opt_configure_tpm=false
@@ -1069,6 +1106,7 @@ else
             --install-packages) opt_install_packages=true ;;
             --deploy-configs) opt_deploy_configs=true ;;
             --configure-all-apps) opt_configure_all_apps=true ;;
+            --configure-fish) opt_configure_fish=true ;;
             --configure-git) opt_configure_git=true ;;
             --configure-starship) opt_configure_starship=true ;;
             --configure-tpm) opt_configure_tpm=true ;;
@@ -1106,6 +1144,7 @@ else
     if "$opt_configure_all_apps"; then
         configure_apps
     else
+        "$opt_configure_fish" && configure_fish
         "$opt_configure_git" && configure_git
         "$opt_configure_starship" && configure_starship
         "$opt_configure_tpm" && configure_tpm
