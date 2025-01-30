@@ -710,10 +710,7 @@ initialize_package_manager_homebrew() {
 
     # shellcheck disable=SC2016
     case "$SHELL" in
-        *zsh)
-            config_path="${HOME}/.zprofile"
-            cmd='eval "$(/opt/homebrew/bin/brew shellenv)"'
-            ;;
+        *zsh)  config_path="${HOME}/.zprofile" ;;
         *)
             log.error "not supported shell: $SHELL"
             return 1
@@ -723,7 +720,7 @@ initialize_package_manager_homebrew() {
     if ! grep -q "$cmd" "$config_path" >/dev/null 2>&1; then
         msg -p 'Configuring Homebrew'
         msg -p "Write command to add Homebrew to PATH"
-        appendline "$config_path" "$cmd" || return 1
+        appendline "$config_path" 'eval "$(/opt/homebrew/bin/brew shellenv)"' || return 1
         RELOAD_SHELL=true
     fi
     eval "$cmd" || return 1
