@@ -269,7 +269,7 @@ cmd_exists_check() {
 }
 
 deploy() {
-    # USAGE: deploy [--dry-run] source_file_or_dir destination_file_or_dir
+    # USAGE: deploy [--dry-run] src dst
     #
     # srcに指定されたファイルもしくはディレクトリをdstに指定されたパスに配置します。
     #
@@ -288,11 +288,11 @@ deploy() {
             shift
             dry_run=true
         else
-            log.error 'usage: deploy [--dry-run] src_file_or_dir dst_file_or_dir'
+            log.error 'usage: deploy [--dry-run] src dst'
             return 1
         fi
     elif [[ $# -ne 2 ]]; then
-        log.error 'invalid args: usage: [--dry-run] src_file_or_dir dst_file_or_dir'
+        log.error 'usage: deploy [--dry-run] src dst'
         return 1
     fi
 
@@ -863,7 +863,7 @@ configure_apps() {
     msg 'Starting application configuration.'
     msg.attention 'Configuring the following applications:'
     newline
-    echo '  * Fish Shell'
+    echo '  * Shell'
     echo '  * Git'
     echo '  * Starship'
     echo '  * Tmux Plugin Manager'
