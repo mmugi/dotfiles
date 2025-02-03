@@ -287,6 +287,9 @@ deploy() {
         if [[ $1 = --dry-run ]]; then
             shift
             dry_run=true
+        else
+            log.error 'usage: deploy [--dry-run] src_file_or_dir dst_file_or_dir'
+            return 1
         fi
     elif [[ $# -ne 2 ]]; then
         log.error 'invalid args: usage: [--dry-run] src_file_or_dir dst_file_or_dir'
