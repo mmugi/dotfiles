@@ -19,6 +19,8 @@ cd ~/.dotfiles && make install
 
 ### ▼ Installation Options
 
+#### > Environment Variables
+
 You can customize the installation by setting environment variables.
 
 - `DOTFILES_BRANCH`
@@ -46,6 +48,24 @@ You can customize the installation by setting environment variables.
   - Example:
     - `export DOTFILES_INIT=true && ~/.dotfiles/install.sh`
     - `DOTFILES_INIT=true make install`
+
+#### > Ignoring Configuration Files
+
+You can also control which configuration files are deployed.
+
+By default, the installation will be stopped when configuration files already exists.
+If you wish to prioritize existing configuration files, place a .dotignore file at `~/.dotfiles/.dotignore` and list the patterns that match paths relative to your home directory.
+
+Pattern matching is performed using prefix matching. For example, if you specify `.config`, all configuration files under the `.config/` directory will be ignored.
+
+Example `.dotignore` file:
+
+``` shell
+$ cat ~/.dotfiles/.dotignore
+.bashrc
+.config/tmux/
+.config/fish/config.fish
+```
 
 ## Uninstallation
 

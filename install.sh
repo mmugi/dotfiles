@@ -59,6 +59,7 @@ YELLOW=220
 CYAN=195
 PINK=175
 PURPLE=105
+LIME=118
 DARKGREEN=30
 FG_BASE="$CYAN"
 FG_ACCENT="$PURPLE"
@@ -141,6 +142,9 @@ log.link() {
 log.mkdir() {
     printf "%s: %s\n" "$(sgr bold "$BLUE")MKDIR$(sgr)" "$*"
 }
+log.ignore() {
+    printf "%s: %s\n" "$(sgr bold "$LIME")IGNORE$(sgr)" "$*"
+}
 
 draw.line() {
     local -r length=67
@@ -199,7 +203,7 @@ nextstep.symlink_conflict() {
     draw.line
     newline
     msg.nextstep
-    echo 'Delete the conflicting files and try again.'
+    echo "Please either move the target config file or configure '.dotignore', then rerun the install."
     echo
     exit 1
 }
@@ -776,6 +780,15 @@ deploy_configs() {
     #   ...
     #
     # 途中のディレクトリが存在しない場合、ディレクトリをパーミッション700で作成します。
+    #
+    # 配置先となるパスにファイルもしくは dotfiles 管理でないリンクが既に存在する場合、
+    # 全コンフィグのデプロイは中断されます。
+    # 続行するには、既存のファイルを退避/削除後する、もしくは、
+    # ~/.dotignore に無視したいコンフィグを指定し再実行します。
+    #
+    # .dotignore ファイルに記載されたパスが、コンフィグのホームディレクトリからの
+    # 相対パスと前方一致する場合は、該当パスのコンフィグ配置処理をスキップします。
+    # また、空行および#から始まる行は無視されます。
 
     local cmd_result
     local pkg_dirs
@@ -788,6 +801,32 @@ deploy_configs() {
     local conflict=false
 
     deploy_configs_failed() { abort 'Config deployment failed;('; }
+
+    check_ignore() {
+        # usage: check_ignore config_relpath_from_home
+        #
+        # dotfilesディレクトリに配置された .dotignore ファイルを参照し、
+        # 引数として入力されたコンフィグが無視されるかどうか判定します。
+        # コンフィグは、ホームディレクトリからの相対パスで指定します。
+        # .dotignore に記載のパスと前方一致する場合、trueを返します。
+
+        local ignorefile="${DOTFILES_PATH}/.dotignore"
+        local config_relpath_from_home
+
+        if [[ $# -ne 1 ]]; then
+            log.error 'usage: check_ignore config_relpath_from_home'
+            deploy_configs_failed
+        fi
+
+        config_relpath_from_home="$1"
+
+        [[ -s $ignorefile ]] || return
+        while read -r pattern; do
+            [[ -z $pattern || $pattern =~ ^# ]] && continue
+            [[ $config_relpath_from_home =~ ^"$pattern" ]] && return
+        done < "$ignorefile"
+        return 1
+    }
 
     msg 'Starting config deployment.'
 
@@ -821,7 +860,11 @@ deploy_configs() {
         while read -r src; do
             config_relpath_fromhome="${src#"${pkg_dir}/"}"
             dst="${HOME}/${config_relpath_fromhome:?}"
-            deploy --dry-run "$src" "$dst" || conflict=true
+            if check_ignore "$config_relpath_fromhome"; then
+                continue
+            else
+                deploy --dry-run "$src" "$dst" || conflict=true
+            fi
         done < <(echo "$src_configs")
     done < <(echo "$pkg_dirs")
 
@@ -847,11 +890,14 @@ deploy_configs() {
         while read -r src; do
             config_relpath_fromhome="${src#"${pkg_dir}/"}"
             dst="${HOME}/${config_relpath_fromhome:?}"
-
-            # ignore pattern
-            [[ $src =~ \.swp$ ]] && continue
-
-            deploy "$src" "$dst" || deploy_configs_failed
+            if [[ $src =~ \.swp$ ]]; then
+                continue
+            elif check_ignore "$config_relpath_fromhome"; then
+                log.ignore "~/${config_relpath_fromhome}"
+                continue
+            else
+                deploy "$src" "$dst" || deploy_configs_failed
+            fi
         done < <(echo "$src_configs")
     done < <(echo "$pkg_dirs")
     msg.complete 'Config deployment is complete:)'
