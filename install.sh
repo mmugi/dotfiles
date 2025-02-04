@@ -1055,6 +1055,10 @@ configure_starship() {
 
     # shellcheck disable=SC2016
     case "$SHELL" in
+        *fish)
+            config_path="${HOME}/.config/fish/config.fish"
+            cmd='starship init fish | source'
+            ;;
         *zsh)
             config_path="${HOME}/.zshrc"
             cmd='eval "$(starship init zsh)"'
