@@ -375,7 +375,7 @@ appendline() {
 
     if ! grep -Fq "$line" "$dst" >/dev/null 2>&1; then
         if echo "$line" >>"$dst"; then
-            printf "%s: echo \"%s\" >>%s\n" "$(sgr bold "$BLUE")APPEND$(sgr)" "$line" "$dst"
+            printf "%s: echo '%s' >>%s\n" "$(sgr bold "$BLUE")APPEND$(sgr)" "$line" "$dst"
         else
             return 1
         fi
