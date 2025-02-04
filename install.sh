@@ -702,6 +702,7 @@ initialize_package_manager() {
 }
 
 initialize_package_manager_homebrew() {
+    local brew_path
     local config_path
     local cmd
 
@@ -718,18 +719,20 @@ initialize_package_manager_homebrew() {
     # shellcheck disable=SC2016
     case "$SHELL" in
         *zsh)  config_path="${HOME}/.zprofile" ;;
+        *fish) config_path="${HOME}/.config/fish/config.fish" ;;
         *)
             log.error "not supported shell: $SHELL"
             return 1
             ;;
     esac
 
-    if ! grep -q "$cmd" "$config_path" >/dev/null 2>&1; then
-        msg -p 'Configuring Homebrew'
-        msg -p "Write command to add Homebrew to PATH"
-        appendline "$config_path" 'eval "$(/opt/homebrew/bin/brew shellenv)"' || return 1
-        RELOAD_SHELL=true
-    fi
+    brew_path="$(type -p 'brew')"
+    cmd="$(printf 'eval "$(%s shellenv)"' "$brew_path")"
+
+    msg -p 'Configuring Homebrew in the terminal'
+    appendline "$config_path" "$cmd" || return 1
+    RELOAD_SHELL=true
+
     eval "$cmd" || return 1
     msg -p 'Checking system with brew doctor'
     brew doctor
