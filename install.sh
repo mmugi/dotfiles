@@ -59,7 +59,7 @@ YELLOW=220
 CYAN=195
 PINK=175
 PURPLE=105
-LIME=118
+LIME=155
 DARKGREEN=30
 FG_BASE="$CYAN"
 FG_ACCENT="$PURPLE"
@@ -368,7 +368,6 @@ appendline() {
     local input
 
     if [[ ! -f $dst ]]; then
-        log.warn "file not found: $dst"
         touch "$dst"
         printf "%s: %s\n" "$(sgr bold "$BLUE")CREATE$(sgr)" "$dst"
     fi
@@ -418,6 +417,7 @@ download_dotfiles() {
     local test_user
     local git_ssh_test_result
 
+    download_complete() { msg.complete 'Dotfiles download completed:)'; }
     download_failed() { abort 'Dotfiles download failed;('; }
 
     if [[ -z ${GITHUB_USERNAME:-} ]]; then
@@ -441,10 +441,9 @@ download_dotfiles() {
         download_failed
     fi
 
-    msg "Starting download of dotfiles to '${DOTFILES_PATH}'"
-
     if [[ -e $DOTFILES_PATH ]]; then
-        msg.complete "Dotfiles already exists;)"
+        msg 'Dotfiles already exists.'
+        download_complete
         return
     fi
 
@@ -558,8 +557,6 @@ configure_dotfiles_repository() {
     local hook_filename
     local deploy_hook_failed=false
 
-    msg 'Starting dotfiles repository configuration.'
-
     msg -p 'Installing Git-hooks to dotfiles'
     src_hooks=$(find "$DOTFILES_GITHOOKS_DIR" -mindepth 1 -type f)
     while read -r src; do
@@ -572,26 +569,22 @@ configure_dotfiles_repository() {
     "$deploy_hook_failed" && abort 'Hooks deployment failed;('
 
     local -r gitconfig_local="${DOTFILES_PATH}/.git/config"
-    local username
-    local email
 
-    msg -p 'Applying default configs'
+    msg -p 'Configuring local Git user to dotfiles'
     if cmd_result=$(git config --file "$gitconfig_local" user.name); then
-        [[ $cmd_result != "$GITHUB_USERNAME" ]] && log.warn 'user.name already configured'
-        username="$cmd_result"
+        if [[ $cmd_result != "$GITHUB_USERNAME" ]]; then
+            log.warn "user.name already configured: $cmd_result"
+        fi
     else
         git config --file "$gitconfig_local" user.name "$GITHUB_USERNAME"
-        username="$GITHUB_USERNAME"
     fi
     if cmd_result=$(git config --file "$gitconfig_local" user.email); then
-        [[ $cmd_result != "$GITHUB_EMAIL" ]] && log.warn 'user.email already configured'
-        email="$cmd_result"
+        if [[ $cmd_result != "$GITHUB_EMAIL" ]]; then
+            log.warn "user.email already configured: $cmd_result"
+        fi
     else
         git config --file "${DOTFILES_PATH}/.git/config" user.email "$GITHUB_EMAIL"
-        email="$GITHUB_EMAIL"
     fi
-    printf "%s: %s\n" "$(sgr bold "$BLUE")user.name$(sgr)" "$username"
-    printf "%s: %s\n" "$(sgr bold "$BLUE")user.email$(sgr)" "$email"
 
     msg.complete 'Dotfiles repository configured:)'
 }
@@ -691,11 +684,20 @@ initialize_macos() {
 initialize_package_manager() {
     [[ -z ${DOTFILES_INIT:-} ]] && return 0
 
-    msg -p 'Initializing the package manager'
-    if [[ $PLATFORM = mac ]]; then
+    local package_manager
+
+    msg -p 'Detecting package manager'
+    case "$PLATFORM" in
+        mac) package_manager='Homebrew' ;;
+        *) platform_not_support ;;
+    esac
+    printf "Package Manager: %s\n" "$(sgr bold "$PURPLE")${package_manager}$(sgr)"
+
+    if [[ $package_manager = Homebrew ]]; then
         initialize_package_manager_homebrew || abort 'Homebrew initialization failed;('
     else
-        platform_not_support
+        log.error "package manager is not supported: $package_manager"
+        abort 'Initialize package manager failed;('
     fi
 
     msg.complete 'Package manager initialization complete:)'
@@ -706,7 +708,9 @@ initialize_package_manager_homebrew() {
     local config_path
     local cmd
 
-    if ! cmd_exists_check 'brew'; then
+    if cmd_exists_check -q 'brew'; then
+        msg 'brew command already exists.'
+    else
         msg -p 'Installing Homebrew'
         if ! /bin/bash -c \
              "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)";
@@ -831,12 +835,12 @@ deploy_configs() {
         return 1
     }
 
-    msg 'Starting config deployment.'
-
     if [[ -z ${DOTFILES_CONFIG_DIR:-} ]]; then
         log.error "'DOTFILES_CONFIG_DIR' is not set"
         deploy_configs_failed
     fi
+
+    msg -p 'Checking configs to be deployed'
 
     if ! pkg_dirs=$(find "$DOTFILES_CONFIG_DIR" -mindepth 1 -maxdepth 1 -type d 2>&1); then
         log.error "$pkg_dirs"
@@ -845,8 +849,6 @@ deploy_configs() {
         msg.warn "Package directory not found:/"
         return
     fi
-
-    msg -p 'Checking symlink destinations'
 
     while read -r pkg_dir; do
         if [[ ! -d $pkg_dir ]]; then
@@ -879,7 +881,7 @@ deploy_configs() {
     while read -r pkg_dir; do
         if [[ -d $pkg_dir ]]; then
             pkg=$(basename "$pkg_dir")
-            msg "Deploying configs: $pkg"
+            msg "Deploying configs: $(sgr bold ${PURPLE})${pkg}$(sgr)"
         else
             log.error "package directry not found: $pkg_dir"
             deploy_configs_failed
@@ -909,7 +911,6 @@ deploy_configs() {
 configure_apps() {
     [[ -z ${DOTFILES_INIT:-} ]] && return
 
-    msg 'Starting application configuration.'
     msg.attention 'Configuring the following applications:'
     newline
     echo '  * Shell'
@@ -941,9 +942,7 @@ configure_fish() {
 
     local fish_theme='Dracula'
 
-    msg 'Configuring Fish Shell.'
-
-    msg -p 'Checking requirements'
+    msg -p 'Checking fish requirements'
     if ! cmd_exists_check 'fish' ||
        ! cmd_exists_check 'curl' ||
        ! cmd_exists_check 'fzf'
@@ -953,12 +952,13 @@ configure_fish() {
     fi
 
     msg -p 'Configuring theme'
+    printf "Theme: %s\n" "$(sgr $PURPLE)${fish_theme}$(sgr)"
     fish -c "fish_config theme choose '${fish_theme}'"
 
     msg -p 'Installing fisher'
     fish -c 'curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher' || return 1
 
-    msg -p 'Installing fish packages'
+    msg -p 'Installing fish plugins'
     fish -c 'fisher update'
 
     msg.complete 'Fish configuration complete!'
@@ -982,7 +982,7 @@ configure_git() {
     local gitconfig_username
     local gitconfig_email
 
-    msg -p 'Configuring Git user settings'
+    msg -p 'Configuring global Git user settings'
 
     if ! cmd_exists_check 'git'; then
         configuration_skip
@@ -991,7 +991,7 @@ configure_git() {
 
     echo -n 'Checking user.name...'
     if gitconfig_username=$(git config --global user.name); then
-        result.ok
+        result.exist
     else
         result.notfound
         read -rp "Configuring user.name [${GITHUB_USERNAME}]: " gitconfig_username
@@ -999,11 +999,10 @@ configure_git() {
         git config --global user.name "$gitconfig_username" || return 1
         gitconfig_username=$(git config --global user.name) || return 1
     fi
-    printf "%s: %s\n" "$(sgr bold "$BLUE")user.name$(sgr)" "$gitconfig_username"
 
     echo -n 'Checking user.email...'
     if gitconfig_email=$(git config --global user.email); then
-        result.ok
+        result.exist
     else
         result.notfound
         read -rp "Configuring user.email [${GITHUB_EMAIL}]: " gitconfig_email
@@ -1011,6 +1010,9 @@ configure_git() {
         git config --global user.email "$gitconfig_email" || return 1
         gitconfig_email=$(git config --global user.email) || return 1
     fi
+
+    msg 'Global Git user configuration completed!'
+    printf "%s: %s\n" "$(sgr bold "$BLUE")user.name$(sgr)" "$gitconfig_username"
     printf "%s: %s\n" "$(sgr bold "$BLUE")user.email$(sgr)" "$gitconfig_email"
 
     msg -p 'Configuring Git to include config files managed by dotfiles'
