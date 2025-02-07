@@ -400,7 +400,7 @@ greet() {
 
 platform_detection() {
     local os
-    msg -p 'Detecting platform'
+    msg -p 'Detecting the platform'
     os=$(uname -o)
     case "$os" in
         Darwin)    PLATFORM='mac' ;;
@@ -477,8 +477,8 @@ download_dotfiles() {
             download_failed
         fi
 
-        msg -p 'Checking Git SSH connection'
-        echo -n 'Checking Git config user.name...'
+        msg -p 'Checking git SSH connection'
+        echo -n 'Checking git config user.name...'
         if test_user=$(git config user.name); then
             result.exist
         else
@@ -557,7 +557,7 @@ configure_dotfiles_repository() {
     local hook_filename
     local deploy_hook_failed=false
 
-    msg -p 'Installing Git-hooks to dotfiles'
+    msg -p 'Installing git-hooks to dotfiles'
     src_hooks=$(find "$DOTFILES_GITHOOKS_DIR" -mindepth 1 -type f)
     while read -r src; do
         hook_filename=$(basename "$src")
@@ -570,7 +570,7 @@ configure_dotfiles_repository() {
 
     local -r gitconfig_local="${DOTFILES_PATH}/.git/config"
 
-    msg -p 'Configuring local Git user to dotfiles'
+    msg -p 'Configuring local git user to dotfiles'
     if cmd_result=$(git config --file "$gitconfig_local" user.name); then
         if [[ $cmd_result != "$GITHUB_USERNAME" ]]; then
             log.warn "user.name already configured: $cmd_result"
@@ -594,9 +594,9 @@ confirm_init() {
         msg.attention 'The DOTFILES_INIT option has been selected.'
         msg.attention 'The following tasks may be executed in the subsequent steps:'
         newline
-        echo '  * Installation and initial setup of package management software'
-        echo '  * Installation of software'
-        echo '  * Modification of software settings'
+        echo '  * Installation and initial setup of package management'
+        echo '  * Modification of OS settings'
+        echo '  * Installation of applications and configuration updates'
         newline
         printf "Press %s to continue or press any other key to skip.\n" "$(sgr bold)RETURN/ENTER$(sgr)"
         IFS='' read -sr -n 1 -p 'Ready?' input && newline
@@ -632,7 +632,7 @@ initialize_macos() {
     local rosetta_available=false
     local initialize_failed=false
 
-    msg -p 'Checking the machine type'
+    msg -p 'Detecting the machine type'
     arc=$(uname -m)
     if [[ $arc = x86_64 ]]; then
         printf "Processor: %s\n" "$(sgr bold "$FG_ACCENT")${arc}$(sgr)"
@@ -913,7 +913,7 @@ configure_apps() {
 
     msg.attention 'Configuring the following applications:'
     newline
-    echo '  * Shell'
+    echo '  * Fish Shell'
     echo '  * Git'
     echo '  * Starship'
     echo '  * Tmux Plugin Manager'
@@ -927,8 +927,7 @@ configure_apps() {
     else
         platform_not_support
     fi
-
-    #msg.complete 'All application configuration complete;)'
+    msg.complete 'All application configuration complete;)'
 }
 
 configure_fish() {
@@ -942,7 +941,7 @@ configure_fish() {
 
     local fish_theme='Dracula'
 
-    msg -p 'Checking fish requirements'
+    msg -p 'Checking fish-shell requirements'
     if ! cmd_exists_check 'fish' ||
        ! cmd_exists_check 'curl' ||
        ! cmd_exists_check 'fzf'
@@ -951,7 +950,7 @@ configure_fish() {
         configuration_skip && return
     fi
 
-    msg -p 'Configuring theme'
+    msg -p 'Configuring fish theme'
     printf "Theme: %s\n" "$(sgr $PURPLE)${fish_theme}$(sgr)"
     fish -c "fish_config theme choose '${fish_theme}'"
 
@@ -982,7 +981,7 @@ configure_git() {
     local gitconfig_username
     local gitconfig_email
 
-    msg -p 'Configuring global Git user settings'
+    msg -p 'Configuring global git user settings'
 
     if ! cmd_exists_check 'git'; then
         configuration_skip
@@ -1011,11 +1010,11 @@ configure_git() {
         gitconfig_email=$(git config --global user.email) || return 1
     fi
 
-    msg 'Global Git user configuration completed!'
+    msg 'Global git user configuration completed!'
     printf "%s: %s\n" "$(sgr bold "$BLUE")user.name$(sgr)" "$gitconfig_username"
     printf "%s: %s\n" "$(sgr bold "$BLUE")user.email$(sgr)" "$gitconfig_email"
 
-    msg -p 'Configuring Git to include config files managed by dotfiles'
+    msg -p 'Configuring git to include config files managed by dotfiles'
 
     gitconfigs=$(find "${HOME}/.config/git" -type l | grep -E 'dotfiles$')
 
@@ -1048,13 +1047,14 @@ configure_starship() {
     local config_path
     local cmd
 
-    msg -p 'Configuring Starship'
+    msg -p 'Checking starship requirements'
 
     if ! cmd_exists_check 'starship'; then
         configuration_skip
         return
     fi
 
+    msg -p 'Configuring starship in the terminal'
     # shellcheck disable=SC2016
     case "$SHELL" in
         *fish)
@@ -1098,7 +1098,7 @@ configure_tpm() {
     fi
 
     if [[ -d ~/.tmux/plugins/tpm ]]; then
-        msg 'tpm already exists!'
+        msg 'Tpm already exists!'
     else
         msg -p 'Installing tpm'
         git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm || return 1
