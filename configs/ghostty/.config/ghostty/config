@@ -10,7 +10,7 @@ theme = rebecca
 cursor-style = block
 cursor-style-blink = true
 
-background-opacity = 0.8
+background-opacity = 0.9
 background-blur-radius = 15
 
 unfocused-split-opacity = 0.75
