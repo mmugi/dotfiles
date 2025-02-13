@@ -720,7 +720,6 @@ initialize_package_manager_homebrew() {
         msg 'Homebrew installation successful!'
     fi
 
-    # shellcheck disable=SC2016
     case "$SHELL" in
         *zsh)  config_path="${HOME}/.zprofile" ;;
         *fish) config_path="${HOME}/.config/fish/config.fish" ;;
@@ -731,7 +730,7 @@ initialize_package_manager_homebrew() {
     esac
 
     brew_path="$(type -p 'brew')"
-    cmd="$(printf 'eval "$(%s shellenv)"' "$brew_path")"
+    cmd="eval \"\$(${brew_path} shellenv)\""
 
     msg -p 'Configuring Homebrew in the terminal'
     appendline "$config_path" "$cmd" || return 1
@@ -898,7 +897,7 @@ deploy_configs() {
             if [[ $src =~ \.swp$ ]]; then
                 continue
             elif check_ignore "$config_relpath_fromhome"; then
-                log.ignore "~/${config_relpath_fromhome}"
+                log.ignore "${HOME}/${config_relpath_fromhome}"
                 continue
             else
                 deploy "$src" "$dst" || deploy_configs_failed
