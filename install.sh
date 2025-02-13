@@ -288,7 +288,7 @@ exists_check() {
     target="$1"
 
     if [[ $opt_selector = c ]]; then
-        "$opt_quiet" || printf "Checking command: %s ... " "$(sgr bold "$PURPLE")${target}$(sgr)"
+        "$opt_quiet" || printf "Checking command %s..." "$(sgr bold "$PURPLE")${target}$(sgr)"
         if type "$target" >/dev/null 2>&1; then
             "$opt_quiet" || result.exist
             return 0
@@ -297,7 +297,7 @@ exists_check() {
             return 1
         fi
     elif [[ $opt_selector = f ]]; then
-        "$opt_quiet" || printf "Checking file: %s ... " "$(sgr bold "$PURPLE")${target}$(sgr)"
+        "$opt_quiet" || printf "Checking file %s..." "$(sgr bold "$PURPLE")${target}$(sgr)"
         if "$opt_exists"; then
             if [[ -f $target ]]; then
                 "$opt_quiet" || result.exist
@@ -316,7 +316,7 @@ exists_check() {
             fi
         fi
     elif [[ $opt_selector = l ]]; then
-        "$opt_quiet" || printf "Checking symlink: %s ... " "$(sgr bold "$PURPLE")${target}$(sgr)"
+        "$opt_quiet" || printf "Checking symlink %s..." "$(sgr bold "$PURPLE")${target}$(sgr)"
         if [[ -L $target ]]; then
             "$opt_quiet" || result.exist
             return 0
