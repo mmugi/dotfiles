@@ -327,46 +327,6 @@ exists_check() {
     fi
 }
 
-cmd_exists_check() {
-    local cmd
-    local option_q=false
-
-    while (( $# > 0 )); do
-        case "$1" in
-            --)
-                shift
-                cmd="$*"
-                break
-                ;;
-            -q)
-                option_q=true
-                ;;
-            *)
-                cmd="$*"
-                break
-                ;;
-        esac
-        shift
-    done
-
-    if "$option_q"; then
-        if type "$cmd" >/dev/null 2>&1; then
-            return
-        else
-            return 1
-        fi
-    else
-        printf "Checking the %s command..." "$(sgr bold "$FG_ACCENT")${cmd}$(sgr)"
-        if type "$cmd" >/dev/null 2>&1; then
-            result.exist
-            return
-        else
-            result.notfound
-            return 1
-        fi
-    fi
-}
-
 deploy() {
     # USAGE: deploy [--dry-run] src dst
     #
@@ -544,11 +504,11 @@ download_dotfiles() {
 
     msg -p 'Checking DOTFILES_DOWNLOADER'
     if [[ -z ${DOTFILES_DOWNLOADER:-} ]]; then
-        if cmd_exists_check 'git'; then
+        if exists_check -c 'git'; then
             DOTFILES_DOWNLOADER='git'
-        elif cmd_exists_check 'curl'; then
+        elif exists_check -c 'curl'; then
             DOTFILES_DOWNLOADER='curl'
-        elif cmd_exists_check 'wget'; then
+        elif exists_check -c 'wget'; then
             DOTFILES_DOWNLOADER='wget'
         else
             log.error "'DOTFILES_DOWNLOADER' not found: git, curl, wget"
@@ -556,7 +516,7 @@ download_dotfiles() {
         fi
         printf "Downloader detected: %s\n" "$(sgr bold "$FG_ACCENT")$DOTFILES_DOWNLOADER$(sgr)"
     else
-        if cmd_exists_check "$DOTFILES_DOWNLOADER"; then
+        if exists_check -c "$DOTFILES_DOWNLOADER"; then
             printf "Specified downloader: %s\n" "$(sgr bold "$FG_ACCENT")${DOTFILES_DOWNLOADER}$(sgr)"
         else
             log.error "invalid downloader 'DOTFILES_DOWNLOADER': $DOTFILES_DOWNLOADER"
@@ -620,7 +580,7 @@ download_dotfiles() {
             download_failed
         fi
     elif [[ $DOTFILES_DOWNLOADER =~ curl|wget ]]; then
-        if ! cmd_exists_check 'tar'; then
+        if ! exists_check -c 'tar'; then
             log.error 'tar command is required'
             download_failed
         fi
@@ -640,7 +600,7 @@ download_dotfiles() {
 }
 
 configure_dotfiles_repository() {
-    if ! cmd_exists_check -q 'git' || ! [[ -d ${DOTFILES_PATH:?}/.git ]]; then
+    if ! exists_check -cq 'git' || ! [[ -d ${DOTFILES_PATH:?}/.git ]]; then
         return
     fi
 
@@ -803,7 +763,7 @@ initialize_package_manager_homebrew() {
     local config_path
     local cmd
 
-    if cmd_exists_check -q 'brew'; then
+    if exists_check -cq 'brew'; then
         msg 'brew command already exists.'
     else
         msg -p 'Installing Homebrew'
@@ -856,7 +816,7 @@ install_packages_mac() {
         return 1
     fi
 
-    if ! cmd_exists_check -q "$package_manager"; then
+    if ! exists_check -cq "$package_manager"; then
         log.error "command not found: $package_manager"
         return 1
     fi
@@ -1079,7 +1039,7 @@ configure_git() {
 
     msg -p 'Configuring global git user settings'
 
-    if ! cmd_exists_check 'git'; then
+    if ! exists_check -c 'git'; then
         configuration_skip
         return
     fi
@@ -1145,7 +1105,7 @@ configure_starship() {
 
     msg -p 'Checking starship requirements'
 
-    if ! cmd_exists_check 'starship'; then
+    if ! exists_check -c 'starship'; then
         configuration_skip
         return
     fi
@@ -1183,11 +1143,11 @@ configure_tpm() {
 
     msg -p 'Checking tpm requirements'
 
-    if ! cmd_exists_check 'tmux'; then
+    if ! exists_check -c 'tmux'; then
         configuration_skip
         return
     fi
-    if ! cmd_exists_check 'git'; then
+    if ! exists_check -c 'git'; then
         log.error 'git command required'
         configuration_failed
         return
@@ -1207,7 +1167,7 @@ dotfiles_installation_complete() {
     draw.line
     newline
     printf "%s  🌟 DOTFILES INSTALLATION COMPLETE 🌟%s\n\n" "$(sgr bold "$PINK")" "$(sgr)"
-    if cmd_exists_check -q 'fastfetch'; then
+    if exists_check -cq 'fastfetch'; then
         fastfetch
         newline
     fi
@@ -1224,7 +1184,7 @@ dotfiles_configuration_failed() {
     printf "%s  🌟 DOTFILES INSTALLATION COMPLETE 🌟%s\n\n" "$(sgr bold "$YELLOW")" "$(sgr)"
     msg.warn 'Some configuration steps have failed. Please check them as required.'
     newline
-    if cmd_exists_check -q 'fastfetch'; then
+    if exists_check -cq 'fastfetch'; then
         fastfetch
         newline
     fi
