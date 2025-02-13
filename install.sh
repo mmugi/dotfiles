@@ -1035,24 +1035,26 @@ configure_fish() {
 
     local fish_theme='Dracula'
 
+
     msg -p 'Checking fish-shell requirements'
-    if ! cmd_exists_check 'fish' ||
-       ! cmd_exists_check 'curl' ||
-       ! cmd_exists_check 'fzf'
+    if ! exists_check -c 'fish' ||
+       ! exists_check -c 'curl' ||
+       ! exists_check -c 'fzf'  ||
+       ! exists_check -l "${HOME}/.config/fish/fish_plugins"
     then
         log.warn 'requirements are not met'
         configuration_skip && return
     fi
 
+    msg -p 'Installing plugin manager and plugins'
+    fish -c 'curl -fsSL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher update' || return 1
+
     msg -p 'Configuring fish theme'
+    if fish -c "fisher list | grep 'catppuccin/fish' >/dev/null"; then
+        fish_theme='Catppuccin Mocha'
+    fi
     printf "Theme: %s\n" "$(sgr $PURPLE)${fish_theme}$(sgr)"
-    fish -c "fish_config theme choose '${fish_theme}'"
-
-    msg -p 'Installing fisher'
-    fish -c 'curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher' || return 1
-
-    msg -p 'Installing fish plugins'
-    fish -c 'fisher update'
+    fish -c "fish_config theme save '${fish_theme}'" || true
 
     msg.complete 'Fish configuration complete!'
 }
