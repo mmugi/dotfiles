@@ -24,15 +24,15 @@ uninstall: ## Uninstall dotfiles.
 
 # individual installer tasks
 
-.PHONY: deploy-configs initialize-package-manager install-packages configure-apps configure-git configure-starship configure-tpm
+.PHONY: deploy-configs initialize-package-manager install-packages configure-all-apps configure-git configure-starship configure-tpm configure-vim
 deploy-configs: ## Create symlinks and directories for dotfiles.
 	@$(INSTALLER) --deploy-configs
 initialize-package-manager: ## Install and configure the package manager.
 	@DOTFILES_INIT=true $(INSTALLER) --initialize-package-manager
 install-packages: ## Install packages.
 	@DOTFILES_INIT=true $(INSTALLER) --install-packages
-configure-apps: ## Configure all applications.
-	@DOTFILES_INIT=true $(INSTALLER) --configure-apps-all
+configure-all-apps: ## Configure all applications.
+	@DOTFILES_INIT=true $(INSTALLER) --configure-all-apps
 configure-fish: ## Configure Fish Shell.
 	@DOTFILES_INIT=true $(INSTALLER) --configure-fish
 configure-git: ## Configure Git.
