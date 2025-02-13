@@ -232,6 +232,101 @@ nextstep.package_installation_failed() {
 
 platform_not_support() { abort "This platform is not supported: $PLATFORM"; }
 
+exists_check() {
+    local msg_abort='exists_check error;('
+    local opt_exists=false
+    local opt_selector
+    local opt_quiet=false
+    local positional_args=()
+    local target
+
+    exists_check_usage() {
+        log.error "usage: [-c|-f|-l] [-e] [-q] target"
+        abort "$msg_abort"
+    }
+
+    while (( $# > 0 )); do
+        case "$1" in
+            --) shift; positional_args+=("$@"); set -- ;;
+            -*)
+                options="$1"
+                for (( i=1; i<${#options}; i++ )); do
+                    case "${options:$i:1}" in
+                        c)
+                            [[ -n $opt_selector ]] && exists_check_usage
+                            opt_selector=c
+                            ;;
+                        e)  opt_exists=true ;;
+                        f)
+                            [[ -n $opt_selector ]] && exists_check_usage
+                            opt_selector=f
+                            ;;
+                        l)
+                            [[ -n $opt_selector ]] && exists_check_usage
+                            opt_selector=l
+                            ;;
+                        q)  opt_quiet=true ;;
+                        *)
+                            log.error "invalid option: $options"
+                            abort "$msg_abort"
+                            ;;
+                    esac
+                done
+                shift
+                ;;
+            *)
+                positional_args+=("$1")
+                shift
+                ;;
+        esac
+    done
+    set -- "${positional_args[@]}"
+
+    [[ -z $opt_selector ]] && exists_check_usage
+    [[ -z ${1:-} ]] && exists_check_usage
+
+    target="$1"
+
+    if [[ $opt_selector = c ]]; then
+        "$opt_quiet" || printf "Checking command: %s ... " "$(sgr bold "$PURPLE")${target}$(sgr)"
+        if type "$target" >/dev/null 2>&1; then
+            "$opt_quiet" || result.exist
+            return 0
+        else
+            "$opt_quiet" || result.notfound
+            return 1
+        fi
+    elif [[ $opt_selector = f ]]; then
+        "$opt_quiet" || printf "Checking file: %s ... " "$(sgr bold "$PURPLE")${target}$(sgr)"
+        if "$opt_exists"; then
+            if [[ -f $target ]]; then
+                "$opt_quiet" || result.exist
+                return 0
+            else
+                "$opt_quiet" || result.notfound
+                return 1
+            fi
+        else
+            if [[ -e $target ]]; then
+                "$opt_quiet" || result.exist
+                return 0
+            else
+                "$opt_quiet" || result.notfound
+                return 1
+            fi
+        fi
+    elif [[ $opt_selector = l ]]; then
+        "$opt_quiet" || printf "Checking symlink: %s ... " "$(sgr bold "$PURPLE")${target}$(sgr)"
+        if [[ -L $target ]]; then
+            "$opt_quiet" || result.exist
+            return 0
+        else
+            "$opt_quiet" || result.notfound
+            return 1
+        fi
+    fi
+}
+
 cmd_exists_check() {
     local cmd
     local option_q=false
