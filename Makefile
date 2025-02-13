@@ -59,7 +59,7 @@ brew-dump: ## Write all installed packages into a Brewfile in dotfiles.
 brew-diff: ## Show differences between installed brew package and those in the dotfiles Brewfile.
 	@brew bundle dump --global --force
 	@if type git >/dev/null 2>&1; then \
-             git diff "${HOME}/.Brewfile" "$(BREWFILE)"; \
+             git diff "$(BREWFILE)" "${HOME}/.Brewfile"; \
          else \
-             diff -u "${HOME}/.Brewfile" "$(BREWFILE)"; \
+             diff -u "$(BREWFILE)" "${HOME}/.Brewfile"; \
          fi || true
