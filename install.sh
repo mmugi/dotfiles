@@ -971,6 +971,7 @@ configure_apps() {
     echo '  * Git'
     echo '  * Starship'
     echo '  * Tmux Plugin Manager'
+    echo '  * Vim'
     newline
 
     if [[ $PLATFORM = mac ]]; then
@@ -978,6 +979,7 @@ configure_apps() {
         configure_git
         configure_starship
         configure_tpm
+        configure_vim
     else
         platform_not_support
     fi
@@ -1199,6 +1201,48 @@ configure_tpm() {
     msg.complete 'Tpm configuration complete!'
 }
 
+configure_vim() {
+    [[ -z ${DOTFILES_INIT:-} ]] && return
+
+    local cmd_result
+    local msg_failed='vim-jetpack installation failed;('
+    local requirements_met=true
+
+    msg 'Start vim configuration.'
+
+    msg -p 'Checking requirements'
+
+    if ! exists_check -c 'vim'; then
+        CONFIGURATION_FAILED=true
+        msg.warn 'Vim is not installed:P'
+        return
+    fi
+
+    exists_check -c 'curl' || requirements_met=false
+
+    if ! "$requirements_met"; then
+        CONFIGURATION_FAILED=true
+        msg.warn 'Requirements are not met:('
+        return
+    fi
+
+    msg -p 'Installing vim-jetpack'
+
+    if [[ $PLATFORM = mac || $PLATFORM = linux ]]; then
+        if ! cmd_result=$(curl -fsSLo ~/.vim/pack/jetpack/opt/vim-jetpack/plugin/jetpack.vim --create-dirs https://raw.githubusercontent.com/tani/vim-jetpack/master/plugin/jetpack.vim 2>&1)
+        then
+            CONFIGURATION_FAILED=true
+            log.error "$cmd_result"
+            msg.error "$msg_failed"
+            return
+        fi
+    else
+        platform_not_support
+    fi
+
+    msg.complete 'Vim configuration complete!'
+}
+
 dotfiles_installation_complete() {
     draw.line
     newline
@@ -1207,23 +1251,9 @@ dotfiles_installation_complete() {
         fastfetch
         newline
     fi
-    if "$RELOAD_SHELL"; then
-        msg -p 'Reloading current shell'
-        newline
-        exec -l "${SHELL:?}"
-    fi
 }
 
-dotfiles_configuration_failed() {
-    draw.line
-    newline
-    printf "%s  🌟 DOTFILES INSTALLATION COMPLETE 🌟%s\n\n" "$(sgr bold "$YELLOW")" "$(sgr)"
-    msg.warn 'Some configuration steps have failed. Please check them as required.'
-    newline
-    if exists_check -cq 'fastfetch'; then
-        fastfetch
-        newline
-    fi
+reload_shell() {
     if "$RELOAD_SHELL"; then
         msg -p 'Reloading current shell'
         newline
@@ -1242,6 +1272,7 @@ opt_configure_fish=false
 opt_configure_git=false
 opt_configure_starship=false
 opt_configure_tpm=false
+opt_configure_vim=false
 
 if [[ $# -eq 0 ]]; then
     opt_all=true
@@ -1257,6 +1288,7 @@ else
             --configure-git) opt_configure_git=true ;;
             --configure-starship) opt_configure_starship=true ;;
             --configure-tpm) opt_configure_tpm=true ;;
+            --configure-vim) opt_configure_vim=true ;;
             *) abort 'invalid options;(' ;;
         esac
         shift
@@ -1276,11 +1308,8 @@ if "$opt_all"; then
     install_packages
     configure_apps
 
-    if "$CONFIGURATION_FAILED"; then
-        dotfiles_configuration_failed
-    else
-        dotfiles_installation_complete
-    fi
+    dotfiles_installation_complete
+    reload_shell
 else
     platform_detection
     "$opt_deploy_configs" && deploy_configs
@@ -1295,6 +1324,12 @@ else
         "$opt_configure_git" && configure_git
         "$opt_configure_starship" && configure_starship
         "$opt_configure_tpm" && configure_tpm
+        "$opt_configure_vim" && configure_vim
     fi
-    exit 0
+
+    if "$CONFIGURATION_FAILED"; then
+        exit 1
+    else
+        exit 0
+    fi
 fi

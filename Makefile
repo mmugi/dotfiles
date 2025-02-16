@@ -41,6 +41,8 @@ configure-starship: ## Configure Starship.
 	@DOTFILES_INIT=true $(INSTALLER) --configure-starship
 configure-tpm: ## Configure Tmux Plugin Manager.
 	@DOTFILES_INIT=true $(INSTALLER) --configure-tpm
+configure-vim: ## Configure Vim.
+	@DOTFILES_INIT=true $(INSTALLER) --configure-vim
 
 # individual uninstaller tasks
 
