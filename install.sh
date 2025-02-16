@@ -981,38 +981,65 @@ configure_apps() {
     else
         platform_not_support
     fi
-    msg.complete 'All application configuration complete;)'
+
+    if "$CONFIGURATION_FAILED"; then
+        msg.warn 'Some configuration steps have failed. Please check them as required.'
+    else
+        msg.complete 'All application configuration complete;)'
+    fi
 }
 
 configure_fish() {
     [[ -z ${DOTFILES_INIT:-} ]] && return
 
-    configuration_skip() { msg.warn 'Skip fish configuration:P'; }
-    configuration_failed() {
+    local fish_theme
+    local msg_failed='Fish configuration failed;('
+
+    msg 'Start fish configuration.'
+
+    msg -p 'Checking requirements'
+
+    if ! exists_check -c 'fish'; then
         CONFIGURATION_FAILED=true
-        msg.error 'Fish configuration failed;('
-    }
+        msg.warn 'Fish is not installed:P'
+        return
+    fi
 
-    local fish_theme='Dracula'
-
-
-    msg -p 'Checking fish-shell requirements'
-    if ! exists_check -c 'fish' ||
-       ! exists_check -c 'curl' ||
+    if ! exists_check -c 'curl' ||
        ! exists_check -c 'fzf'  ||
        ! exists_check -l "${HOME}/.config/fish/fish_plugins"
     then
-        log.warn 'requirements are not met'
-        configuration_skip && return
+        CONFIGURATION_FAILED=true
+        msg.warn 'Requirements are not met:('
+        return
     fi
 
     msg -p 'Installing plugin manager and plugins'
-    fish -c 'curl -fsSL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher update' || return 1
+
+    local fisher
+
+    if ! fisher=$(curl -fsSL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fishh 2>&1)
+    then
+        CONFIGURATION_FAILED=true
+        log.error "$fisher"
+        msg.error "$msg_failed"
+        return
+    fi
+    if ! fish -c "${fisher}; fisher update"; then
+        CONFIGURATION_FAILED=true
+        log.error 'fisher update error'
+        msg.error "$msg_failed"
+        return
+    fi
 
     msg -p 'Configuring fish theme'
+
     if fish -c "fisher list | grep 'catppuccin/fish' >/dev/null"; then
         fish_theme='Catppuccin Mocha'
+    else
+        fish_theme='Dracula' # default
     fi
+
     printf "Theme: %s\n" "$(sgr $PURPLE)${fish_theme}$(sgr)"
     fish -c "fish_config theme save '${fish_theme}'" || true
 
@@ -1026,23 +1053,24 @@ configure_git() {
 
     [[ -z ${DOTFILES_INIT:-} ]] && return
 
-    configuration_skip() { msg.warn 'Skip git configuration:P'; }
-    configuration_failed() {
-        CONFIGURATION_FAILED=true
-        msg.error 'Git configuration failed;('
-    }
-
-    local gitconfigs
+    local cmd_result
     local config
+    local gitconfigs
     local gitconfig_username
     local gitconfig_email
+    local msg_failed='Git configuration failed;('
 
-    msg -p 'Configuring global git user settings'
+    msg 'Start git configuration.'
+
+    msg -p 'Checking requirements'
 
     if ! exists_check -c 'git'; then
-        configuration_skip
+        CONFIGURATION_FAILED=true
+        msg.warn 'Git is not installed:P'
         return
     fi
+
+    msg -p 'Configuring global git user settings'
 
     echo -n 'Checking user.name...'
     if gitconfig_username=$(git config --global user.name); then
@@ -1072,11 +1100,10 @@ configure_git() {
 
     msg -p 'Configuring git to include config files managed by dotfiles'
 
-    gitconfigs=$(find "${HOME}/.config/git" -type l | grep -E 'dotfiles$')
-
-    if [[ -z $gitconfigs ]]; then
+    if ! gitconfigs=$(find "${HOME}/.config/git" -type l | grep -E 'dotfiles$'); then
+        CONFIGURATION_FAILED=true
         log.error 'git config links not found'
-        configuration_failed
+        msg.error "$msg_failed"
         return
     fi
 
@@ -1094,19 +1121,17 @@ configure_git() {
 configure_starship() {
     [[ -z ${DOTFILES_INIT:-} ]] && return
 
-    configuration_skip() { msg.warn 'Skip starship configuration:P'; }
-    configuration_failed() {
-        CONFIGURATION_FAILED=true
-        msg.error 'Starship configuration failed;('
-    }
-
-    local config_path
     local cmd
+    local config_path
+    local msg_failed='Starship configuration failed;('
 
-    msg -p 'Checking starship requirements'
+    msg 'Start starship configuration.'
+
+    msg -p 'Checking requirements'
 
     if ! exists_check -c 'starship'; then
-        configuration_skip
+        CONFIGURATION_FAILED=true
+        msg.warn 'Starship is not installed:P'
         return
     fi
 
@@ -1123,33 +1148,38 @@ configure_starship() {
             ;;
         *)
             log.error "not supported shell: $SHELL"
-            configuration_failed
+            msg.error "$msg_failed"
             return
             ;;
     esac
 
     appendline "$config_path" "$cmd" || return 1
+
     msg.complete 'Starship configuration complete!'
 }
 
 configure_tpm() {
     [[ -z ${DOTFILES_INIT:-} ]] && return
 
-    configuration_skip() { msg.warn 'Skip tpm configuration:P'; }
-    configuration_failed() {
-        CONFIGURATION_FAILED=true
-        msg.error 'Tpm configuration failed;('
-    }
+    local cmd_result
+    local msg_failed='Tpm configuration failed;('
+    local requirements_met=true
 
-    msg -p 'Checking tpm requirements'
+    msg 'Start tpm configuration.'
+
+    msg -p 'Checking requirements'
 
     if ! exists_check -c 'tmux'; then
-        configuration_skip
+        CONFIGURATION_FAILED=true
+        msg.warn 'Tmux is not installed:P'
         return
     fi
-    if ! exists_check -c 'git'; then
-        log.error 'git command required'
-        configuration_failed
+
+    exists_check -c 'git' || requirements_met=false
+
+    if ! "$requirements_met"; then
+        CONFIGURATION_FAILED=true
+        msg.warn 'Requirements are not met:('
         return
     fi
 
@@ -1157,7 +1187,13 @@ configure_tpm() {
         msg 'Tpm already exists!'
     else
         msg -p 'Installing tpm'
-        git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm || return 1
+        if ! cmd_result=$(git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm 2>&1)
+        then
+            CONFIGURATION_FAILED=true
+            log.error "$cmd_result"
+            msg.error "$msg_failed"
+            return
+        fi
     fi
 
     msg.complete 'Tpm configuration complete!'
