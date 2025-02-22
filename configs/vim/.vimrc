@@ -32,6 +32,7 @@ if filereadable(s:jetpackfile)
     call jetpack#begin()
         Jetpack 'tani/vim-jetpack', { 'opt': 1 } " bootstrap
         Jetpack 'wadackel/vim-dogrun', { 'as': 'dogrun' }
+        Jetpack 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
     call jetpack#end()
 endif
 
