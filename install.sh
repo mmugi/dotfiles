@@ -978,7 +978,7 @@ configure_apps() {
         configure_fish
         configure_git
         configure_starship
-        configure_tpm
+        configure_tmux
         configure_vim
     else
         platform_not_support
@@ -1160,14 +1160,14 @@ configure_starship() {
     msg.complete 'Starship configuration complete!'
 }
 
-configure_tpm() {
+configure_tmux() {
     [[ -z ${DOTFILES_INIT:-} ]] && return
 
     local cmd_result
-    local msg_failed='Tpm configuration failed;('
+    local msg_failed='Tmux configuration failed;('
     local requirements_met=true
 
-    msg 'Start tpm configuration.'
+    msg 'Start tmux configuration.'
 
     msg -p 'Checking requirements'
 
@@ -1185,10 +1185,11 @@ configure_tpm() {
         return
     fi
 
+    msg -p 'Installing tpm'
+
     if [[ -d ~/.tmux/plugins/tpm ]]; then
         msg 'Tpm already exists!'
     else
-        msg -p 'Installing tpm'
         if ! cmd_result=$(git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm 2>&1)
         then
             CONFIGURATION_FAILED=true
@@ -1198,7 +1199,7 @@ configure_tpm() {
         fi
     fi
 
-    msg.complete 'Tpm configuration complete!'
+    msg.complete 'Tmux configuration complete!'
 }
 
 configure_vim() {
@@ -1271,7 +1272,7 @@ opt_configure_all_apps=false
 opt_configure_fish=false
 opt_configure_git=false
 opt_configure_starship=false
-opt_configure_tpm=false
+opt_configure_tmux=false
 opt_configure_vim=false
 
 if [[ $# -eq 0 ]]; then
@@ -1287,7 +1288,7 @@ else
             --configure-fish) opt_configure_fish=true ;;
             --configure-git) opt_configure_git=true ;;
             --configure-starship) opt_configure_starship=true ;;
-            --configure-tpm) opt_configure_tpm=true ;;
+            --configure-tmux) opt_configure_tmux=true ;;
             --configure-vim) opt_configure_vim=true ;;
             *) abort 'invalid options;(' ;;
         esac
@@ -1323,7 +1324,7 @@ else
         "$opt_configure_fish" && configure_fish
         "$opt_configure_git" && configure_git
         "$opt_configure_starship" && configure_starship
-        "$opt_configure_tpm" && configure_tpm
+        "$opt_configure_tmux" && configure_tmux
         "$opt_configure_vim" && configure_vim
     fi
 

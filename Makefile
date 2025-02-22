@@ -24,7 +24,7 @@ uninstall: ## Uninstall dotfiles.
 
 # individual installer tasks
 
-.PHONY: deploy-configs initialize-package-manager install-packages configure-all-apps configure-git configure-starship configure-tpm configure-vim
+.PHONY: deploy-configs initialize-package-manager install-packages configure-all-apps configure-git configure-starship configure-tmux configure-vim
 deploy-configs: ## Create symlinks and directories for dotfiles.
 	@$(INSTALLER) --deploy-configs
 initialize-package-manager: ## Install and configure the package manager.
@@ -39,8 +39,8 @@ configure-git: ## Configure Git.
 	@DOTFILES_INIT=true $(INSTALLER) --configure-git
 configure-starship: ## Configure Starship.
 	@DOTFILES_INIT=true $(INSTALLER) --configure-starship
-configure-tpm: ## Configure Tmux Plugin Manager.
-	@DOTFILES_INIT=true $(INSTALLER) --configure-tpm
+configure-tmux: ## Configure Tmux.
+	@DOTFILES_INIT=true $(INSTALLER) --configure-tmux
 configure-vim: ## Configure Vim.
 	@DOTFILES_INIT=true $(INSTALLER) --configure-vim
 
