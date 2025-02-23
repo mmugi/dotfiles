@@ -1020,7 +1020,7 @@ configure_fish() {
 
     local fisher
 
-    if ! fisher=$(curl -fsSL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fishh 2>&1)
+    if ! fisher=$(curl -fsSL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish 2>&1)
     then
         CONFIGURATION_FAILED=true
         log.error "$fisher"
