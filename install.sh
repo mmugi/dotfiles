@@ -502,7 +502,7 @@ download_dotfiles() {
         return
     fi
 
-    msg -p 'Checking DOTFILES_DOWNLOADER'
+    msg -p 'Checking downloader'
     if [[ -z ${DOTFILES_DOWNLOADER:-} ]]; then
         if exists_check -c 'git'; then
             DOTFILES_DOWNLOADER='git'
@@ -1190,8 +1190,10 @@ configure_tmux() {
     if [[ -d ~/.tmux/plugins/tpm ]]; then
         msg 'Tpm already exists!'
     else
-        if ! cmd_result=$(git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm 2>&1)
+        if cmd_result=$(git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm 2>&1)
         then
+            msg 'tpm installation complete!'
+        else
             CONFIGURATION_FAILED=true
             log.error "$cmd_result"
             msg.error "$msg_failed"
@@ -1230,8 +1232,10 @@ configure_vim() {
     msg -p 'Installing vim-jetpack'
 
     if [[ $PLATFORM = mac || $PLATFORM = linux ]]; then
-        if ! cmd_result=$(curl -fsSLo ~/.vim/pack/jetpack/opt/vim-jetpack/plugin/jetpack.vim --create-dirs https://raw.githubusercontent.com/tani/vim-jetpack/master/plugin/jetpack.vim 2>&1)
+        if cmd_result=$(curl -fsSLo ~/.vim/pack/jetpack/opt/vim-jetpack/plugin/jetpack.vim --create-dirs https://raw.githubusercontent.com/tani/vim-jetpack/master/plugin/jetpack.vim 2>&1)
         then
+            msg 'Vim-jetpack installation complete!'
+        else
             CONFIGURATION_FAILED=true
             log.error "$cmd_result"
             msg.error "$msg_failed"
