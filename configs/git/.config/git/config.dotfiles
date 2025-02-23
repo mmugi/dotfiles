@@ -1,0 +1,12 @@
+[core]
+	autocrlf = input
+[fetch]
+	prune = true
+[merge]
+	ff = false
+[pull]
+	ff = only
+[push]
+	default = simple
+[user]
+	useConfigOnly = true

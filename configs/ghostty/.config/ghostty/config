@@ -1,0 +1,33 @@
+font-size = 10.5
+
+#theme = aura
+#theme = "Apple System Colors"
+#theme = carbonfox
+#theme = Cyberpunk
+#theme = CyberpunkScarletProtocol
+theme = rebecca
+
+cursor-style = block
+cursor-style-blink = true
+
+background-opacity = 0.9
+background-blur-radius = 15
+
+unfocused-split-opacity = 0.75
+
+keybind = option+shift+space=toggle_quick_terminal
+
+window-padding-x = 5
+window-padding-y = 5
+window-padding-balance = true
+
+copy-on-select = true
+
+quit-after-last-window-closed = true
+
+quick-terminal-position = bottom
+quick-terminal-autohide = true
+
+shell-integration-features = no-cursor
+
+macos-titlebar-style = tabs
