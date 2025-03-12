@@ -235,7 +235,7 @@ platform_not_support() { abort "This platform is not supported: $PLATFORM"; }
 exists_check() {
     local msg_abort='exists_check error;('
     local opt_exists=false
-    local opt_selector
+    local opt_selector=
     local opt_quiet=false
     local positional_args=()
     local target
