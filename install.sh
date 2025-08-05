@@ -805,6 +805,10 @@ deploy_configs() {
   msg.complete 'deployed configuration files:)'
 }
 
+install_complete() {
+  printf "🌟 %s\n" "${BOLD}${PINK}DOTFILES INSTALLATION COMPLETE!${RESET}"
+  draw.line
+}
 
 greet
 set_platform
@@ -812,3 +816,4 @@ set_downloader
 download_dotfiles
 configure_dotfiles
 deploy_configs
+install_complete
