@@ -1,7 +1,7 @@
 " packages
 "   package manager: vim-jetpack (https://github.com/tani/vim-jetpack)
 "   インストール後に JetpackSync を実行
-let s:jetpackfile = $HOME .. '/.vim/pack/jetpack/opt/vim-jetpack/plugin/jetpack.vim'
+let s:jetpackfile = expand('$HOME') . '/.vim/pack/jetpack/opt/vim-jetpack/plugin/jetpack.vim'
 if filereadable(s:jetpackfile)
   packadd vim-jetpack
   call jetpack#begin()
