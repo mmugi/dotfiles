@@ -71,7 +71,7 @@ msg() {
   local progress_dots
   local prompt_char='>'
   local prompt_color="${FG_ACCENT}"
-  local result
+  local result=''
   local with_progress_dots=false
 
   while (( $# > 0 )); do
