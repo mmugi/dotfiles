@@ -525,7 +525,7 @@ download_dotfiles() {
   if [[ -e $DOTFILES_PATH ]]; then
     msg 'dotfiles already exists.'
     msg.complete "$msg_download_complete"
-    return
+    return 0
   fi
 
   msg -n -p 'detecting dotfiles downloader'
@@ -617,7 +617,7 @@ download_dotfiles() {
 }
 
 configure_dotfiles() {
-  [[ -d ${DOTFILES_PATH}/.git ]] || return
+  [[ -d ${DOTFILES_PATH}/.git ]] || return 0
 
   local cmd_result
   local src_hooks
@@ -744,7 +744,7 @@ deploy_configs() {
     abort "$pkg_dirs"
   elif [[ -z $pkg_dirs ]]; then
     msg.warn "package directories not found:/"
-    return
+    return 0
   fi
 
   while read -r pkg_dir; do
