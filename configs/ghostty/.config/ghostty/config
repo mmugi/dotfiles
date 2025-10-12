@@ -1,4 +1,5 @@
 font-size = 10.5
+font-feature = -dlig
 
 #theme = aura
 #theme = "Apple System Colors"
