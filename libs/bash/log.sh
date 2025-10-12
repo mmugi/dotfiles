@@ -2,12 +2,9 @@
 
 set -ueo pipefail
 
-# shellcheck disable=SC2034
-{
-  LIB_VERSION='1.0.0'
-  LIB_DEPS='esc'
-  [[ ${1:-} = __META_PROBE__ ]] && return 0
-}
+LIB_VERSION='1.0.0'
+LIB_DEPS='esc'
+[[ ${1:-} = __META_PROBE__ ]] && return 0
 
 : "${LOG_TS:=false}"              # true: タイムスタンプを出力
 : "${LOG_FULLPATH:=false}"        # true: フルパス / false: ファイル名のみ

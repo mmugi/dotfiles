@@ -2,12 +2,9 @@
 
 set -Eueo pipefail
 
-# shellcheck disable=SC2034
-{
-  LIB_VERSION='1.0.0'
-  LIB_DEPS='esc msg log'
-  [[ ${1:-} = __META_PROBE__ ]] && return 0
-}
+LIB_VERSION='1.0.0'
+LIB_DEPS='esc msg log'
+[[ ${1:-} = __META_PROBE__ ]] && return 0
 
 util.log() {
   local event color="$ESC_FG_BLUE"

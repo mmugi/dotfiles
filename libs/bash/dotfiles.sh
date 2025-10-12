@@ -2,12 +2,9 @@
 
 set -Eueo pipefail
 
-# shellcheck disable=SC2034
-{
-  LIB_VERSION='1.0.0'
-  LIB_DEPS='esc msg'
-  [[ ${1:-} = __META_PROBE__ ]] && return 0
-}
+LIB_VERSION='1.0.0'
+LIB_DEPS='esc msg'
+[[ ${1:-} = __META_PROBE__ ]] && return 0
 
 : "${DOTFILES_MSG_DELAY:=0.2}"
 : "${DOTFILES_C_LINE:=$ESC_TAG_MAIN}"

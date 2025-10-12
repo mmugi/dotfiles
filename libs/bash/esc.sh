@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2034
 
-# meta
 LIB_VERSION='1.0.0'
 LIB_DEPS=''
 [[ ${1:-} = __META_PROBE__ ]] && return 0
