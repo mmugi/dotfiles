@@ -57,3 +57,6 @@ highlight CursorLineNr ctermbg=none cterm=underline
 highlight StatusLine ctermbg=63 ctermfg=white cterm=none
 highlight CursorLine ctermbg=none cterm=underline
 highlight Normal ctermbg=none
+highlight TabLine ctermbg=white ctermfg=black cterm=none
+highlight TabLineSel ctermbg=63 ctermfg=white cterm=bold
+highlight TabLineFill ctermbg=none cterm=none
