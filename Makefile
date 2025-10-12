@@ -2,10 +2,10 @@ MAKEFILE      := $(firstword $(MAKEFILE_LIST))
 DOTFILES_ROOT := $(realpath $(dir $(MAKEFILE)))
 SHELL         = /usr/bin/env bash
 
-INSTALLER     := $(DOTFILES_ROOT)/install.sh
-UNINSTALLER   := $(DOTFILES_ROOT)/uninstall.sh
-
 SCRIPT_DIR    := $(DOTFILES_ROOT)/scripts
+INSTALLER     := $(SCRIPT_DIR)/install.sh
+UNINSTALLER   := $(SCRIPT_DIR)/uninstall.sh
+
 BREWFILE      := $(DOTFILES_ROOT)/misc/brew/Brewfile
 
 
