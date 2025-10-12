@@ -18,7 +18,13 @@ format = '⌛[$duration]($style) '
 style = 'bold 63'
 
 [gcloud]
-disabled = true
+format = '[$symbol$active]($style) '
+symbol = '☁️'
+
+[gcloud.region_aliases]
+asia-northeast1 = 'tokyo'
+asia-northeast2 = 'osaka'
+
 
 [git_branch]
 symbol = '🌱'
