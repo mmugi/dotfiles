@@ -29,6 +29,8 @@ set tabstop=4
 let mapleader = "\<space>"
 nnoremap <silent> <leader>h :set hlsearch!<cr>
 nnoremap <silent> <leader>i :<cr>
+nnoremap <silent> <leader>j :bprev<cr>
+nnoremap <silent> <leader>k :bnext<cr>
 nnoremap <silent> <leader>l :set number!<cr>:set cursorcolumn!<cr>
 nnoremap <silent> <leader>m
   \ :exec &mouse!="" ? "set mouse=" : "set mouse=a"<cr>
