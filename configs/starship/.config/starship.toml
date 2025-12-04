@@ -7,24 +7,24 @@ $username$character"""
 success_symbol = '[>]()'
 error_symbol = '[>](red)'
 
+[cmd_duration]
+format = '⌛[$duration]($style) '
+style = 'bold 63'
+
 [directory]
 truncation_length = 8
 truncation_symbol = '…/'
 truncate_to_repo = false
 style = ''
 
-[cmd_duration]
-format = '⌛[$duration]($style) '
-style = 'bold 63'
-
 [gcloud]
+disabled = true
 format = '[$symbol$active]($style) '
 symbol = '☁️'
 
 [gcloud.region_aliases]
 asia-northeast1 = 'tokyo'
 asia-northeast2 = 'osaka'
-
 
 [git_branch]
 symbol = '🌱'
@@ -58,6 +58,13 @@ format = '[$symbol$status(:$common_meaning$signal_name$maybe_int)]($style) '
 symbol = '🔥'
 pipestatus = true
 map_symbol = true
+
+[time]
+disabled = false
+format = '[$time]($style) '
+style = 'green'
+time_format = '%H:%M'
+utc_time_offset = '+9'
 
 [username]
 format = '[$user]()'
