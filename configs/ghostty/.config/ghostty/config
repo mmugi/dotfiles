@@ -3,16 +3,25 @@ font-feature = -dlig
 
 #theme = aura
 #theme = "Apple System Colors"
-#theme = carbonfox
+#theme = Carbonfox
+#theme = Cyberdyne
 #theme = Cyberpunk
 #theme = CyberpunkScarletProtocol
-theme = rebecca
+#theme = "Electron Highlighter"
+#theme = "HaX0R BLUE"
+#theme = "Havn Skumring"
+#theme = Heeler
+#theme = Lavandula
+#theme = "Nocturnal Winter"
+theme = Rebecca
+#theme = "Shades Of Purple"
+#theme = Sugarplum
 
 cursor-style = block
 cursor-style-blink = true
 
 background-opacity = 0.9
-background-blur-radius = 15
+background-blur-radius = 5
 
 unfocused-split-opacity = 0.75
 
