@@ -53,7 +53,8 @@ msg() {
   # スクリプトのメッセージ出力に利用できます。
   # 引数にとった文字列をオプションに基づいて整形・色付けして出力します。
   # 引数に取る文字列は以下のタグを解釈します。
-  #   <hl>...</hl>: プロンプトと同様の色でハイライトする。
+  #   <hl>...</hl>: 囲まれた範囲の文字をプロンプトと同様の色でハイライトする
+  #   <b>...</b>: 囲まれた範囲の文字を強調する
   #
   # options:
   #   -2   インデントされた出力を行います。
@@ -237,6 +238,8 @@ msg() {
   elif [[ "$MSG_TTY_MODE" == 'true' ]]; then
     s="${s//<hl>/${hl_color}}"
     s="${s//<\/hl>/${base_color}}"
+    s="${s//<b>/${ESC_ATTR_BOLD}}"
+    s="${s//<\/b>/${ESC_ATTR_RESET_IE}}"
     msg="${bold:-}${base_color}${s}"
     prompt="${prompt_color}${prompt_char} "
     result="${result_color:-}${result_str:-}"
@@ -272,6 +275,8 @@ msg() {
     # stdout is not connected to a tty
     s="${s//<hl>/}"
     s="${s//<\/hl>/}"
+    s="${s//<b>/}"
+    s="${s//<\/b>/}"
     msg="$s"
     prompt=''
     result="${result_str:-}"
