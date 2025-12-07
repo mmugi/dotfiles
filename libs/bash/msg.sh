@@ -138,8 +138,9 @@ msg() {
         if [[ "$1" =~ ^--color= ]]; then
           base_color="${1#--color=}"
         elif [[ -z "$2" ]]; then
-          log.error "$1: expected a ansi color code"
-          return 1
+          # stdoutがttyに接続されていない場合、escライブラリの
+          # ESC_FG_COLORNAME みたいな変数がからになる場合がある。
+          shift
         elif [[ "$2" =~ ^-+ ]]; then
           log.error "$1: expected a ansi color code. perhaps try --color=\"$2\"?"
           return 1
