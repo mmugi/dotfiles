@@ -13,6 +13,7 @@
 [alias]
 	show-alias = config --get-regexp ^alias\\.
 	d = diff
+	ds = diff --staged
 	l = log --graph --oneline --decorate=full
 	ll = log --graph --date=iso --decorate=full --stat
 	s = status --short --branch
