@@ -38,17 +38,6 @@ esc::_colors_supported_stderr() {
 }
 
 esc::sgr() {
-  # colors
-  local -r black='30'
-  local -r red='31'
-  local -r green='32'
-  local -r yellow='33'
-  local -r blue='34'
-  local -r magenta='35'
-  local -r cyan='36'
-  local -r white='37'
-  local -r default='39'
-
   # attributes
   local -r reset_attr='0'
   local -r bold='1'
@@ -60,6 +49,18 @@ esc::sgr() {
   local -r reverse='7'
   local -r conceal='8'
   local -r strike='9'
+  local -r reset_intensity='22'
+
+  # colors
+  local -r black='30'
+  local -r red='31'
+  local -r green='32'
+  local -r yellow='33'
+  local -r blue='34'
+  local -r magenta='35'
+  local -r cyan='36'
+  local -r white='37'
+  local -r default='39'
 
   local -r reset_all="${reset_attr};${default}"
 
@@ -86,6 +87,7 @@ esc::sgr() {
 
       # attributes
       reset_attr)  code_attr_arr+=("$reset_attr") ;;
+      reset_ie)    code_attr_arr+=("$reset_intensity") ;;
       bold)        code_attr_arr+=("$bold") ;;
       faint)       code_attr_arr+=("$faint") ;;
       italic)      code_attr_arr+=("$italic") ;;
@@ -107,44 +109,35 @@ esc::sgr() {
 
 # shellcheck disable=SC2034
 if esc::_colors_supported; then
-  # color palette
-  ESC_FG_DEFAULT=$(esc::sgr 39)
-  ESC_FG_GRAY=$(esc::sgr 103)
-  ESC_FG_RED=$(esc::sgr  166)
-  ESC_FG_RED=$(esc::sgr  167)
-  ESC_FG_BLUE=$(esc::sgr 75)
-  ESC_FG_YELLOW=$(esc::sgr 220)
-  ESC_FG_CYAN=$(esc::sgr 195)
-  ESC_FG_PINK=$(esc::sgr 175)
-  ESC_FG_PURPLE=$(esc::sgr 105)
-  ESC_FG_LIME=$(esc::sgr 155)
-  ESC_FG_DARKGREEN=$(esc::sgr 36)
+  ESC_RESET="$(esc::sgr)"
 
   # attributes
-  ESC_ATTR_RESET=$(esc::sgr reset_attr)
-  ESC_ATTR_BOLD=$(esc::sgr bold)
-  ESC_ATTR_FAINT=$(esc::sgr faint)
-  ESC_ATTR_ITALIC=$(esc::sgr italic)
-  ESC_ATTR_UNDERLINE=$(esc::sgr underline)
-  ESC_ATTR_BLINK=$(esc::sgr blink)
-  ESC_ATTR_FAST_BLINK=$(esc::sgr fast_blink)
-  ESC_ATTR_REVERSE=$(esc::sgr reverse)
-  ESC_ATTR_CONCEAL=$(esc::sgr conceal)
-  ESC_ATTR_STRIKE=$(esc::sgr strike)
+  ESC_ATTR_RESET="$(esc::sgr reset_attr)"
+  ESC_ATTR_BOLD="$(esc::sgr bold)"
+  ESC_ATTR_FAINT="$(esc::sgr faint)"
+  ESC_ATTR_ITALIC="$(esc::sgr italic)"
+  ESC_ATTR_UNDERLINE="$(esc::sgr underline)"
+  ESC_ATTR_BLINK="$(esc::sgr blink)"
+  ESC_ATTR_FAST_BLINK="$(esc::sgr fast_blink)"
+  ESC_ATTR_REVERSE="$(esc::sgr reverse)"
+  ESC_ATTR_CONCEAL="$(esc::sgr conceal)"
+  ESC_ATTR_STRIKE="$(esc::sgr strike)"
+  ESC_ATTR_RESET_IE="$(esc::sgr reset_ie)"
 
-  ESC_RESET=$(esc::sgr)
-else
   # color palette
-  ESC_FG_DEFAULT=
-  ESC_FG_GRAY=
-  ESC_FG_RED=
-  ESC_FG_BLUE=
-  ESC_FG_YELLOW=
-  ESC_FG_CYAN=
-  ESC_FG_PINK=
-  ESC_FG_PURPLE=
-  ESC_FG_LIME=
-  ESC_FG_DARKGREEN=
+  ESC_FG_DEFAULT="$(esc::sgr 39)"
+  ESC_FG_GRAY="$(esc::sgr 103)"
+  ESC_FG_RED="$(esc::sgr  166)"
+  ESC_FG_RED="$(esc::sgr  167)"
+  ESC_FG_BLUE="$(esc::sgr 75)"
+  ESC_FG_YELLOW="$(esc::sgr 220)"
+  ESC_FG_CYAN="$(esc::sgr 195)"
+  ESC_FG_PINK="$(esc::sgr 175)"
+  ESC_FG_PURPLE="$(esc::sgr 105)"
+  ESC_FG_LIME="$(esc::sgr 155)"
+  ESC_FG_DARKGREEN="$(esc::sgr 36)"
+else
+  ESC_RESET=
 
   # attributes
   ESC_ATTR_RESET=
@@ -157,50 +150,52 @@ else
   ESC_ATTR_REVERSE=
   ESC_ATTR_CONCEAL=
   ESC_ATTR_STRIKE=
+  ESC_ATTR_RESET_IE=
 
-  ESC_RESET=
+  # color palette
+  ESC_FG_DEFAULT=
+  ESC_FG_GRAY=
+  ESC_FG_RED=
+  ESC_FG_BLUE=
+  ESC_FG_YELLOW=
+  ESC_FG_CYAN=
+  ESC_FG_PINK=
+  ESC_FG_PURPLE=
+  ESC_FG_LIME=
+  ESC_FG_DARKGREEN=
 fi
 
 # shellcheck disable=SC2034
 if esc::_colors_supported_stderr; then
-  # color palette
-  ESC_STDERR_FG_DEFAULT=$(esc::sgr 39)
-  ESC_STDERR_FG_GRAY=$(esc::sgr 103)
-  ESC_STDERR_FG_RED=$(esc::sgr  166)
-  ESC_STDERR_FG_RED=$(esc::sgr  167)
-  ESC_STDERR_FG_BLUE=$(esc::sgr 75)
-  ESC_STDERR_FG_YELLOW=$(esc::sgr 220)
-  ESC_STDERR_FG_CYAN=$(esc::sgr 195)
-  ESC_STDERR_FG_PINK=$(esc::sgr 175)
-  ESC_STDERR_FG_PURPLE=$(esc::sgr 105)
-  ESC_STDERR_FG_LIME=$(esc::sgr 155)
-  ESC_STDERR_FG_DARKGREEN=$(esc::sgr 36)
+  ESC_STDERR_RESET="$(esc::sgr)"
 
   # attributes
-  ESC_STDERR_ATTR_RESET=$(esc::sgr reset_attr)
-  ESC_STDERR_ATTR_BOLD=$(esc::sgr bold)
-  ESC_STDERR_ATTR_FAINT=$(esc::sgr faint)
-  ESC_STDERR_ATTR_ITALIC=$(esc::sgr italic)
-  ESC_STDERR_ATTR_UNDERLINE=$(esc::sgr underline)
-  ESC_STDERR_ATTR_BLINK=$(esc::sgr blink)
-  ESC_STDERR_ATTR_FAST_BLINK=$(esc::sgr fast_blink)
-  ESC_STDERR_ATTR_REVERSE=$(esc::sgr reverse)
-  ESC_STDERR_ATTR_CONCEAL=$(esc::sgr conceal)
-  ESC_STDERR_ATTR_STRIKE=$(esc::sgr strike)
+  ESC_STDERR_ATTR_RESET="$(esc::sgr reset_attr)"
+  ESC_STDERR_ATTR_BOLD="$(esc::sgr bold)"
+  ESC_STDERR_ATTR_FAINT="$(esc::sgr faint)"
+  ESC_STDERR_ATTR_ITALIC="$(esc::sgr italic)"
+  ESC_STDERR_ATTR_UNDERLINE="$(esc::sgr underline)"
+  ESC_STDERR_ATTR_BLINK="$(esc::sgr blink)"
+  ESC_STDERR_ATTR_FAST_BLINK="$(esc::sgr fast_blink)"
+  ESC_STDERR_ATTR_REVERSE="$(esc::sgr reverse)"
+  ESC_STDERR_ATTR_CONCEAL="$(esc::sgr conceal)"
+  ESC_STDERR_ATTR_STRIKE="$(esc::sgr strike)"
+  ESC_STDERR_ATTR_RESET_IE="$(esc::sgr reset_ie)"
 
-  ESC_STDERR_RESET=$(esc::sgr)
-else
   # color palette
-  ESC_STDERR_FG_DEFAULT=
-  ESC_STDERR_FG_GRAY=
-  ESC_STDERR_FG_RED=
-  ESC_STDERR_FG_BLUE=
-  ESC_STDERR_FG_YELLOW=
-  ESC_STDERR_FG_CYAN=
-  ESC_STDERR_FG_PINK=
-  ESC_STDERR_FG_PURPLE=
-  ESC_STDERR_FG_LIME=
-  ESC_STDERR_FG_DARKGREEN=
+  ESC_STDERR_FG_DEFAULT="$(esc::sgr 39)"
+  ESC_STDERR_FG_GRAY="$(esc::sgr 103)"
+  ESC_STDERR_FG_RED="$(esc::sgr  166)"
+  ESC_STDERR_FG_RED="$(esc::sgr  167)"
+  ESC_STDERR_FG_BLUE="$(esc::sgr 75)"
+  ESC_STDERR_FG_YELLOW="$(esc::sgr 220)"
+  ESC_STDERR_FG_CYAN="$(esc::sgr 195)"
+  ESC_STDERR_FG_PINK="$(esc::sgr 175)"
+  ESC_STDERR_FG_PURPLE="$(esc::sgr 105)"
+  ESC_STDERR_FG_LIME="$(esc::sgr 155)"
+  ESC_STDERR_FG_DARKGREEN="$(esc::sgr 36)"
+else
+  ESC_STDERR_RESET=
 
   # attributes
   ESC_STDERR_ATTR_RESET=
@@ -213,8 +208,19 @@ else
   ESC_STDERR_ATTR_REVERSE=
   ESC_STDERR_ATTR_CONCEAL=
   ESC_STDERR_ATTR_STRIKE=
+  ESC_STDERR_ATTR_RESET_IE=
 
-  ESC_STDERR_RESET=
+  # color palette
+  ESC_STDERR_FG_DEFAULT=
+  ESC_STDERR_FG_GRAY=
+  ESC_STDERR_FG_RED=
+  ESC_STDERR_FG_BLUE=
+  ESC_STDERR_FG_YELLOW=
+  ESC_STDERR_FG_CYAN=
+  ESC_STDERR_FG_PINK=
+  ESC_STDERR_FG_PURPLE=
+  ESC_STDERR_FG_LIME=
+  ESC_STDERR_FG_DARKGREEN=
 fi
 
 # shellcheck disable=SC2034
