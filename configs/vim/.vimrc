@@ -31,10 +31,14 @@ nnoremap <silent> <leader>h :set hlsearch!<cr>
 nnoremap <silent> <leader>i :<cr>
 nnoremap <silent> <leader>j :bprev<cr>
 nnoremap <silent> <leader>k :bnext<cr>
-nnoremap <silent> <leader>l :set number!<cr>:set cursorcolumn!<cr>
+nnoremap <silent> <leader>l :ls<cr>
 nnoremap <silent> <leader>m
   \ :exec &mouse!="" ? "set mouse=" : "set mouse=a"<cr>
   \ :echo 'mouse:'.(&mouse!='' ? 'enabled' : 'disabled')<cr>
+nnoremap <silent> <leader>n :set number!<cr>:set cursorcolumn!<cr>
+nnoremap <silent> <leader>t :tabnew<cr>
+nnoremap <silent> <leader><tab> :tabnext<cr>
+nnoremap <silent> <leader><s-tab> :tabprevious<cr>
 
 nnoremap <silent> <esc><esc> :nohlsearc<cr>
 " xXでyankしない
