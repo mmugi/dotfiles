@@ -12,13 +12,13 @@
 : "${LOG_TS:=false}"
 
 # ログのファイル名をフルパスで出力 (true/false)
-: "${LOG_FULLPATH:=true}"
+: "${LOG_FULLPATH:=false}"
 
 # stacktraceの出力設定 (true/false)
 # トレース情報のファイル名をフルパスで出力
 : "${LOG_TRACE_FULLPATH:=true}"
 # ログレベルごとのトレース情報を出力の有無
-: "${LOG_TRACE_ERROR:=true}"
+: "${LOG_TRACE_ERROR:=false}"
 : "${LOG_TRACE_WARN:=false}"
 : "${LOG_TRACE_INFO:=false}"
 : "${LOG_TRACE_DEBUG:=false}"
