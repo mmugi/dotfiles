@@ -5,7 +5,7 @@ $username$character"""
 
 [character]
 success_symbol = '[>]()'
-error_symbol = '[>](red)'
+error_symbol = '[!](167)'
 
 [cmd_duration]
 format = '⌛[$duration]($style) '
@@ -37,7 +37,7 @@ tag_symbol = '🔖'
 
 [git_state]
 format = '[\($state( $progress_current of $progress_total)\)]($style) '
-cherry_pick = '[🍒 PICKING](bold red)'
+cherry_pick = '[🍒 PICKING](bold 167)'
 
 [git_status]
 style = 'bold 105'
@@ -55,6 +55,7 @@ style = ''
 [status]
 disabled = false
 format = '[$symbol$status(:$common_meaning$signal_name$maybe_int)]($style) '
+style = 'bold 167'
 symbol = '🔥'
 pipestatus = true
 map_symbol = true
@@ -62,7 +63,7 @@ map_symbol = true
 [time]
 disabled = false
 format = '[$time]($style) '
-style = 'green'
+style = '43'
 time_format = '%H:%M'
 utc_time_offset = '+9'
 
