@@ -431,7 +431,9 @@ EOF
     # [TODO] STDOUTの出力
   else
     msg -r --ng="$result_ng" "$msg"
-    printf '%s\n' "$(cat "$_MSG_EXEC_TMPFILE_STDERR")" >&2
+    if [[ -s "$_MSG_EXEC_TMPFILE_STDERR" ]]; then
+      printf '%s\n' "$(cat "$_MSG_EXEC_TMPFILE_STDERR")" >&2
+    fi
   fi
 
   return "$rc"
