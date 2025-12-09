@@ -105,6 +105,9 @@ msg() {
   #        環境変数 MSG_PROMPT_CHAR で指定された文字列を利用します。
   #          $ msg --prompt-char='#' -- message
   #          # message
+  #
+  #   --no-prompt
+  #        プロンプトなしで出力します。
 
   local bold result_str result_color
 
@@ -139,7 +142,7 @@ msg() {
           base_color="${1#--color=}"
         elif [[ -z "$2" ]]; then
           # stdoutがttyに接続されていない場合、escライブラリの
-          # ESC_FG_COLORNAME みたいな変数がからになる場合がある。
+          # 色変数が空になる場合がある。
           shift
         elif [[ "$2" =~ ^-+ ]]; then
           log.error "$1: expected a ansi color code. perhaps try --color=\"$2\"?"
@@ -221,6 +224,7 @@ msg() {
           shift
         fi
         ;;
+      --no-prompt) prompt_char='' ;;
       -*) log.error "invalid option: $1"; return 1 ;;
       *) break ;;
     esac
