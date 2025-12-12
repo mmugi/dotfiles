@@ -9,12 +9,12 @@
 }
 
 util::log() {
-  local event color="$ESC_FG_BLUE"
+  local event color="$ESC_C_SUCCESS"
   while (( $# > 0 )); do
     case "$1" in
-      --ignore) event='IGNORE'; color="$ESC_FG_GRAY"; shift; break ;;
-      --link) event='LINK'; shift; break ;;
-      --mkdir) event='MKDIR'; shift; break ;;
+      --ignore) event='IGNORE'; color="$ESC_C_GRAYOUT"; shift; break ;;
+      --link)   event='LINK'; shift; break ;;
+      --mkdir)  event='MKDIR'; shift; break ;;
       *) abort "invalid option: $1" ;;
     esac
     shift

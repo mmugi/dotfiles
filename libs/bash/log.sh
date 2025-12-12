@@ -55,8 +55,8 @@ log::_log_stacktrace() {
     fmt_file="$(log::_log_fmt_file "$file")"
     printf '  #%d %s (%s)\n' \
       "$i" \
-      "${ESC_STDERR_ATTR_BOLD}${ESC_TAG_STDERR_MAIN}${func}${ESC_STDERR_RESET}" \
-      "${ESC_STDERR_FG_GRAY}${fmt_file}:${line}${ESC_STDERR_RESET}" >&2
+      "${ESC_STDERR_ATTR_BOLD}${ESC_C_STDERR_MAIN}${func}${ESC_STDERR_RESET}" \
+      "${ESC_STDERR_GRAY}${fmt_file}:${line}${ESC_STDERR_RESET}" >&2
     i=$((++i))
   done
 }
@@ -83,27 +83,27 @@ log::_log_emit() {
 }
 
 log.error() {
-  log::_log_emit 'ERROR' "$ESC_STDERR_FG_RED" "$*"
+  log::_log_emit 'ERROR' "$ESC_C_STDERR_CRITICAL" "$*"
   if [[ "$LOG_TRACE_ERROR" == 'true' ]]; then log::_log_stacktrace; fi
 }
 
 log.warn() {
-  log::_log_emit 'WARN' "$ESC_STDERR_FG_YELLOW" "$*"
+  log::_log_emit 'WARN' "$ESC_C_STDERR_WARNING" "$*"
   if [[ "$LOG_TRACE_WARN" == 'true' ]]; then log::_log_stacktrace; fi
 }
 
 log.info() {
-  log::_log_emit 'INFO' "$ESC_STDERR_FG_BLUE" "$*"
+  log::_log_emit 'INFO' "$ESC_C_STDERR_INFO" "$*"
   if [[ "$LOG_TRACE_INFO" == 'true' ]]; then log::_log_stacktrace; fi
 }
 
 log.debug() {
-  log::_log_emit 'DEBUG' "$ESC_STDERR_FG_GRAY" "$*"
+  log::_log_emit 'DEBUG' "$ESC_C_STDERR_DEBUG" "$*"
   if [[ "$LOG_TRACE_DEBUG" == 'true' ]]; then log::_log_stacktrace; fi
 }
 
 abort() {
-  log::_log_emit 'ABORT' "$ESC_STDERR_FG_RED" "$*"
+  log::_log_emit 'ABORT' "$ESC_C_STDERR_PANIC" "$*"
   log::_log_stacktrace
   if [[ "${LOG_ABORT_RETURN_ONLY:-false}" == 'true' ]]; then
     return 1

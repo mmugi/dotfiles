@@ -22,9 +22,9 @@ else
 fi
 
 : "${MSG_PROMPT_CHAR:=>}"
-: "${MSG_C_BASE:=$ESC_TAG_BASE}"
-: "${MSG_C_HIGHLIGHT1:=$ESC_TAG_MAIN}"
-: "${MSG_C_HIGHLIGHT2:=$ESC_TAG_ACCENT2}"
+: "${MSG_C_BASE:=$ESC_C_BASE}"
+: "${MSG_C_HIGHLIGHT1:=$ESC_C_MAIN}"
+: "${MSG_C_HIGHLIGHT2:=$ESC_C_ACCENT1}"
 
 _MSG_EXEC_TMPFILE_STDOUT="$(mktemp)"
 _MSG_EXEC_TMPFILE_STDERR="$(mktemp)"
@@ -178,7 +178,7 @@ msg() {
           result_str="$2"
           shift
         fi
-        result_color="${ESC_ATTR_BOLD}${ESC_FG_BLUE}"
+        result_color="${ESC_ATTR_BOLD}${ESC_C_SUCCESS}"
         ;;
       --ng | --ng=*)
         if [[ "$1" =~ ^--ng= ]]; then
@@ -193,7 +193,7 @@ msg() {
           result_str="$2"
           shift
         fi
-        result_color="${ESC_ATTR_BOLD}${ESC_FG_RED}"
+        result_color="${ESC_ATTR_BOLD}${ESC_C_FAILURE}"
         ;;
       --result | --result=*)
         if [[ "$1" =~ ^--result= ]]; then
@@ -299,12 +299,12 @@ msg() {
 }
 
 msg::complete() {
-  msg -b --color="$ESC_FG_PINK" --prompt-char='✨️' "$*"
+  msg -b --color="$ESC_C_COMPLETE" --prompt-char='✨️' "$*"
   printf '\n'
 }
 
 msg::warn() {
-  msg -b --color="$ESC_FG_YELLOW" --prompt-char='⚡' "$*"
+  msg -b --color="$ESC_C_WARNING" --prompt-char='⚡' "$*"
   printf '\n'
 }
 
