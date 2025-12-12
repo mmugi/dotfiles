@@ -1,15 +1,25 @@
-add_newline = true
+# starship configs
+
 format = """
 $all$shlvl$time$cmd_duration$status$line_break\
 $username$character"""
+add_newline = true
+palette = 'mypalette'
+
+[palettes.mypalette]
+red = '167'
+green = '43'
+blue = '63'
+pink = '175'
+purple = '105'
 
 [character]
 success_symbol = '[>]()'
-error_symbol = '[!](167)'
+error_symbol = '[!](bold red)'
 
 [cmd_duration]
 format = '⌛[$duration]($style) '
-style = 'bold 63'
+style = 'bold blue'
 
 [directory]
 truncation_length = 8
@@ -29,7 +39,7 @@ asia-northeast2 = 'osaka'
 [git_branch]
 symbol = '🌱'
 format = '[$symbol$branch]($style) '
-style = 'bold 63'
+style = 'bold blue'
 
 [git_commit]
 commit_hash_length = 4
@@ -37,10 +47,10 @@ tag_symbol = '🔖'
 
 [git_state]
 format = '[\($state( $progress_current of $progress_total)\)]($style) '
-cherry_pick = '[🍒 PICKING](bold 167)'
+cherry_pick = '[🍒 PICKING](bold pink)'
 
 [git_status]
-style = 'bold 105'
+style = 'bold purple'
 
 [hostname]
 format = '[$ssh_symbol$hostname]($style) '
@@ -55,7 +65,7 @@ style = ''
 [status]
 disabled = false
 format = '[$symbol$status(:$common_meaning$signal_name$maybe_int)]($style) '
-style = 'bold 167'
+style = 'bold red'
 symbol = '🔥'
 pipestatus = true
 map_symbol = true
@@ -63,7 +73,7 @@ map_symbol = true
 [time]
 disabled = false
 format = '[$time]($style) '
-style = '43'
+style = 'green'
 time_format = '%H:%M'
 utc_time_offset = '+9'
 
