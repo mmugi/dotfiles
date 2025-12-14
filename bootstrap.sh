@@ -46,7 +46,7 @@ abort() {
 }
 
 exec_user=$(whoami)
-[[ "$exec_user" == root ]] && abort "don't run this script as root"
+[[ "$exec_user" == 'root' ]] && abort "don't run this script as root"
 
 if [[ ! -e "$DOTFILES_PATH" ]]; then
   if type 'git' >/dev/null 2>&1; then
