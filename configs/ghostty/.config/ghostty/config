@@ -21,7 +21,7 @@ cursor-style = block
 cursor-style-blink = true
 
 background-opacity = 0.9
-background-blur-radius = 5
+background-blur = true
 
 unfocused-split-opacity = 0.75
 
