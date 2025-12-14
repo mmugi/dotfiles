@@ -7,22 +7,17 @@ if [ -z "${BASH_VERSION:-}" ]; then
   exit 1
 fi
 
-readonly DOTFILES_PATH="${DOTFILES_PATH:="${HOME}/.dotfiles"}"
-readonly DOTFILES_CONFIG_DIR="${DOTFILES_PATH}/configs"
-readonly DOTFILES_GITHOOKS_DIR="${DOTFILES_PATH}/misc/git/hooks/dotfiles"
+# shellcheck source=/dev/null
+source "${DOTFILES_PATH:?}/libs/bash/import.sh"
+
+import dotfiles esc log msg util
 
 readonly GITHUB_USERNAME='mmugi'
 readonly GITHUB_EMAIL='173437276+mmugi@users.noreply.github.com'
 
-# shellcheck source=/dev/null
-source "${DOTFILES_PATH}/libs/bash/import.sh"
-import esc log dotfiles msg util
-
 exec_user="$(whoami)"
 [[ "$exec_user" == 'root' ]] && abort "don't run this script as root"
 [[ ! -t 0 ]] && abort 'stdin is not connected to a tty'
-
-dotfiles::env
 
 _nextstep() {
   [[ -z "${1:-}" ]] && abort 'scenario argument is required'
@@ -68,7 +63,7 @@ greet() {
     'hello:)'
     'this is the dotfiles installation script.'
     "date: <b><hl>$(date '+%Y/%m/%d %H:%M:%S %Z')</hl></b>"
-    "path: <b><hl>${DOTFILES_PATH}</hl></b>"
+    "DOTFILES_PATH: <b><hl>${DOTFILES_PATH}</hl></b>"
   )
   msg::line "$DOTFILES_LOGO_WIDTH"
   msg -b --no-prompt "$DOTFILES_LOGO"

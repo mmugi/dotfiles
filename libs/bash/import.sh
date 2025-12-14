@@ -1,13 +1,13 @@
-#!/usr/bin/env bash
+# bash library loader / import.sh
+# shellcheck shell=bash
 
-### Bash Library Loader ###
 # usage:
 #   source path/to/import.sh
 #   import <library名>...
 #
-# LIB_PATHから <library名>.sh を探索してsourceします。
+# DOTFILES_LIB_PATHから <library名>.sh を探索してsourceします。
 # 依存関係は各ライブラリのメタ情報で管理します。
-# デフォルトでは、~/.dotfiles/libs/bash から検索します。
+# デフォルトでは $DOTFILES_PATH/libs/bash から検索します。
 #
 # ライブラリ側に必要なメタ情報
 # ライブラリの先頭に以下を定義する必要があります。
@@ -20,6 +20,9 @@
 # }
 # -----
 
+[[ "${_IMPORT_IMPORTED:-false}" == 'true' ]] && return 0
+_IMPORT_IMPORTED=true
+
 if [ -z "${BASH_VERSION:-}" ]; then
   printf "\033[1;31m%s\033[0m\n" 'import.sh: please source this library with bash.'
   exit 1
@@ -30,20 +33,30 @@ if (( "${BASH_VERSINFO[0]}" < 4 )); then
   exit 1
 fi
 
+if [[ -z "${DOTFILES_PATH:-}" ]]; then
+  printf 'To continue, the environment variables \033[1;32mDOTFILES_PATH\033[m must be defined.\n' >&2
+  exit 1
+fi
+
+_IMPORT_ENTITY="$(realpath -- "${BASH_SOURCE[0]}")"
+if [[ "$_IMPORT_ENTITY" != "${DOTFILES_PATH}/libs/bash/import.sh" ]]; then
+  printf \
+    "DOTFILES_PATH does not match the sourced import.sh: %s/libs/bash/import.sh\n" \
+    "$DOTFILES_PATH" >&2
+  exit 1
+fi
+
 : "${IMPORT_LOG:=false}"
 
 # ライブラリ検索パス定義
-# デフォルトでは以下の配列を検索します。
-declare -a _import_lib_path_default=(
-  "${DOTFILES_DIR:-"${HOME}/.dotfiles"}/libs/bash"
-)
-# LIB_PATH 環境変数を使用して、検索パスを追加できます。
+# DOTFILES_LIB_PATH 環境変数を定義することで検索パスを追加できます。
 # :区切りで複数与えることも可能で、左から優先されます。
-if [[ -n "${LIB_PATH:-}" ]]; then
-  IFS=: read -r -a _import_lib_path_extra <<< "$LIB_PATH"
-  LIB_PATH=( "${_import_lib_path_extra[@]}" "${_import_lib_path_default[@]}" )
+declare -a _import_lib_path_default=( "${DOTFILES_PATH}/libs/bash" )
+if [[ -n "${DOTFILES_LIB_PATH:-}" ]]; then
+  IFS=: read -r -a _import_lib_path_extra <<< "$DOTFILES_LIB_PATH"
+  DOTFILES_LIB_PATH=( "${_import_lib_path_extra[@]}" "${_import_lib_path_default[@]}" )
 else
-  LIB_PATH=( "${_import_lib_path_default[@]}" )
+  DOTFILES_LIB_PATH=( "${_import_lib_path_default[@]}" )
 fi
 
 if [[ -t 1 ]]; then
@@ -76,7 +89,7 @@ import::_log() {
 
 import::_find_library_file() {
   local library="$1" p filepath
-  for p in "${LIB_PATH[@]}"; do
+  for p in "${DOTFILES_LIB_PATH[@]}"; do
     filepath="${p}/${library}.sh"
     [[ -r "$filepath" ]] && { printf '%s\n' "$filepath"; return 0; }
   done
@@ -133,7 +146,7 @@ import() {
     # モジュール探索
     import::_log "searching library file '${library}.sh'..."
     if ! libfile=$(import::_find_library_file "$library"); then
-      import::_abort "library file not found: ${library} (searched: ${LIB_PATH[*]})"
+      import::_abort "library file not found: ${library} (searched: ${DOTFILES_LIB_PATH[*]})"
     else
       import::_log "library file found: ${libfile}"
     fi

@@ -19,8 +19,10 @@ RESET=$(printf '\033[0;39m')
 : "${DOTFILES_BRANCH:=trunk}"
 : "${DOTFILES_PATH:=${HOME}/.dotfiles}"
 
-DOTFILES_URL='git@github.com:mmugi/dotfiles.git'
-DOTFILES_TARBALL_URL="https://github.com/mmugi/dotfiles/archive/${DOTFILES_BRANCH}.tar.gz"
+export DOTFILES_PATH
+
+readonly DOTFILES_URL='git@github.com:mmugi/dotfiles.git'
+readonly DOTFILES_TARBALL_URL="https://github.com/mmugi/dotfiles/archive/${DOTFILES_BRANCH}.tar.gz"
 
 msg() {
   printf '%s%s\n' "${BOLD}${PURPLE}> ${RESET}" "${CYAN}$*${RESET}"
