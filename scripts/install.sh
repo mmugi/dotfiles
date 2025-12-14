@@ -28,6 +28,14 @@ _nextstep() {
     " next steps! " \
     "${ESC_ATTR_BOLD}${ESC_C_COMPLETE}*${ESC_RESET}"
   case "$1" in
+    --undefined-dotfiles-path)
+      cat <<'EOF'
+Please define it in your shell config file:
+
+  export DOTFILES_PATH="$HOME/.dotfiles"
+EOF
+      exit 0
+      ;;
     --symlink-conflict)
       cat <<EOF
 Configuration files are already present.
@@ -36,12 +44,12 @@ Please do one of the following:
   - Move the configuration files out of the target directory.
   - Configure '${DOTFILES_PATH}/.dotignore' to ignore them.
 EOF
+      exit 1
       ;;
     *)
       abort "invalid scenario: $1"
       ;;
   esac
-  exit 1
 }
 
 #set_platform() {
@@ -267,3 +275,10 @@ greet
 configure_git_for_dotfiles
 install_configs
 msg -b -c "$ESC_C_COMPLETE" --prompt-char='>' 'DOTFILES SETUP COMPLETED!'
+
+if [[ -n "${DOTFILES_PATH_UNDEFINED:-}" \
+      && "$DOTFILES_PATH_UNDEFINED" == 'true' ]]
+then
+  newline
+  _nextstep --undefined-dotfiles-path
+fi

@@ -17,9 +17,15 @@ BOLD=$(printf '\033[1m')
 RESET=$(printf '\033[0;39m')
 
 : "${DOTFILES_BRANCH:=trunk}"
-: "${DOTFILES_PATH:=${HOME}/.dotfiles}"
 
+if [[ -z "${DOTFILES_PATH:-}" ]]; then
+  DOTFILES_PATH="${HOME}/.dotfiles"
+  DOTFILES_PATH_UNDEFINED=true
+else
+  DOTFILES_PATH_UNDEFINED=false
+fi
 export DOTFILES_PATH
+export DOTFILES_PATH_UNDEFINED
 
 readonly DOTFILES_URL='git@github.com:mmugi/dotfiles.git'
 readonly DOTFILES_TARBALL_URL="https://github.com/mmugi/dotfiles/archive/${DOTFILES_BRANCH}.tar.gz"
