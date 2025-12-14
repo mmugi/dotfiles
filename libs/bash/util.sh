@@ -1,6 +1,4 @@
-#!/usr/bin/env bash
-
-: LIBRARY METADATA
+# shellcheck shell=bash
 # shellcheck disable=SC2034
 {
   LIB_VERSION='1.0.0'
