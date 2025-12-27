@@ -6,20 +6,6 @@
   [[ "${1:-}" = '__META_PROBE__' ]] && return 0
 }
 
-util::log() {
-  local event color="$ESC_C_SUCCESS"
-  while (( $# > 0 )); do
-    case "$1" in
-      --ignore) event='IGNORE'; color="$ESC_C_GRAYOUT"; shift; break ;;
-      --link)   event='LINK'; shift; break ;;
-      --mkdir)  event='MKDIR'; shift; break ;;
-      *) abort "invalid option: $1" ;;
-    esac
-    shift
-  done
-  printf '%s: %s\n' "${ESC_ATTR_BOLD}${color}${event}${ESC_RESET}" "$*"
-}
-
 #util::chk() {
 #  local opt_exists=false
 #  local opt_selector=
@@ -203,7 +189,7 @@ util::install() {
     else
       if [[ -d "$src" ]]; then
         if cmd_result="$(mkdir -m 700 "$dst" 2>&1)"; then
-          util::log --mkdir "$dst"
+          msg::notice --mkdir "$dst"
           return
         else
           log.error "$cmd_result"
@@ -211,7 +197,7 @@ util::install() {
         fi
       else
         if cmd_result="$(ln -s "$src" "$dst" 2>&1)"; then
-          util::log --link "${src} ==> ${dst}"
+          msg::notice --link "${src} ==> ${dst}"
         else
           log.error "$cmd_result"
           return 1

@@ -18,11 +18,13 @@ if [[ -t 1 ]]; then
 else
   MSG_DELAY=0
 fi
-
 : "${MSG_PROMPT_CHAR:=>}"
-: "${MSG_C_BASE:=$ESC_C_BASE}"
-: "${MSG_C_HIGHLIGHT1:=$ESC_C_MAIN}"
-: "${MSG_C_HIGHLIGHT2:=$ESC_C_ACCENT1}"
+: "${MSG_INDENT:=0}"
+: "${MSG_C_BASE:="$ESC_C_BASE"}"
+: "${MSG_C_HIGHLIGHT1:="$ESC_C_MAIN"}"
+: "${MSG_C_HIGHLIGHT2:="$ESC_C_ACCENT1"}"
+: "${MSG_LOGO:-}"
+: "${MSG_BOX_WIDTH:=80}"
 
 _MSG_EXEC_TMPFILE_STDOUT="$(mktemp)"
 _MSG_EXEC_TMPFILE_STDERR="$(mktemp)"
@@ -50,22 +52,32 @@ newline() { printf '\n'; }
 msg() {
   # スクリプトのメッセージ出力に利用できます。
   # 引数にとった文字列をオプションに基づいて整形・色付けして出力します。
-  # 引数に取る文字列は以下のタグを解釈します。
-  #   <hl>...</hl>: 囲まれた範囲の文字をプロンプトと同様の色でハイライトする
-  #   <b>...</b>: 囲まれた範囲の文字を強調する
+  #
+  # env:
+  #   MSG_INDENT
+  #        インデントの高さを数値で指定します(0でインデントなし)。
+  #
+  # tags:
+  #   引数に取る文字列は以下のタグを解釈します。
+  #     <hl>...</hl>: 囲まれた範囲の文字をプロンプトと同様の色でハイライトする
+  #     <b>...</b>: 囲まれた範囲の文字を強調する
   #
   # options:
-  #   -2   インデントされた出力を行います。
-  #          $ msg example1; msg -2 example2
-  #          > example1
-  #            > example2
+  #   -2   ハイライトカラーを変更します。
+  #        セクションに応じて、使用します。
   #
   #   -b, --bold
-  #        太文で出力します。
+  #        メッセージ本文を太字で出力します。
   #
-  #   -c, --color <ansi color code>
+  #   -B, --prompt-bold
+  #        プロンプト文字を太字で出力します。
+  #
+  #   -c, --base-color <ansi color code>
   #        ベースの文字列色をANSI color codeで指定します。
   #        hlタグやプロンプト色には影響しません。
+  #
+  #   -C, --hl-color <ansi color code>
+  #        <hl>タグのハイライト文字列色をANSI color codeで指定します。
   #
   #   -n   末尾で改行しません。
   #
@@ -74,11 +86,17 @@ msg() {
   #          > example...
   #
   #   -P, --plain
-  #        プロンプト非表示・文字色なしで出力します。
+  #        プロンプト非表示かつバックスラッシュを解釈せずに出力します。
+  #        タグの解釈も行いません。
+  #        --stripオプションが指定された場合は、制御文字およびタグ文字の除去を
+  #        行ったうえで出力されます。
   #
   #   -r   \rで出力行をリセット後にメッセージを出力する。
   #
-  #   -s, --spinner
+  #   -s, --strip
+  #       制御文字(ANSI, ASCII)およびタグの除去をして出力します。
+  #
+  #   --spinner
   #        --progressオプションを有効化し、スピナー行を出力します。
   #        実行プロセスをkillするまで無限ループで出力し続けます。
   #
@@ -98,21 +116,22 @@ msg() {
   #          $ msg --result EXAMPLE -- "message"
   #          > message...EXAMPLE
   #
-  #   --prompt-char
-  #        プロンプトの文字を指定します。指定されない場合は、
-  #        環境変数 MSG_PROMPT_CHAR で指定された文字列を利用します。
-  #          $ msg --prompt-char='#' -- message
+  #   --prompt
+  #        プロンプトを指定します。
+  #        指定されない場合は、環境変数 MSG_PROMPT_CHAR で指定された文字列を利用します。
+  #          $ msg --prompt='#' -- message
   #          # message
+  #
+  #   --prompt-color <ansi color code>
+  #        プロンプト文字列色をANSI color codeで指定します。
   #
   #   --no-prompt
   #        プロンプトなしで出力します。
 
-  local bold result_str result_color
-
-  local prompt_char="$MSG_PROMPT_CHAR"
-  local prompt_color="$MSG_C_HIGHLIGHT1"
-  local hl_color="$MSG_C_HIGHLIGHT1"
-  local base_color="$MSG_C_BASE"
+  local prompt_bold prompt_str prompt_color
+  local prompt_indent='' no_prompt=false
+  local bold base_color hl_color
+  local result_str result_color
 
   local -r dots='...'
   #local -r spinner_dot='⠧⠏⠛⠹⠼⠶'
@@ -124,6 +143,7 @@ msg() {
   local line_reset=false
   local newline=true
   local progress_dots=false
+  local strip=false
   local style_plain=false
 
   while (( $# > 0 )); do
@@ -132,21 +152,36 @@ msg() {
       -2)
         hl_color="$MSG_C_HIGHLIGHT2"
         prompt_color="$MSG_C_HIGHLIGHT2"
-        prompt_char=' >'
         ;;
       -b | --bold) bold="$ESC_ATTR_BOLD" ;;
-      -c | --color | --color=*)
-        if [[ "$1" =~ ^--color= ]]; then
-          base_color="${1#--color=}"
-        elif [[ -z "$2" ]]; then
+      -B | --prompt-bold) prompt_bold="$ESC_ATTR_BOLD" ;;
+      -c | --base-color | --base-color=*)
+        if [[ "$1" =~ ^--base-color= ]]; then
+          base_color="${1#--base-color=}"
+        elif [[ -z "${2:-}" ]]; then
           # stdoutがttyに接続されていない場合、escライブラリの
           # 色変数が空になる場合がある。
           shift
         elif [[ "$2" =~ ^-+ ]]; then
-          log.error "$1: expected a ansi color code. perhaps try --color=\"$2\"?"
+          log.error "$1: expected a ansi color code. perhaps try --base-color=\"$2\"?"
           return 1
         else
           base_color="$2"
+          shift
+        fi
+        ;;
+      -C | --hl-color | --hl-color=*)
+        if [[ "$1" =~ ^--hl-color= ]]; then
+          hl_color="${1#--hl-color=}"
+        elif [[ -z "${2:-}" ]]; then
+          # stdoutがttyに接続されていない場合、escライブラリの
+          # 色変数が空になる場合がある。
+          shift
+        elif [[ "$2" =~ ^-+ ]]; then
+          log.error "$1: expected a ansi color code. perhaps try --hl-color=\"$2\"?"
+          return 1
+        else
+          hl_color="$2"
           shift
         fi
         ;;
@@ -157,7 +192,8 @@ msg() {
         ;;
       -P | --plain) style_plain=true ;;
       -r) line_reset=true ;;
-      -s | --spinner)
+      -s | --strip) strip=true ;;
+      --spinner)
         # 無限ループするので呼び出し側でkillが必要です
         progress_dots=true
         spinner=true
@@ -166,7 +202,7 @@ msg() {
       --ok | --ok=*)
         if [[ "$1" =~ ^--ok= ]]; then
           result_str="${1#--ok=}"
-        elif [[ -z "$2" ]]; then
+        elif [[ -z "${2:-}" ]]; then
           log.error "$1: expected a string argument"
           return 1
         elif [[ "$2" =~ ^-+ ]]; then
@@ -181,7 +217,7 @@ msg() {
       --ng | --ng=*)
         if [[ "$1" =~ ^--ng= ]]; then
           result_str="${1#--ng=}"
-        elif [[ -z "$2" ]]; then
+        elif [[ -z "${2:-}" ]]; then
           log.error "$1: expected a string argument"
           return 1
         elif [[ "$2" =~ ^-+ ]]; then
@@ -196,7 +232,7 @@ msg() {
       --result | --result=*)
         if [[ "$1" =~ ^--result= ]]; then
           result_str="${1#--result=}"
-        elif [[ -z "$2" ]]; then
+        elif [[ -z "${2:-}" ]]; then
           log.error "$1: expected a string argument"
           return 1
         elif [[ "$2" =~ ^-+ ]]; then
@@ -208,26 +244,51 @@ msg() {
         fi
         result_color="${ESC_ATTR_BOLD}${MSG_C_HIGHLIGHT1}"
         ;;
-      --prompt-char | --prompt-char=*)
-        if [[ "$1" =~ ^--prompt-char= ]]; then
-          prompt_char="${1#--prompt-char=}"
-        elif [[ -z "$2" ]]; then
+      --prompt | --prompt=*)
+        if [[ "$1" =~ ^--prompt= ]]; then
+          prompt_str="${1#--prompt=}"
+        elif [[ -z "${2:-}" ]]; then
           log.error "$1: expected a string argument"
           return 1
         elif [[ "$2" =~ ^-+ ]]; then
-          log.error "$1: expected a string argument. perhaps try --prompt-char=\"$2\"?"
+          log.error "$1: expected a string argument. perhaps try --prompt=\"$2\"?"
           return 1
         else
-          prompt_char="$2"
+          prompt_str="$2"
           shift
         fi
         ;;
-      --no-prompt) prompt_char='' ;;
+      --prompt-color | --prompt-color=*)
+        if [[ "$1" =~ ^--prompt-color= ]]; then
+          prompt_color="${1#--prompt-color=}"
+        elif [[ -z "${2:-}" ]]; then
+          # stdoutがttyに接続されていない場合、escライブラリの
+          # 色変数が空になる場合がある。
+          shift
+        elif [[ "$2" =~ ^-+ ]]; then
+          log.error "$1: expected a ansi color code. perhaps try --prompt-color=\"$2\"?"
+          return 1
+        else
+          prompt_color="$2"
+          shift
+        fi
+        ;;
+      --no-prompt) no_prompt=true ;;
       -*) log.error "invalid option: $1"; return 1 ;;
       *) break ;;
     esac
     shift
   done
+
+  if [[ "$no_prompt" == 'true' ]]; then
+    unset prompt_str
+  else
+    : "${prompt_str:="$MSG_PROMPT_CHAR"}"
+  fi
+
+  : "${prompt_color:="$MSG_C_HIGHLIGHT1"}"
+  : "${hl_color:="$MSG_C_HIGHLIGHT1"}"
+  : "${base_color:="$MSG_C_BASE"}"
 
   msg::_check_tty_mode
 
@@ -236,15 +297,30 @@ msg() {
   local msg prompt result
   local s="$*"
 
+  prompt_indent="$(printf '%*s' "$MSG_INDENT" '')"
+
   if [[ "$style_plain" == 'true' ]]; then
-    printf '%s' "$s"
+    s="${s//<hl>/}"
+    s="${s//<\/hl>/}"
+    s="${s//<b>/}"
+    s="${s//<\/b>/}"
+    msg="$s"
+    prompt="${prompt_indent}${prompt_str:-}${prompt_str+ }"
+
+    if [[ "$strip" == 'true' ]]; then
+      printf '%s%s' "$prompt" "$msg" \
+        | sed -E 's/\x1b\[[0-9;?]*[ -/]*[@-~]//g' \
+        | tr -d '\000-\010\013\014\016-\037\177'
+    else
+      printf '%s%s' "$prompt" "$msg"
+    fi
   elif [[ "$MSG_TTY_MODE" == 'true' ]]; then
     s="${s//<hl>/${hl_color}}"
     s="${s//<\/hl>/${base_color}}"
     s="${s//<b>/${ESC_ATTR_BOLD}}"
     s="${s//<\/b>/${ESC_ATTR_RESET_IE}}"
-    msg="${bold:-}${base_color}${s}"
-    prompt="${prompt_color}${prompt_char} "
+    msg="${bold:-${ESC_ATTR_RESET_IE}}${base_color}${s}"
+    prompt="${prompt_bold:-${ESC_ATTR_RESET_IE}}${prompt_color}${prompt_indent}${prompt_str:-}${prompt_str+ }"
     result="${result_color:-}${result_str:-}"
 
     if [[ "$progress_dots" == 'true' ]]; then
@@ -259,7 +335,7 @@ msg() {
       local i=0
       local n="${#spinner_chars}"
       while true; do
-        prompt_spinner="${prompt_color}${spinner_chars:i:1} "
+        prompt_spinner="${prompt_indent}${prompt_color}${spinner_chars:i:1} "
         printf '\r\033[2K%s' "${prompt_spinner}${msg}${dots}${ESC_RESET}"
         i=$(( (i + 1) % n ))
         sleep 0.1
@@ -281,8 +357,9 @@ msg() {
     s="${s//<b>/}"
     s="${s//<\/b>/}"
     msg="$s"
-    prompt=''
+    prompt="${prompt_indent}${prompt_str:-}${prompt_str+ }"
     result="${result_str:-}"
+
     if [[ -z "$result" ]]; then
       printf '%s' "${prompt}${msg}"
       [[ "$progress_dots" == 'true' ]] && printf '%s' "$dots"
@@ -296,14 +373,239 @@ msg() {
   return 0
 }
 
-msg::complete() {
-  msg -b --color="$ESC_C_COMPLETE" --prompt-char='✨️' "$*"
-  printf '\n'
+msg::box() {
+  local line plain_text term_width box_width base_color box_color
+  local msg_prompt prompt_opts
+  local max=0 max_logo=0 len
+  local -a messages=() logo_lines=() prompt_opts=()
+  local padding=2
+  local top_padding=false
+  local mid_padding=false
+  local bot_padding=false
+  local width_fit_mode=auto
+
+  while (( $# > 0 )); do
+    case "${1:-notset}" in
+      --) shift; break ;;
+      -c | --base-color | --base-color=*)
+        if [[ "$1" =~ ^--base-color= ]]; then
+          base_color="${1#--base-color=}"
+        elif [[ -z "${2:-}" ]]; then
+          # stdoutがttyに接続されていない場合、escライブラリの
+          # 色変数が空になる場合がある。
+          shift
+        elif [[ "$2" =~ ^-+ ]]; then
+          log.error "$1: expected a ansi color code. perhaps try --base-color=\"$2\"?"
+          return 1
+        else
+          base_color="$2"
+          shift
+        fi
+        ;;
+      --bot-padding) bot_padding=true ;;
+      --box-color | --box-color=*)
+        if [[ "$1" =~ ^--box-color= ]]; then
+          box_color="${1#--box-color=}"
+        elif [[ -z "${2:-}" ]]; then
+          # stdoutがttyに接続されていない場合、escライブラリの
+          # 色変数が空になる場合がある。
+          shift
+        elif [[ "$2" =~ ^-+ ]]; then
+          log.error "$1: expected a ansi color code. perhaps try --box-color=\"$2\"?"
+          return 1
+        else
+          box_color="$2"
+          shift
+        fi
+        ;;
+      --logo)
+        if [[ -z "${MSG_LOGO:-}" ]]; then
+          log.error 'MSG_LOGO is not set'
+          return 1
+        fi
+        mid_padding=true
+        while IFS= read -r line; do
+          logo_lines+=( "$line" )
+        done <<< "$MSG_LOGO"
+        ;;
+      --fix-width) box_width="$MSG_BOX_WIDTH" ;;
+      --full-width) width_fit_mode=full ;;
+      --width | --width=*)
+        if [[ "$1" =~ ^--width= ]]; then
+          box_width="${1#--width=}"
+        elif [[ -z "${2:-}" ]]; then
+          log.error 'expected a numeric width value'
+          return 1
+        elif [[ ! "$2" =~ ^[0-9]+$ ]]; then
+          log.error "$1: expected a numeric width value: $2"
+          return 1
+        else
+          box_width="$2"
+          shift
+        fi
+        ;;
+      --top-padding) top_padding=true ;;
+      notset) log.error 'option required'; return 1 ;;
+      -*) log.error "invalid option: $1"; return 1 ;;
+      *) break ;;
+    esac
+    shift
+  done
+
+  : "${base_color:="$MSG_C_BASE"}"
+  : "${box_color:="$MSG_C_HIGHLIGHT1"}"
+  : "${msg_prompt:=*}"
+
+  prompt_opts=( --prompt "$msg_prompt" )
+
+  for line in "$@"; do
+    messages+=( "$line" )
+  done
+
+  # 表示幅の計算
+  # msg() に渡す文字列には `<hl></hl>` やエスケープシーケンスなどの
+  # 表示時の文字数に反映されない文字が含まれることがあるため、--plain で
+  # 装飾なしの実際に表示される文字列を取得して、表示幅を計算する
+
+  for line in "${logo_lines[@]}"; do
+    plain_text="$(MSG_INDENT=0 msg --no-prompt --plain --strip "$line")"
+    len="${#plain_text}"
+    (( len > max )) && max="$len"
+  done
+
+  for line in "${messages[@]}"; do
+    plain_text="$(msg "${prompt_opts[@]}" --plain --strip "$line")"
+    len="${#plain_text}"
+    (( len > max )) && max="$len"
+  done
+
+  if [[ -n "${box_width:-}" ]]; then
+    max="$box_width"
+  elif [[ "$width_fit_mode" == 'full' ]]; then
+    term_width="$(tput cols)"
+    max=$(( $(tput cols) - padding * 2 - 2 ))
+  fi
+
+  # boxの上面と底面を作成
+  local inner_width="$(( max + padding * 2 ))"
+  local top='┌' mid='│' bot='└'
+  local i
+  for ((i=0; i<inner_width; i++)); do
+    top+='─'
+    bot+='─'
+  done
+  top+='┐'
+  bot+='┘'
+
+  msg::_box_line_padding() {
+    printf '%b│%*s%*s%*s│\n' "$box_color" \
+      "$padding" "" \
+      "$max" "" \
+      "$padding" ""
+  }
+
+  # 上面出力
+  printf '%b%s%b\n' "$box_color" "$top" "$ESC_RESET"
+
+  [[ "$top_padding" == 'true' ]] && msg::_box_line_padding
+
+  # logo出力
+  for line in "${logo_lines[@]}"; do
+    plain_text="$(MSG_INDENT=0 msg --no-prompt --plain --strip "$line")"
+    printf '%b│%*s' "$box_color" "$padding" ""
+    MSG_INDENT=0 msg -b -n --no-prompt -c "$base_color" "$line"
+    printf '%*s' $(( max - ${#plain_text} )) ""
+    printf '%*s%b│\n' "$padding" "" "$box_color"
+  done
+
+  [[ "$mid_padding" == 'true' ]] && msg::_box_line_padding
+
+  # 本文出力
+  for line in "${messages[@]}"; do
+    plain_text="$(msg "${prompt_opts[@]}" --plain --strip "$line")"
+    printf '%b│%*s' "$box_color" "$padding" ""
+    msg -n "${prompt_opts[@]}" -c "$base_color" "$line"
+    printf '%*s' $(( max - ${#plain_text} )) ""
+    printf '%*s%b│\n' "$padding" "" "$box_color"
+  done
+
+  [[ "$bot_padding" == 'true' ]] && msg::_box_line_padding
+
+  # 底面出力
+  printf '%b%s%b\n' "$box_color" "$bot" "$ESC_RESET"
 }
 
-msg::warn() {
-  msg -b --color="$ESC_C_WARNING" --prompt-char='⚡' "$*"
-  printf '\n'
+msg::confirm() {
+  local input
+  if [[ "$1" == '-r' ]]; then
+    shift
+    msg -B --prompt-color "$ESC_C_WARNING" --prompt='!' -- \
+      'press <b><hl>RETURN/ENTER</hl></b> to continue or press any other key to abort.' \
+      </dev/tty >/dev/tty
+
+    # stdin flush
+    read -sr -t 0.1 -N 255 _
+    read -sr -n 1 -p 'ready?' input </dev/tty >/dev/tty && echo
+    if [[ -z "${input:-}" ]]; then
+      return 0
+    else
+      return 1
+    fi
+  else
+    msg -n -B --prompt-color "$ESC_C_WARNING" --prompt='!' -- "$* [y/N] "
+    # stdin flush
+    read -sr -t 0.1 -N 255 _
+    IFS='' read -r input
+    if [[ "$input" =~ ^([Yy]|[Yy][Ee][Ss])$ ]]; then
+      return 0
+    else
+      return 1
+    fi
+  fi
+}
+
+msg::marker() {
+  local base_color prompt
+  case "${1:-option not set}" in
+    --complete)
+      base_color="$ESC_C_COMPLETE"
+      prompt='✨️'
+      shift
+      ;;
+    --warning)
+      base_color="$ESC_C_WARNING"
+      prompt='⚡'
+      shift
+      ;;
+    --terminate)
+      base_color="$ESC_C_CRITICAL"
+      prompt='⛔'
+      shift
+      ;;
+    -*) abort "invalid option: $1" ;;
+    *) abort 'option required' ;;
+  esac
+  msg -b --base-color="$base_color" --prompt="$prompt" -- "$*"
+  newline
+}
+
+msg::notice() {
+  local color event
+  case "$1" in
+    --delete) event='DELETE'; color="$ESC_C_DANGER";  shift ;;
+    --ignore) event='IGNORE'; color="$ESC_C_GRAYOUT"; shift ;;
+    --link)   event='LINK';   color="$ESC_C_SUCCESS"; shift ;;
+    --mkdir)  event='MKDIR';  color="$ESC_C_SUCCESS"; shift ;;
+    --remove) event='REMOVE'; color="$ESC_C_DANGER";  shift ;;
+    --rmdir)  event='RMDIR';  color="$ESC_C_DANGER";  shift ;;
+    --skip)   event='SKIP';   color="$ESC_C_NOTICE";  shift ;;
+    --unlink) event='UNLINK'; color="$ESC_C_DANGER";  shift ;;
+    -*) abort "invalid option: $1" ;;
+    *) abort 'option required' ;;
+  esac
+  msg --prompt "${ESC_DEFAULT}[ ${ESC_ATTR_BOLD}${color}${event}${ESC_RESET} ]" \
+      --base-color "$ESC_DEFAULT" \
+      -- "$*"
 }
 
 msg::exec() {
