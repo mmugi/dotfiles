@@ -1,233 +1,184 @@
 #!/usr/bin/env bash
 
-set -ueo pipefail
-
-DOTFILES_PATH="${HOME:?}/.dotfiles"
-DOTFILES_CONFIG_DIR="${DOTFILES_PATH}/configs"
+set -Eueo pipefail
 
 # shellcheck source=/dev/null
-source "${DOTFILES_PATH:?}/scripts/lib/format.bash"
-
-abort() {
-    printf "\033[1;31m⛔ %s\033[0m\n" "$@" >&2
-    exit 1
-}
+source "${DOTFILES_PATH}/libs/bash/import.sh"
+import dotfiles log msg
 
 if [ -z "${BASH_VERSION:-}" ]; then
-    abort "Bash is required to interpret this script."
+  abort "Bash is required to interpret this script."
 fi
 
-executing_user=$(whoami)
-[[ $executing_user == root ]] && abort "Don't run this as root."
-[[ ! -t 0 ]] && abort "'stdin' is not a TTY."
+: "${DOTFILES_UNINSTALL_DRYRUN:=false}"
+: "${DOTFILES_UNINSTALL_COLOR:="$ESC_C_CRITICAL"}"
 
+[[ -n "${1:-}" && "$1" == '--dryrun' ]] && DOTFILES_UNINSTALL_DRYRUN=true
 
-###  functions  ###
+# shellcheck disable=SC2034
+MSG_LOGO="$(cat <<LOGO
+ _______ _______ _______ _______ _______ _______ _______ _____   _____
+|   |   |    |  |_     _|    |  |     __|_     _|   _   |     |_|     |_
+|   |   |       |_|   |_|       |__     | |   | |       |       |       |
+|_______|__|____|_______|__|____|_______| |___| |___|___|_______|_______|
 
-line() {
-    local line_length=76
-    draw.line "$line_length"
-}
+LOGO
+)"
 
-uninstall_failed() {
-    abort 'Uninstallation failed;('
-}
-
-uninstall_abort() {
-    msg.warn 'Uninstallation aborted:P'
-    exit
-}
+exec_user="$(whoami)"
+[[ "$exec_user" == 'root' ]] && abort "don't run this script as root"
+[[ ! -t 0 ]] && abort 'stdin is not connected to a tty'
 
 greet() {
-    local -r greeting_messages=(
-              'Hello:)'
-              'This is the dotfiles uninstallation script.'
-              "Date: $(LANG=C date)")
-    line
-    draw.logo -u -c "$RED"
-    for msg in "${greeting_messages[@]}"; do
-        msg -c "$RED" -- "$msg"
-    done
-    newline
-    line
-    newline
+  MSG_INDENT=2 \
+    msg::box --logo --top-padding --bot-padding --base-color "$DOTFILES_UNINSTALL_COLOR" \
+      'hello:)' \
+      'this is the dotfiles uninstallation script.' \
+      "date: <b><hl>$(date '+%Y/%m/%d %H:%M:%S %Z')</hl></b>" \
+      "dotfiles path: <b><hl>${DOTFILES_PATH}</b></hl>"
+
+  if [[ "$DOTFILES_UNINSTALL_DRYRUN" == 'true' ]]; then
+    msg::box \
+      'dryrun mode is enabled.' \
+      "${ESC_C_WARNING}  empty directories resulting from configuration removal will be removed," \
+      "${ESC_C_WARNING}  but will not be shown in dry-run mode."
+  fi
+  newline
 }
 
-confirm_uninstall() {
-    msg.attention "Starting dotfiles uninstallation."
-    printf "Press %s to continue or press any other key to abort.\n" "$(sgr bold)RETURN/ENTER$(sgr)"
-    IFS='' read -sr -n 1 -p 'Ready?' input && echo
-    if [[ -n ${input:-} ]]; then
-        uninstall_abort
+remove_configs() {
+  local pkg pkg_dir pkg_dirs
+
+  msg -p 'removing configuration files'
+
+  pkg_dirs="$(find "$DOTFILES_CONFIG_DIR" \
+                   -mindepth 1 \
+                   -maxdepth 1 \
+                   -type d)"
+
+  if [[ -z "$pkg_dirs" ]]; then
+    msg::abort "package directories not found:/"
+  fi
+
+  while read -r pkg_dir; do
+    if [[ -d "$pkg_dir" ]]; then
+      pkg="$(basename "$pkg_dir")"
+      msg -2 "config: <b><hl>${pkg}</hl></b>"
+      log.debug "pkg_dir: ${pkg_dir}/"
     else
-        newline
-    fi
-}
-
-delete_configs() {
-    local pkg_dirs
-    local pkg_dir
-    local pkg
-    local src_files
-    local src_dirs
-    local target
-    local link_src
-    local cmd_result
-
-    delete_configs_failed() { abort 'Config deletion failed;('; }
-
-    msg -p 'Starting config deletion'
-
-    if [[ -z ${DOTFILES_CONFIG_DIR:-} ]]; then
-        log.error "'DOTFILES_CONFIG_DIR' is not set"
-        delete_configs_failed
+      abort "package directory not found: ${pkg_dir}/"
     fi
 
-    if ! pkg_dirs=$(find "$DOTFILES_CONFIG_DIR" -mindepth 1 -maxdepth 1 -type d 2>&1); then
-        log.error "$pkg_dirs"
-        delete_configs_failed
-    elif [[ -z $pkg_dirs ]]; then
-        msg.warn "Package directory not found:/"
-        return
-    fi
+    local src_files src_file
+    local src_dirs src_dir
 
-    while read -r pkg_dir; do
-        if [[ -d $pkg_dir ]]; then
-            pkg=$(basename "$pkg_dir")
-            msg "Deleting configs: $pkg"
+    src_dirs="$(find "$pkg_dir" -mindepth 1 -type d)"
+    src_files="$(find "$pkg_dir" -mindepth 1 -type f)"
+
+    [[ -z $src_files && -z $src_dirs ]] && continue
+
+    local relpath target
+
+    if [[ -n "${src_files:-}" ]]; then
+      while read -r src_file; do
+        relpath="${src_file#"${pkg_dir}/"}"
+        target="${HOME}/${relpath}"
+        log.debug "remove target config file: ${target}"
+
+        if [[ ! -e "$target" ]]; then
+          log.debug "target file is not exists: ${target}"
+          continue
+        fi
+
+        if [[ ! -L "$target" ]]; then
+          msg::notice --skip "symlink points outside dotfiles: ${target}"
+          continue
         else
-            log.error "package directory not found: $pkg_dir"
-            delete_configs_failed
-        fi
-
-        if ! src_files=$(find "$pkg_dir" -mindepth 1 -type f 2>&1); then
-            log.error "$src_files"
-            delete_configs_failed
-        fi
-
-        if ! src_dirs=$(find "$pkg_dir" -mindepth 1 -type d 2>&1); then
-            log.error "$src_dirs"
-            delete_configs_failed
-        fi
-
-        if [[ -z $src_files && -z $src_dirs ]]; then
+          src_link="$(realpath "$target")"
+          log.debug "target realpath: ${src_link}"
+          if [[ "$src_link" == "$src_file" ]]; then
+            [[ "$DOTFILES_UNINSTALL_DRYRUN" == 'true' ]] || unlink -- "$target"
+            msg::notice --unlink "$target"
+          else
+            msg::notice --skip "symlink points outside dotfiles: ${target}"
             continue
+          fi
         fi
+      done < <(echo "$src_files")
+    fi
 
-        if [[ -n $src_files ]]; then
-            while read -r src_file; do
-                target="${HOME}/${src_file#"${DOTFILES_CONFIG_DIR}/$pkg/"}"
-                if [[ ! -e $target ]]; then
-                    continue
-                elif [[ ! -L $target ]]; then
-                    log.skip "target is not owned by dotfiles: $target"
-                    continue
-                else
-                    if link_src=$(readlink "$target"); then
-                        if [[ $link_src != "$src_file" ]]; then
-                            log.skip "target is not owned by dotfiles: $target"
-                            continue
-                        fi
-                    else
-                        log.error "$cmd_result"
-                        delete_config_failed
-                    fi
-                    if cmd_result=$(rm "$target"); then
-                        log.remove "$target"
-                    else
-                        log.error "$cmd_result"
-                        delete_config_failed
-                    fi
-                fi
-            done < <(echo "$src_files")
+    # 空のディレクトリを削除
+    if [[ -n "${src_dirs:-}" ]]; then
+      while read -r src_dir; do
+        relpath="${src_dir#"${pkg_dir}/"}"
+        target="${HOME}/${relpath}"
+        log.debug "remove target dir: ${target}/"
+        if [[ ! -d "$target" ]]; then
+          log.debug "target dir is not exists: ${target}/"
+          continue
+        else
+          if [[ -z "$(ls -A "$target")" ]]; then
+            log.debug "dir is empty: ${target}/"
+            [[ "$DOTFILES_UNINSTALL_DRYRUN" == 'true' ]] || rmdir -- "$target"
+            msg::notice --rmdir "${target}/"
+          else
+            log.debug "dir is not empty: ${target}/"
+          fi
         fi
-
-        # 空のディレクトリを削除
-        if [[ -n $src_dirs ]]; then
-            while read -r src_dirs; do
-                target="${HOME}/${src_dirs#"${DOTFILES_CONFIG_DIR}/$pkg/"}"
-                if [[ ! -d $target ]]; then
-                    continue
-                else
-                    if [[ -z $(ls -A "$target") ]]; then
-                        if cmd_result=$(rm -r "$target"); then
-                            log.remove "$target"
-                        else
-                            log.error "$cmd_result"
-                            delete_config_failed
-                        fi
-                    fi
-                fi
-            done < <(echo "$src_dirs")
-        fi
-    done < <(echo "$pkg_dirs")
-
-    msg.complete 'Deleted config files:)'
+      done < <(echo "$src_dirs")
+    fi
+  done < <(echo "$pkg_dirs")
+  msg::marker --complete 'configuration files removal completed:)'
 }
 
-self_destruct() {
-    msg -c "$RED" -p 'Self-destructing'
+# DOTFILES_PATH の環境変数でディレクトリを rm -rf で削除するのは、変数次第で怖かったので
+# 手動で削除する方針にします。
+#self_destruct() {
+#  if [[ ! -d "$DOTFILES_PATH" ]]; then
+#    log.abort "dotfiles directory not found: ${DOTFILES_PATH}"
+#  fi
+#
+#  if msg::confirm "do you really want to delete <b><hl>${DOTFILES_PATH}</hl></b>?"; then
+#    msg -p -b --base-color "$DOTFILES_UNINSTALL_COLOR" 'self-destructing'
+#
+#    local dotfiles_dirname script_path
+#
+#    dotfiles_dirname="$(basename "$DOTFILES_PATH")"
+#    log.debug "dotfiles_dirname: ${dotfiles_dirname}"
+#
+#    script_path="$(realpath "$0")"
+#    log.debug "script path: ${script_path}"
+#
+#    if ! [[ "${DOTFILES_PATH}/scripts/uninstall.sh" == "$script_path" ]]; then
+#      abort "uninstallation script path mismatch: ${script_path}"
+#      exit 1
+#    fi
+#
+#    if ! [[ "$dotfiles_dirname" =~ .*dotfiles.* ]]; then
+#      abort "the target directory may not be a dotfiles directory: ${DOTFILES_PATH}"
+#      exit 1
+#    fi
+#
+#    ### DANGER ###
+#    #rm -rf "$DOTFILES_PATH"
+#    ### DANGER ###
+#
+#    msg::marker --complete 'dotfiles deleted:)'
+#  else
+#    msg::marker --terminate 'self-destruction aborted!'
+#    exit 1
+#  fi
+#}
 
-    if [[ ! -d $DOTFILES_PATH ]]; then
-        log.error "dotfiles directory not found: $DOTFILES_PATH"
-        uninstall_failed
-    fi
-
-    printf "DOTFILES: %s\n" "$(sgr bold "$FG_ACCENT")${DOTFILES_PATH}$(sgr)"
-
-    local input
-    local cmd_result
-
-    while true; do
-        read -rp 'Are you sure you want to delete this? (y/n) ' input
-        if [[ $input =~ ^[Yy]|[Yy][Ee][Ss]$ ]]; then
-            break
-        elif [[ $input =~ ^[Nn]|[Nn][Oo]$ ]]; then
-            uninstall_abort
-        fi
-    done
-
-    echo -n "Deleting dotfiles..."
-    cmd_result=$(basename "$DOTFILES_PATH")
-    if ! [[ $cmd_result = .dotfiles ]]; then
-        log.error "'DOTFILES_PATH' is not dotfiles directory"
-        uninstall_failed
-    fi
-    if cmd_result="$(rm -rf "${DOTFILES_PATH:?}" 2>&1)"; then
-        result.ok
-        newline
-    else
-        result.failed
-        log.error "$cmd_result"
-        uninstall_failed
-    fi
-}
-
-
-###  main  ###
-
-opt_all=false
-opt_delete_configs=false
-
-if [[ $# -eq 0 ]]; then
-    opt_all=true
+greet
+msg 'starting dotfiles uninstallation.'
+if msg::confirm -r; then
+  newline
+  remove_configs
+  #self_destruct
+  msg -b --base-color "$ESC_C_COMPLETE" 'goodbye👋'
+  newline
 else
-    while (($# > 0)); do
-        case "$1" in
-            --all) opt_all=true && break ;;
-            --delete-configs) opt_delete_configs=true ;;
-        esac
-        shift
-    done
-fi
-
-if "$opt_all"; then
-    greet
-    confirm_uninstall
-    delete_configs
-    self_destruct
-    printf "  %s\n" "$(sgr bold "$PINK")GoodBye!👋$(sgr)"
-else
-    "$opt_delete_configs" && delete_configs
-    exit 0
+  msg::marker --terminate 'uninstallation aborted!'
+  exit 1
 fi
