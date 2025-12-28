@@ -6,22 +6,57 @@
   [[ "${1:-}" = '__META_PROBE__' ]] && return 0
 }
 
-util::detect_platform() {
+util::sysinfo() {
+  local selector property
   local silent=false
   local force=false
-  local os
-  [[ "${1:-}" == '-q' ]] && { silent=true; shift; }
-  [[ "${1:-}" == '-f' ]] && { force=true;  shift; }
-  [[ "$force" == 'false' && -n "${DOTFILES_PLATFORM:-}" ]] && return 0
-  [[ "$silent" == 'false' ]] && msg -n -p 'detecting platform'
-  os="$(uname -o)"
-  case "$os" in
-    Darwin)    DOTFILES_PLATFORM='macos' ;;
-    GNU/Linux) DOTFILES_PLATFORM='linux' ;;
-    *)         DOTFILES_PLATFORM='unknown' ;;
+
+  while (( $# > 0 )); do
+    case "$1" in
+      # selectors
+      --os)   selector=os ;;
+      --arch) selector=arch ;;
+      # options
+      -q) silent=true ;;
+      -f) force=true ;;
+      *)
+        log.error "invalid option: $1"
+        return 1
+        ;;
+    esac
+    shift
+  done
+
+  case "$selector" in
+    os)
+      [[ "$force" == 'false' && -n "${DOTFILES_SYS_OS:-}" ]] && return 0
+      [[ "$silent" == 'false' ]] && msg -n -p 'detecting operating system'
+      property="$(uname -o)"
+      case "$property" in
+        Darwin)    DOTFILES_SYS_OS='macos' ;;
+        GNU/Linux) DOTFILES_SYS_OS='linux' ;;
+        *)         DOTFILES_SYS_OS='unknown' ;;
+      esac
+      [[ "$silent" == 'false' ]] \
+        && msg -r --result="$DOTFILES_SYS_OS" 'detecting operating system'
+      export "$DOTFILES_SYS_OS"
+      ;;
+
+    arch)
+      [[ "$force" == 'false' && -n "${DOTFILES_SYS_ARCH:-}" ]] && return 0
+      [[ "$silent" == 'false' ]] && msg -n -p 'detecting architecture'
+      property="$(uname -m)"
+      DOTFILES_SYS_ARCH="$property"
+      [[ "$silent" == 'false' ]] \
+        && msg -r --result="$DOTFILES_SYS_ARCH" 'detecting architecture'
+      export "$DOTFILES_SYS_ARCH"
+      ;;
+
+    *)
+      log.error "invalid selector: $selector"
+      return 1
+      ;;
   esac
-  [[ "$silent" == 'false' ]] && msg -r --result="$DOTFILES_PLATFORM" 'detecting platform'
-  export "$DOTFILES_PLATFORM"
 }
 
 #util::chk() {
