@@ -15,6 +15,8 @@ import dotfiles esc log msg util
 readonly GITHUB_USERNAME='mmugi'
 readonly GITHUB_EMAIL='173437276+mmugi@users.noreply.github.com'
 
+MSG_LOGO="$DOTFILES_LOGO"
+
 exec_user="$(whoami)"
 [[ "$exec_user" == 'root' ]] && abort "don't run this script as root"
 [[ ! -t 0 ]] && abort 'stdin is not connected to a tty'
@@ -34,6 +36,7 @@ Please define it in your shell config file:
 
   export DOTFILES_PATH="$HOME/.dotfiles"
 EOF
+      newline
       exit 0
       ;;
     --symlink-conflict)
@@ -44,6 +47,7 @@ Please do one of the following:
   - Move the configuration files out of the target directory.
   - Configure '${DOTFILES_PATH}/.dotignore' to ignore them.
 EOF
+      newline
       exit 1
       ;;
     *)
@@ -67,21 +71,12 @@ EOF
 #}
 
 greet() {
-  local -r greeting_messages=(
-    'hello:)'
-    'this is the dotfiles installation script.'
-    "date: <b><hl>$(date '+%Y/%m/%d %H:%M:%S %Z')</hl></b>"
-    "DOTFILES_PATH: <b><hl>${DOTFILES_PATH}</hl></b>"
-  )
-  msg::line "$DOTFILES_LOGO_WIDTH"
-  msg -b --no-prompt "$DOTFILES_LOGO"
-  newline
-  for msg in "${greeting_messages[@]}"; do
-    msg "$msg"
-  done
-  #set_platform
-  newline
-  msg::line "$DOTFILES_LOGO_WIDTH"
+  MSG_INDENT=2 \
+  msg::box --logo --top-padding --bot-padding \
+    'hello:)' \
+    'this is the dotfiles installation script.' \
+    "date: <b><hl>$(date '+%Y/%m/%d %H:%M:%S %Z')</hl></b>" \
+    "dotfiles path: <b><hl>${DOTFILES_PATH}</hl></b>"
   newline
 }
 
@@ -138,7 +133,7 @@ configure_git_for_dotfiles() {
     abort 'git configuration failed.'
   fi
 
-  msg::complete 'git configured for dotfiles:)'
+  msg::marker --complete 'git configured for dotfiles:)'
 }
 
 install_configs() {
@@ -211,7 +206,7 @@ install_configs() {
   msg -p 'checking configuration files to be installed'
   pkg_dirs="$(find "$DOTFILES_CONFIG_DIR" -mindepth 1 -maxdepth 1 -type d)"
   if [[ -z "$pkg_dirs" ]]; then
-    msg::warn 'package directories not found:/'
+    msg::marker --warning 'package directories not found:/'
     return 0
   fi
 
@@ -236,7 +231,7 @@ install_configs() {
   done < <(echo "$pkg_dirs")
 
   if [[ "$conflict" == 'true' ]]; then
-    msg::warn 'conflicting files detected:/'
+    msg::marker --warning 'conflicting files detected:/'
     _nextstep --symlink-conflict
   fi
 
@@ -259,14 +254,14 @@ install_configs() {
       if [[ "$src" =~ \.swp$ ]]; then
         continue
       elif _check_ignore "$config_relpath_fromhome"; then
-        util::log --ignore "${HOME}/${config_relpath_fromhome}"
+        msg::notice --ignore "${HOME}/${config_relpath_fromhome}"
         continue
       else
         util::install "$src" "$dst"
       fi
     done < <(echo "$src_configs")
   done < <(echo "$pkg_dirs")
-  msg::complete 'configuration files installed:)'
+  msg::marker --complete 'configuration files installed:)'
 }
 
 # --- main ---
@@ -274,7 +269,7 @@ install_configs() {
 greet
 configure_git_for_dotfiles
 install_configs
-msg -b -c "$ESC_C_COMPLETE" --prompt-char='>' 'DOTFILES SETUP COMPLETED!'
+msg -b -c "$ESC_C_COMPLETE" 'DOTFILES SETUP COMPLETED!'
 
 if [[ -n "${DOTFILES_PATH_UNDEFINED:-}" \
       && "$DOTFILES_PATH_UNDEFINED" == 'true' ]]
