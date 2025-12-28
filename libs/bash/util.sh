@@ -8,8 +8,11 @@
 
 util::detect_platform() {
   local silent=false
+  local force=false
   local os
-  [[ "${1:-}" == '-q' ]] && silent=true
+  [[ "${1:-}" == '-q' ]] && { silent=true; shift; }
+  [[ "${1:-}" == '-f' ]] && { force=true;  shift; }
+  [[ "$force" == 'false' && -n "${DOTFILES_PLATFORM:-}" ]] && return 0
   [[ "$silent" == 'false' ]] && msg -n -p 'detecting platform'
   os="$(uname -o)"
   case "$os" in
