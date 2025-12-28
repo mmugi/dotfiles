@@ -56,20 +56,6 @@ EOF
   esac
 }
 
-#set_platform() {
-#  local silent=false
-#  local os
-#  [[ "${1:-}" == '-q' ]] && silent=true
-#  [[ "$silent" == 'false' ]] && msg -n -p 'detecting platform'
-#  os="$(uname -o)"
-#  case "$os" in
-#    Darwin)    DOTFILES_PLATFORM='macos' ;;
-#    GNU/Linux) DOTFILES_PLATFORM='linux' ;;
-#    *) newline; abort "unknown os: $os" ;;
-#  esac
-#  [[ "$silent" == 'false' ]] && msg -r --result="$DOTFILES_PLATFORM" 'detecting platform'
-#}
-
 greet() {
   MSG_INDENT=2 \
   msg::box --logo --top-padding --bot-padding \
