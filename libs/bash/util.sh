@@ -20,7 +20,7 @@ util::sysinfo() {
       -q) silent=true ;;
       -f) force=true ;;
       *)
-        log.error "invalid option: $1"
+        log::error "invalid option: $1"
         return 1
         ;;
     esac
@@ -53,7 +53,7 @@ util::sysinfo() {
       ;;
 
     *)
-      log.error "invalid selector: $selector"
+      log::error "invalid selector: $selector"
       return 1
       ;;
   esac
@@ -220,11 +220,11 @@ util::install() {
       shift
       dry_run=true
     else
-      log.error "$usage"
+      log::error "$usage"
       return 1
     fi
   elif [[ $# -ne 2 ]]; then
-    log.error "$usage"
+    log::error "$usage"
     return 1
   fi
 
@@ -232,7 +232,7 @@ util::install() {
   local dst="$2"
 
   if [[ ! -e "$src" ]]; then
-    log.error "source not found: ${src}"
+    log::error "source not found: ${src}"
     return 1
   fi
 
@@ -245,14 +245,14 @@ util::install() {
           msg::notice --mkdir "$dst"
           return
         else
-          log.error "$cmd_result"
+          log::error "$cmd_result"
           return 1
         fi
       else
         if cmd_result="$(ln -s "$src" "$dst" 2>&1)"; then
           msg::notice --link "${src} ==> ${dst}"
         else
-          log.error "$cmd_result"
+          log::error "$cmd_result"
           return 1
         fi
       fi
@@ -263,16 +263,16 @@ util::install() {
       if [[ -d "$dst" ]]; then
         : directory exists
       else
-        log.warn "target already exists: ${dst}"
+        log::warn "target already exists: ${dst}"
         return 1
       fi
     elif [[ "$src" != "$symlink" ]]; then
-      log.warn "existing target is not owned by dotfiles: ${dst}"
+      log::warn "existing target is not owned by dotfiles: ${dst}"
       return 1
     elif [[ "$src" == "$symlink" ]]; then
       : symlink are managed by dotfiles
     else
-      log.error "readlink error: ${cmd_result}"
+      log::error "readlink error: ${cmd_result}"
       abort 'deploy failed;('
     fi
   fi

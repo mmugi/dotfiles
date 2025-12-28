@@ -64,7 +64,7 @@ remove_configs() {
     if [[ -d "$pkg_dir" ]]; then
       pkg="$(basename "$pkg_dir")"
       msg -2 "config: <b><hl>${pkg}</hl></b>"
-      log.debug "pkg_dir: ${pkg_dir}/"
+      log::debug "pkg_dir: ${pkg_dir}/"
     else
       abort "package directory not found: ${pkg_dir}/"
     fi
@@ -83,10 +83,10 @@ remove_configs() {
       while read -r src_file; do
         relpath="${src_file#"${pkg_dir}/"}"
         target="${HOME}/${relpath}"
-        log.debug "remove target config file: ${target}"
+        log::debug "remove target config file: ${target}"
 
         if [[ ! -e "$target" ]]; then
-          log.debug "target file is not exists: ${target}"
+          log::debug "target file is not exists: ${target}"
           continue
         fi
 
@@ -95,7 +95,7 @@ remove_configs() {
           continue
         else
           src_link="$(realpath "$target")"
-          log.debug "target realpath: ${src_link}"
+          log::debug "target realpath: ${src_link}"
           if [[ "$src_link" == "$src_file" ]]; then
             [[ "$DOTFILES_UNINSTALL_DRYRUN" == 'true' ]] || unlink -- "$target"
             msg::notice --unlink "$target"
@@ -112,17 +112,17 @@ remove_configs() {
       while read -r src_dir; do
         relpath="${src_dir#"${pkg_dir}/"}"
         target="${HOME}/${relpath}"
-        log.debug "remove target dir: ${target}/"
+        log::debug "remove target dir: ${target}/"
         if [[ ! -d "$target" ]]; then
-          log.debug "target dir is not exists: ${target}/"
+          log::debug "target dir is not exists: ${target}/"
           continue
         else
           if [[ -z "$(ls -A "$target")" ]]; then
-            log.debug "dir is empty: ${target}/"
+            log::debug "dir is empty: ${target}/"
             [[ "$DOTFILES_UNINSTALL_DRYRUN" == 'true' ]] || rmdir -- "$target"
             msg::notice --rmdir "${target}/"
           else
-            log.debug "dir is not empty: ${target}/"
+            log::debug "dir is not empty: ${target}/"
           fi
         fi
       done < <(echo "$src_dirs")
@@ -135,7 +135,7 @@ remove_configs() {
 # 手動で削除する方針にします。
 #self_destruct() {
 #  if [[ ! -d "$DOTFILES_PATH" ]]; then
-#    log.abort "dotfiles directory not found: ${DOTFILES_PATH}"
+#    log::abort "dotfiles directory not found: ${DOTFILES_PATH}"
 #  fi
 #
 #  if msg::confirm "do you really want to delete <b><hl>${DOTFILES_PATH}</hl></b>?"; then
@@ -144,10 +144,10 @@ remove_configs() {
 #    local dotfiles_dirname script_path
 #
 #    dotfiles_dirname="$(basename "$DOTFILES_PATH")"
-#    log.debug "dotfiles_dirname: ${dotfiles_dirname}"
+#    log::debug "dotfiles_dirname: ${dotfiles_dirname}"
 #
 #    script_path="$(realpath "$0")"
-#    log.debug "script path: ${script_path}"
+#    log::debug "script path: ${script_path}"
 #
 #    if ! [[ "${DOTFILES_PATH}/scripts/uninstall.sh" == "$script_path" ]]; then
 #      abort "uninstallation script path mismatch: ${script_path}"

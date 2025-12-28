@@ -97,7 +97,7 @@ configure_git_for_dotfiles() {
 
   if username=$(git config --file "$gitconfig_local" user.name); then
     if ! [[ "$username" == "$GITHUB_USERNAME" ]]; then
-      log.warn "user.name already configured: ${username}"
+      log::warn "user.name already configured: ${username}"
     fi
   else
     git config --file "$gitconfig_local" user.name "$GITHUB_USERNAME"
@@ -108,7 +108,7 @@ configure_git_for_dotfiles() {
 
   if user_email=$(git config --file "$gitconfig_local" user.email); then
     if ! [[ "$user_email" == "$GITHUB_EMAIL" ]]; then
-      log.warn "user.email already configured: ${user_email}"
+      log::warn "user.email already configured: ${user_email}"
     fi
   else
     git config --file "$gitconfig_local" user.email "$GITHUB_EMAIL"
@@ -201,7 +201,7 @@ install_configs() {
 
     src_configs="$(find "$pkg_dir" -mindepth 1)"
     if [[ -z "$src_configs" ]]; then
-      log.warn "package directory is empty: ${pkg_dir}"
+      log::warn "package directory is empty: ${pkg_dir}"
       continue
     fi
 

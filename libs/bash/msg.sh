@@ -163,7 +163,7 @@ msg() {
           # 色変数が空になる場合がある。
           shift
         elif [[ "$2" =~ ^-+ ]]; then
-          log.error "$1: expected a ansi color code. perhaps try --base-color=\"$2\"?"
+          log::error "$1: expected a ansi color code. perhaps try --base-color=\"$2\"?"
           return 1
         else
           base_color="$2"
@@ -178,7 +178,7 @@ msg() {
           # 色変数が空になる場合がある。
           shift
         elif [[ "$2" =~ ^-+ ]]; then
-          log.error "$1: expected a ansi color code. perhaps try --hl-color=\"$2\"?"
+          log::error "$1: expected a ansi color code. perhaps try --hl-color=\"$2\"?"
           return 1
         else
           hl_color="$2"
@@ -203,10 +203,10 @@ msg() {
         if [[ "$1" =~ ^--ok= ]]; then
           result_str="${1#--ok=}"
         elif [[ -z "${2:-}" ]]; then
-          log.error "$1: expected a string argument"
+          log::error "$1: expected a string argument"
           return 1
         elif [[ "$2" =~ ^-+ ]]; then
-          log.error "$1: expected a string argument. perhaps try --ok=\"$2\"?"
+          log::error "$1: expected a string argument. perhaps try --ok=\"$2\"?"
           return 1
         else
           result_str="$2"
@@ -218,10 +218,10 @@ msg() {
         if [[ "$1" =~ ^--ng= ]]; then
           result_str="${1#--ng=}"
         elif [[ -z "${2:-}" ]]; then
-          log.error "$1: expected a string argument"
+          log::error "$1: expected a string argument"
           return 1
         elif [[ "$2" =~ ^-+ ]]; then
-          log.error "$1: expected a string argument. perhaps try --ng=\"$2\"?"
+          log::error "$1: expected a string argument. perhaps try --ng=\"$2\"?"
           return 1
         else
           result_str="$2"
@@ -233,10 +233,10 @@ msg() {
         if [[ "$1" =~ ^--result= ]]; then
           result_str="${1#--result=}"
         elif [[ -z "${2:-}" ]]; then
-          log.error "$1: expected a string argument"
+          log::error "$1: expected a string argument"
           return 1
         elif [[ "$2" =~ ^-+ ]]; then
-          log.error "$1: expected a string argument. perhaps try --ok=\"$2\"?"
+          log::error "$1: expected a string argument. perhaps try --ok=\"$2\"?"
           return 1
         else
           result_str="$2"
@@ -248,10 +248,10 @@ msg() {
         if [[ "$1" =~ ^--prompt= ]]; then
           prompt_str="${1#--prompt=}"
         elif [[ -z "${2:-}" ]]; then
-          log.error "$1: expected a string argument"
+          log::error "$1: expected a string argument"
           return 1
         elif [[ "$2" =~ ^-+ ]]; then
-          log.error "$1: expected a string argument. perhaps try --prompt=\"$2\"?"
+          log::error "$1: expected a string argument. perhaps try --prompt=\"$2\"?"
           return 1
         else
           prompt_str="$2"
@@ -266,7 +266,7 @@ msg() {
           # 色変数が空になる場合がある。
           shift
         elif [[ "$2" =~ ^-+ ]]; then
-          log.error "$1: expected a ansi color code. perhaps try --prompt-color=\"$2\"?"
+          log::error "$1: expected a ansi color code. perhaps try --prompt-color=\"$2\"?"
           return 1
         else
           prompt_color="$2"
@@ -274,7 +274,7 @@ msg() {
         fi
         ;;
       --no-prompt) no_prompt=true ;;
-      -*) log.error "invalid option: $1"; return 1 ;;
+      -*) log::error "invalid option: $1"; return 1 ;;
       *) break ;;
     esac
     shift
@@ -292,7 +292,7 @@ msg() {
 
   msg::_check_tty_mode
 
-  [[ $# -eq 0 ]] && { log.error 'message string is required'; return 1; }
+  [[ $# -eq 0 ]] && { log::error 'message string is required'; return 1; }
 
   local msg prompt result
   local s="$*"
@@ -395,7 +395,7 @@ msg::box() {
           # 色変数が空になる場合がある。
           shift
         elif [[ "$2" =~ ^-+ ]]; then
-          log.error "$1: expected a ansi color code. perhaps try --base-color=\"$2\"?"
+          log::error "$1: expected a ansi color code. perhaps try --base-color=\"$2\"?"
           return 1
         else
           base_color="$2"
@@ -411,7 +411,7 @@ msg::box() {
           # 色変数が空になる場合がある。
           shift
         elif [[ "$2" =~ ^-+ ]]; then
-          log.error "$1: expected a ansi color code. perhaps try --box-color=\"$2\"?"
+          log::error "$1: expected a ansi color code. perhaps try --box-color=\"$2\"?"
           return 1
         else
           box_color="$2"
@@ -420,7 +420,7 @@ msg::box() {
         ;;
       --logo)
         if [[ -z "${MSG_LOGO:-}" ]]; then
-          log.error 'MSG_LOGO is not set'
+          log::error 'MSG_LOGO is not set'
           return 1
         fi
         mid_padding=true
@@ -434,10 +434,10 @@ msg::box() {
         if [[ "$1" =~ ^--width= ]]; then
           box_width="${1#--width=}"
         elif [[ -z "${2:-}" ]]; then
-          log.error 'expected a numeric width value'
+          log::error 'expected a numeric width value'
           return 1
         elif [[ ! "$2" =~ ^[0-9]+$ ]]; then
-          log.error "$1: expected a numeric width value: $2"
+          log::error "$1: expected a numeric width value: $2"
           return 1
         else
           box_width="$2"
@@ -445,8 +445,8 @@ msg::box() {
         fi
         ;;
       --top-padding) top_padding=true ;;
-      notset) log.error 'option required'; return 1 ;;
-      -*) log.error "invalid option: $1"; return 1 ;;
+      notset) log::error 'option required'; return 1 ;;
+      -*) log::error "invalid option: $1"; return 1 ;;
       *) break ;;
     esac
     shift
@@ -649,10 +649,10 @@ EOF
         if [[ "$1" =~ ^--msg= ]]; then
           msg="${1#--msg=}"
         elif [[ -z "$2" ]]; then
-          log.error "$1: expected a string argument"
+          log::error "$1: expected a string argument"
           return 1
         elif [[ "$2" =~ ^-+ ]]; then
-          log.error "$1: expected a string argument. perhaps try --msg=\"$2\"?"
+          log::error "$1: expected a string argument. perhaps try --msg=\"$2\"?"
           return 1
         else
           msg="$2"
@@ -663,10 +663,10 @@ EOF
         if [[ "$1" =~ ^--ok= ]]; then
           result_ok="${1#--ok=}"
         elif [[ -z "$2" ]]; then
-          log.error "$1: expected a string argument"
+          log::error "$1: expected a string argument"
           return 1
         elif [[ "$2" =~ ^-+ ]]; then
-          log.error "$1: expected a string argument. perhaps try --ok=\"$2\"?"
+          log::error "$1: expected a string argument. perhaps try --ok=\"$2\"?"
           return 1
         else
           result_ok="$2"
@@ -677,10 +677,10 @@ EOF
         if [[ "$1" =~ ^--ng= ]]; then
           result_ng="${1#--ng=}"
         elif [[ -z "$2" ]]; then
-          log.error "$1: expected a string argument"
+          log::error "$1: expected a string argument"
           return 1
         elif [[ "$2" =~ ^-+ ]]; then
-          log.error "$1: expected a string argument. perhaps try --ng=\"$2\"?"
+          log::error "$1: expected a string argument. perhaps try --ng=\"$2\"?"
           return 1
         else
           result_ng="$2"
@@ -688,7 +688,7 @@ EOF
         fi
         ;;
       -*)
-        log.error "invalid option: $1"
+        log::error "invalid option: $1"
         return 1
         ;;
     esac
@@ -704,8 +704,8 @@ EOF
   kind="$(type -t -- "$cmd" ||:)"
   case "$kind" in
     file|builtin) ;;
-    "") log.error "command not found: ${cmd}"; return 1 ;;
-    *)  log.error "disallowd command type \"${kind}\": ${cmd}"; return 1 ;;
+    "") log::error "command not found: ${cmd}"; return 1 ;;
+    *)  log::error "disallowd command type \"${kind}\": ${cmd}"; return 1 ;;
   esac
 
   trap::save_handler
