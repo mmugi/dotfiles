@@ -93,6 +93,8 @@ msg() {
   #
   #   -r   \rで出力行をリセット後にメッセージを出力する。
   #
+  #   -R   強調表示およびランダムな絵文字プロンプトで出力します。
+  #
   #   -s, --strip
   #       制御文字(ANSI, ASCII)およびタグの除去をして出力します。
   #
@@ -132,6 +134,7 @@ msg() {
   local prompt_indent='' no_prompt=false
   local bold base_color hl_color
   local result_str result_color
+  local p
 
   local -r dots='...'
   #local -r spinner_dot='⠧⠏⠛⠹⠼⠶'
@@ -192,6 +195,16 @@ msg() {
         ;;
       -P | --plain) style_plain=true ;;
       -r) line_reset=true ;;
+      -R)
+        base_color="$MSG_C_HIGHLIGHT1"
+        p="$(( RANDOM % 4 + 1 ))"
+        case "$p" in
+          1) prompt_str='🛸' ;;
+          2) prompt_str='🛰️' ;;
+          3) prompt_str='🚀' ;;
+          4) prompt_str='🪐' ;;
+        esac
+        ;;
       -s | --strip) strip=true ;;
       --spinner)
         # 無限ループするので呼び出し側でkillが必要です
