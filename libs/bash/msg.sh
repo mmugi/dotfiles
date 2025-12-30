@@ -374,18 +374,16 @@ msg() {
 }
 
 msg::box() {
-  local line plain_text term_width box_width base_color box_color
-  local msg_prompt prompt_opts
-  local max=0 max_logo=0 len
-  local -a messages=() logo_lines=() prompt_opts=()
-  local padding=2
-  local top_padding=false
-  local mid_padding=false
-  local bot_padding=false
+  local term_width box_width
+  local box_color base_color base_color
+  local prompt
+  local line plain_text len max=0 max_logo=0
+  local -a messages=() logo_lines=() opts_prompt=()
+  local padding=2 top_padding=false mid_padding=false bot_padding=false
   local width_fit_mode=auto
 
   while (( $# > 0 )); do
-    case "${1:-notset}" in
+    case "$1" in
       --) shift; break ;;
       -c | --base-color | --base-color=*)
         if [[ "$1" =~ ^--base-color= ]]; then
@@ -428,6 +426,20 @@ msg::box() {
           logo_lines+=( "$line" )
         done <<< "$MSG_LOGO"
         ;;
+      --prompt | --prompt=*)
+        if [[ "$1" =~ ^--prompt= ]]; then
+          prompt="${1#--prompt=}"
+        elif [[ -z "${2:-}" ]]; then
+          log::error "$1: expected a string argument"
+          return 1
+        elif [[ "$2" =~ ^-+ ]]; then
+          log::error "$1: expected a string argument. perhaps try --prompt=\"$2\"?"
+          return 1
+        else
+          prompt="$2"
+          shift
+        fi
+        ;;
       --fix-width) box_width="$MSG_BOX_WIDTH" ;;
       --full-width) width_fit_mode=full ;;
       --width | --width=*)
@@ -445,7 +457,6 @@ msg::box() {
         fi
         ;;
       --top-padding) top_padding=true ;;
-      notset) log::error 'option required'; return 1 ;;
       -*) log::error "invalid option: $1"; return 1 ;;
       *) break ;;
     esac
@@ -454,9 +465,9 @@ msg::box() {
 
   : "${base_color:="$MSG_C_BASE"}"
   : "${box_color:="$MSG_C_HIGHLIGHT1"}"
-  : "${msg_prompt:=*}"
+  : "${prompt:=*}"
 
-  prompt_opts=( --prompt "$msg_prompt" )
+  opts_prompt=( --prompt "$prompt" )
 
   for line in "$@"; do
     messages+=( "$line" )
@@ -474,7 +485,7 @@ msg::box() {
   done
 
   for line in "${messages[@]}"; do
-    plain_text="$(msg "${prompt_opts[@]}" --plain --strip "$line")"
+    plain_text="$(msg "${opts_prompt[@]}" --plain --strip "$line")"
     len="${#plain_text}"
     (( len > max )) && max="$len"
   done
@@ -522,9 +533,9 @@ msg::box() {
 
   # 本文出力
   for line in "${messages[@]}"; do
-    plain_text="$(msg "${prompt_opts[@]}" --plain --strip "$line")"
+    plain_text="$(msg "${opts_prompt[@]}" --plain --strip "$line")"
     printf '%b│%*s' "$box_color" "$padding" ""
-    msg -n "${prompt_opts[@]}" -c "$base_color" "$line"
+    msg -n "${opts_prompt[@]}" -c "$base_color" "$line"
     printf '%*s' $(( max - ${#plain_text} )) ""
     printf '%*s%b│\n' "$padding" "" "$box_color"
   done
