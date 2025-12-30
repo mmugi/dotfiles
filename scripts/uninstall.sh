@@ -13,7 +13,11 @@ fi
 : "${DOTFILES_UNINSTALL_DRYRUN:=false}"
 : "${DOTFILES_UNINSTALL_COLOR:="$ESC_C_CRITICAL"}"
 
-[[ -n "${1:-}" && "$1" == '--dryrun' ]] && DOTFILES_UNINSTALL_DRYRUN=true
+case "${1:-notset}" in
+  --dryrun) DOTFILES_UNINSTALL_DRYRUN=true ;;
+  notset) :;;
+  *) abort "invalid option: $1" ;;
+esac
 
 # shellcheck disable=SC2034
 MSG_LOGO="$(cat <<LOGO
