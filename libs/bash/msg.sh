@@ -590,27 +590,23 @@ msg::confirm() {
 
 msg::marker() {
   local base_color prompt
-  case "${1:-option not set}" in
-    --complete)
-      base_color="$ESC_C_COMPLETE"
-      prompt='✨️'
-      shift
-      ;;
-    --warning)
-      base_color="$ESC_C_WARNING"
-      prompt='⚡'
-      shift
-      ;;
-    --terminate)
-      base_color="$ESC_C_CRITICAL"
-      prompt='⛔'
-      shift
-      ;;
-    -*) abort "invalid option: $1" ;;
-    *) abort 'option required' ;;
-  esac
-  msg -b --base-color="$base_color" --prompt="$prompt" -- "$*"
-  newline
+  local newline=true
+  local p
+  while (( $# > 0 )); do
+    case "$1" in
+      --) shift; break ;;
+      --complete)  base_color="$ESC_C_COMPLETE"; prompt='✨️' ;;
+      --warning)   base_color="$ESC_C_WARNING";  prompt='⚡' ;;
+      --terminate) base_color="$ESC_C_CRITICAL"; prompt='⛔' ;;
+      -n) newline=false ;;
+      -*) abort "invalid option: $1" ;;
+      *) break ;;
+    esac
+    shift
+  done
+  msg::box --base-color="$base_color" --prompt="$prompt" -- "$*"
+  [[ "$newline" == 'true' ]] && newline
+  return 0
 }
 
 msg::notice() {
