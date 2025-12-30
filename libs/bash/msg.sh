@@ -561,31 +561,48 @@ msg::box() {
 
 msg::confirm() {
   local input
-  if [[ "$1" == '-r' ]]; then
-    shift
-    msg -B --prompt-color "$ESC_C_WARNING" --prompt='!' -- \
-      'press <b><hl>RETURN/ENTER</hl></b> to continue or press any other key to abort.' \
-      </dev/tty >/dev/tty
+  local mode
 
-    # stdin flush
-    read -sr -t 0.1 -N 255 _
-    read -sr -n 1 -p 'ready?' input </dev/tty >/dev/tty && echo
-    if [[ -z "${input:-}" ]]; then
-      return 0
-    else
-      return 1
-    fi
-  else
-    msg -n -B --prompt-color "$ESC_C_WARNING" --prompt='!' -- "$* [y/N] "
-    # stdin flush
-    read -sr -t 0.1 -N 255 _
-    IFS='' read -r input
-    if [[ "$input" =~ ^([Yy]|[Yy][Ee][Ss])$ ]]; then
-      return 0
-    else
-      return 1
-    fi
-  fi
+  case "${1:-notset}" in
+    -r) mode='return'; shift ;;
+    -y)
+      mode='yes-or-no'
+      [[ -z "${2:-}" ]] && abort "${1}: message required"
+      shift
+      ;;
+    notset) abort 'option required' ;;
+    *) abort "invalid option: $1" ;;
+  esac
+
+  case "$mode" in
+    return)
+      msg -B --prompt-color "$ESC_C_WARNING" --prompt='!' -- \
+        'press <b><hl>RETURN/ENTER</hl></b> to continue or press any other key to abort.' \
+        </dev/tty >/dev/tty
+
+      # stdin flush
+      read -sr -t 0.1 -N 255 _
+      read -sr -n 1 -p 'ready?' input </dev/tty >/dev/tty && echo
+      if [[ -z "${input:-}" ]]; then
+        return 0
+      else
+        return 1
+      fi
+      ;;
+    yes-or-no)
+      msg -n -B --prompt-color "$ESC_C_WARNING" --prompt='!' -- "$* [y/N] "
+      # stdin flush
+      read -sr -t 0.1 -N 255 _
+      IFS='' read -r input
+      if [[ "$input" =~ ^([Yy]|[Yy][Ee][Ss])$ ]]; then
+        return 0
+      else
+        return 1
+      fi
+      ;;
+  esac
+
+  abort "invalid mode: ${mode}"
 }
 
 msg::marker() {
