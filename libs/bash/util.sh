@@ -37,9 +37,14 @@ util::sysinfo() {
         GNU/Linux) DOTFILES_SYS_OS='linux' ;;
         *)         DOTFILES_SYS_OS='unknown' ;;
       esac
-      [[ "$silent" == 'false' ]] \
-        && msg -r --result="$DOTFILES_SYS_OS" 'detecting operating system'
-      export "$DOTFILES_SYS_OS"
+      if [[ "$silent" == 'false' ]]; then
+        if [[ "$DOTFILES_SYS_OS" != 'unknown' ]]; then
+          msg -r --ok="$DOTFILES_SYS_OS" 'detecting operating system'
+        else
+          msg -r --ng="$DOTFILES_SYS_OS" 'detecting operating system'
+        fi
+      fi
+      export DOTFILES_SYS_OS
       ;;
 
     arch)
@@ -49,7 +54,7 @@ util::sysinfo() {
       DOTFILES_SYS_ARCH="$property"
       [[ "$silent" == 'false' ]] \
         && msg -r --result="$DOTFILES_SYS_ARCH" 'detecting architecture'
-      export "$DOTFILES_SYS_ARCH"
+      export DOTFILES_SYS_ARCH
       ;;
 
     *)
@@ -108,7 +113,7 @@ util::chk() {
 
   case "$selector" in
     command)
-      msg="command: <b><hl>${target}</b></hl>"
+      msg="checking for the <b><hl>${target}</b></hl> command"
       [[ "$quiet" != 'true' ]] && msg "${msg_opts[@]}" -n -p "$msg"
       if type "$target" >/dev/null 2>&1; then
         [[ "$quiet" != 'true' ]] && msg "${msg_opts[@]}" -r --ok='EXIST' "$msg"
