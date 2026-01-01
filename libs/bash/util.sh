@@ -59,6 +59,69 @@ util::sysinfo() {
   esac
 }
 
+util::chk() {
+  # options
+  #   -2: msgの-2オプションを有効化
+  #   -c: command
+  #   -q: 結果を出力しない
+
+  local selector target msg
+  local quiet=false
+  local -a msg_opts=()
+  local -r usage='usage: [-c] [-q] target'
+
+  while (( $# > 0 )); do
+    case "$1" in
+      --)
+        shift
+        positional_args+=("$@")
+        set --
+        ;;
+      -*)
+        for (( i=1; i<${#1}; i++ )); do
+          case "${1:$i:1}" in
+            2) msg_opts+=(-2) ;;
+            c)
+              [[ -n "${selector:-}" ]] && abort "$usage"
+              selector=command
+              ;;
+            q) quiet=true ;;
+            *)
+              abort "invalid option: $1"
+              ;;
+          esac
+        done
+        shift
+        ;;
+      *)
+        positional_args+=("$1")
+        shift
+        ;;
+    esac
+  done
+
+  [[ "${#positional_args[@]}" -eq 0 ]] && abort "$usage"
+  [[ -z "$selector" ]] && abort "$usage"
+
+  set -- "${positional_args[@]}"
+  target="$1"
+
+  case "$selector" in
+    command)
+      msg="command: <b><hl>${target}</b></hl>"
+      [[ "$quiet" != 'true' ]] && msg "${msg_opts[@]}" -n -p "$msg"
+      if type "$target" >/dev/null 2>&1; then
+        [[ "$quiet" != 'true' ]] && msg "${msg_opts[@]}" -r --ok='EXIST' "$msg"
+        return 0
+      else
+        [[ "$quiet" != 'true' ]] && msg "${msg_opts[@]}" -r --ng='NOTFOUND' "$msg"
+        return 1
+      fi
+      ;;
+    *) abort "invalid selector: ${selector}"
+  esac
+}
+
 #util::chk() {
 #  local opt_exists=false
 #  local opt_selector=
