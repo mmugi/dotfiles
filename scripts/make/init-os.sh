@@ -5,8 +5,21 @@ set -ueo pipefail
 source "${DOTFILES_PATH}/libs/bash/import.sh"
 import util msg log
 
+_start() {
+  if msg::confirm -y "proceed with the initial <b><hl>${DOTFILES_SYS_OS}</hl></b> setup?"; then
+    msg "starting initializing for ${DOTFILES_SYS_OS}."
+  else
+    msg::marker --terminate 'aborting initial os setup;('
+    exit 1
+  fi
+}
+
+_end() {
+  msg::marker --complete "initial ${DOTFILES_SYS_OS} setup completed:)"
+}
+
 init_macos() {
-  msg 'starting initializing for macos.'
+  _start
 
   msg -p 'installing command line tools for xcode'
   if gcc --version >/dev/null 2>&1; then
@@ -29,17 +42,15 @@ init_macos() {
   #  : rosetta installation
   #fi
 
-  msg::marker --complete 'macos initialized:)'
+  _end
 }
 
 # --- main ---
 
 util::sysinfo --os
-if msg::confirm -y 'proceed with the initial <b><hl>macos</hl></b> setup?'; then
-  case "$DOTFILES_SYS_OS" in
-    macos) init_macos ;;
-    *) abort "unsupported platform: $DOTFILES_SYS_OS" ;;
-  esac
+
+if [[ "$DOTFILES_SYS_OS" == 'macos' ]]; then
+  init_macos
 else
-  msg::marker --terminate 'aborting initial os setup;('
+  abort "unsupported platform: $DOTFILES_SYS_OS"
 fi
