@@ -196,7 +196,7 @@ msg() {
       -P | --plain) style_plain=true ;;
       -r) line_reset=true ;;
       -R)
-        base_color="$MSG_C_HIGHLIGHT1"
+        base_color="$ESC_C_SUCCESS"
         p="$(( RANDOM % 4 + 1 ))"
         case "$p" in
           1) prompt_str='🛸' ;;
