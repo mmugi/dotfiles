@@ -10,6 +10,7 @@ util::sysinfo() {
   local selector property
   local silent=false
   local force=false
+  local usage='usage: util::sysinfo <--os | --arch> [-q] [-f]'
 
   while (( $# > 0 )); do
     case "$1" in
@@ -26,6 +27,8 @@ util::sysinfo() {
     esac
     shift
   done
+
+  [[ -z "${selector:-}" ]] && abort "$usage"
 
   case "$selector" in
     os)
@@ -106,7 +109,7 @@ util::chk() {
   done
 
   [[ "${#positional_args[@]}" -eq 0 ]] && abort "$usage"
-  [[ -z "$selector" ]] && abort "$usage"
+  [[ -z "${selector:-}" ]] && abort "$usage"
 
   set -- "${positional_args[@]}"
   target="$1"
