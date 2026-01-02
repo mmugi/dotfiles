@@ -25,3 +25,10 @@ init: ## Run all initial setup tasks.
 	@$(SCRIPT_DIR)/init/init.sh --all
 init-os: ## Perform the initial setup specific to your operating system.
 	@$(SCRIPT_DIR)/init/os.sh
+
+
+.PHONY: brew-diff brew-dump
+brew-diff: ## Run all initial setup tasks.
+	@$(SCRIPT_DIR)/brew/brew-diff.sh
+brew-dump: ## Perform the initial setup specific to your operating system.
+	@$(SCRIPT_DIR)/brew/brew-dump.sh

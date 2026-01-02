@@ -23,5 +23,6 @@ LOGO
 
   readonly DOTFILES_CONFIG_DIR="${DOTFILES_PATH:?}/configs"
   readonly DOTFILES_GITHOOKS_DIR="${DOTFILES_PATH:?}/misc/git/hooks/dotfiles"
+  readonly DOTFILES_BREWFILE_DIR="${DOTFILES_PATH:?}/misc/brew"
   readonly DOTFILES_LOGO_WIDTH
 }
