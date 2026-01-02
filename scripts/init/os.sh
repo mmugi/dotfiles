@@ -2,7 +2,7 @@
 
 set -ueo pipefail
 
-source "${DOTFILES_PATH}/libs/bash/import.sh"
+source "${DOTFILES_PATH}/lib/bash/import.sh"
 import util msg log
 
 _start() {

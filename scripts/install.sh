@@ -8,7 +8,7 @@ if [ -z "${BASH_VERSION:-}" ]; then
 fi
 
 # shellcheck source=/dev/null
-source "${DOTFILES_PATH:?}/libs/bash/import.sh"
+source "${DOTFILES_PATH:?}/lib/bash/import.sh"
 
 import dotfiles esc log msg util
 

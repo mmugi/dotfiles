@@ -3,7 +3,7 @@
 set -Eueo pipefail
 
 # shellcheck source=/dev/null
-source "${DOTFILES_PATH}/libs/bash/import.sh"
+source "${DOTFILES_PATH}/lib/bash/import.sh"
 import dotfiles log msg
 
 if [ -z "${BASH_VERSION:-}" ]; then

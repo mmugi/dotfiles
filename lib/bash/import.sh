@@ -7,7 +7,7 @@
 #
 # DOTFILES_LIB_PATHから <library名>.sh を探索してsourceします。
 # 依存関係は各ライブラリのメタ情報で管理します。
-# デフォルトでは $DOTFILES_PATH/libs/bash から検索します。
+# デフォルトでは $DOTFILES_PATH/lib/bash から検索します。
 #
 # ライブラリ側に必要なメタ情報
 # ライブラリの先頭に以下を定義する必要があります。
@@ -39,9 +39,9 @@ if [[ -z "${DOTFILES_PATH:-}" ]]; then
 fi
 
 _IMPORT_ENTITY="$(realpath -- "${BASH_SOURCE[0]}")"
-if [[ "$_IMPORT_ENTITY" != "${DOTFILES_PATH}/libs/bash/import.sh" ]]; then
+if [[ "$_IMPORT_ENTITY" != "${DOTFILES_PATH}/lib/bash/import.sh" ]]; then
   printf \
-    "DOTFILES_PATH does not match the sourced import.sh: %s/libs/bash/import.sh\n" \
+    "DOTFILES_PATH does not match the sourced import.sh: %s/lib/bash/import.sh\n" \
     "$DOTFILES_PATH" >&2
   exit 1
 fi
@@ -51,7 +51,7 @@ fi
 # ライブラリ検索パス定義
 # DOTFILES_LIB_PATH 環境変数を定義することで検索パスを追加できます。
 # :区切りで複数与えることも可能で、左から優先されます。
-declare -a _import_lib_path_default=( "${DOTFILES_PATH}/libs/bash" )
+declare -a _import_lib_path_default=( "${DOTFILES_PATH}/lib/bash" )
 if [[ -n "${DOTFILES_LIB_PATH:-}" ]]; then
   IFS=: read -r -a _import_lib_path_extra <<< "$DOTFILES_LIB_PATH"
   DOTFILES_LIB_PATH=( "${_import_lib_path_extra[@]}" "${_import_lib_path_default[@]}" )

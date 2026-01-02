@@ -3,7 +3,7 @@
 set -ueo pipefail
 
 # shellcheck source=/dev/null
-source "${DOTFILES_PATH}/libs/bash/import.sh"
+source "${DOTFILES_PATH}/lib/bash/import.sh"
 import msg util log
 
 [[ "${DOTFILES_INIT:-}" != 'true' ]] && abort 'DOTFILES_INIT is not true'
