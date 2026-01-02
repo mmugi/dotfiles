@@ -28,7 +28,7 @@ init-os: ## Perform the initial setup specific to your operating system.
 
 
 .PHONY: brew-diff brew-dump
-brew-diff: ## Run all initial setup tasks.
+brew-diff: ## Show differences between installed brew package and those in the dotfiles Brewfile.
 	@$(SCRIPT_DIR)/brew/brew-diff.sh
-brew-dump: ## Perform the initial setup specific to your operating system.
+brew-dump: ## Write all installed packages into a Brewfile in dotfiles.
 	@$(SCRIPT_DIR)/brew/brew-dump.sh
