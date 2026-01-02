@@ -76,8 +76,13 @@ remove_configs() {
     local src_files src_file
     local src_dirs src_dir
 
-    src_dirs="$(find "$pkg_dir" -mindepth 1 -type d)"
     src_files="$(find "$pkg_dir" -mindepth 1 -type f)"
+    src_dirs="$(
+      find "$pkg_dir" -mindepth 1 -type d \
+      | awk '{ print gsub("/", "/"), $0 }' \
+      | sort -nr \
+      | cut -d ' ' -f 2
+    )"
 
     [[ -z $src_files && -z $src_dirs ]] && continue
 
