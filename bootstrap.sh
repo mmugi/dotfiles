@@ -49,21 +49,31 @@ exec_user=$(whoami)
 [[ "$exec_user" == 'root' ]] && abort "don't run this script as root"
 
 if [[ ! -e "$DOTFILES_PATH" ]]; then
-  if type 'git' >/dev/null 2>&1; then
-    downloader='git'
-  elif type 'curl' >/dev/null 2>&1; then
-    downloader='curl'
-  elif type 'wget' >/dev/null 2>&1; then
-    downloader='wget'
+  if [[ -z "${DOTFILES_DOWNLOADER:-}" ]]; then
+    if type 'git' >/dev/null 2>&1; then
+      downloader='git'
+    elif type 'curl' >/dev/null 2>&1; then
+      downloader='curl'
+    elif type 'wget' >/dev/null 2>&1; then
+      downloader='wget'
+    else
+      abort 'downloader not found'
+    fi
   else
-    abort 'downloader not found'
+    if [[ ! "$DOTFILES_DOWNLOADER" =~ ^(git|curl|wget)$ ]]; then
+      abort "invalid downloader: ${DOTFILES_DOWNLOADER}"
+    elif type "$DOTFILES_DOWNLOADER" >/dev/null 2>&1; then
+      downloader="$DOTFILES_DOWNLOADER"
+    else
+      abort 'downloader not found'
+    fi
   fi
 
   msg 'downloading dotfiles...'
 
-  if [[ "$downloader" == git ]]; then
+  if [[ "$downloader" == 'git' ]]; then
     git clone --recursive -b "$DOTFILES_BRANCH" "$DOTFILES_URL" "$DOTFILES_PATH"
-  elif [[ "$downloader" =~ curl|wget ]]; then
+  elif [[ "$downloader" =~ ^(curl|wget)$ ]]; then
     type 'tar' >/dev/null 2>&1 || abort 'command not found: tar'
     mkdir "$DOTFILES_PATH"
     case "$downloader" in
