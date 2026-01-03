@@ -101,7 +101,7 @@ configure_git_for_dotfiles() {
     fi
   else
     git config --file "$gitconfig_local" user.name "$GITHUB_USERNAME"
-    msg -2 "user.name: ${ESC_ATTR_BOLD}<hl>${GITHUB_USERNAME}</hl>"
+    msg::notice --configured "user.name: ${GITHUB_USERNAME}"
   fi
 
   msg -p 'configuring git user email'
@@ -112,7 +112,7 @@ configure_git_for_dotfiles() {
     fi
   else
     git config --file "$gitconfig_local" user.email "$GITHUB_EMAIL"
-    msg -2 "user.email: ${ESC_ATTR_BOLD}<hl>${GITHUB_EMAIL}</hl>"
+    msg::notice --configured "user.email: ${GITHUB_EMAIL}"
   fi
 
   if [[ "$configure_git_failed" == 'true' ]]; then
