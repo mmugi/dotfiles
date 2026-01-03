@@ -672,14 +672,15 @@ msg::marker() {
 msg::notice() {
   local color event
   case "$1" in
-    --delete) event='DELETE'; color="$ESC_C_DANGER";  shift ;;
-    --ignore) event='IGNORE'; color="$ESC_C_GRAYOUT"; shift ;;
-    --link)   event='LINK';   color="$ESC_C_SUCCESS"; shift ;;
-    --mkdir)  event='MKDIR';  color="$ESC_C_SUCCESS"; shift ;;
-    --remove) event='REMOVE'; color="$ESC_C_DANGER";  shift ;;
-    --rmdir)  event='RMDIR';  color="$ESC_C_DANGER";  shift ;;
-    --skip)   event='SKIP';   color="$ESC_C_NOTICE";  shift ;;
-    --unlink) event='UNLINK'; color="$ESC_C_DANGER";  shift ;;
+    --configured) event='CONFIGURED'; color="$ESC_C_SUCCESS"; shift ;;
+    --delete)     event='DELETE';     color="$ESC_C_DANGER";  shift ;;
+    --ignore)     event='IGNORE';     color="$ESC_C_GRAYOUT"; shift ;;
+    --link)       event='LINK';       color="$ESC_C_SUCCESS"; shift ;;
+    --mkdir)      event='MKDIR';      color="$ESC_C_SUCCESS"; shift ;;
+    --remove)     event='REMOVE';     color="$ESC_C_DANGER";  shift ;;
+    --rmdir)      event='RMDIR';      color="$ESC_C_DANGER";  shift ;;
+    --skip)       event='SKIP';       color="$ESC_C_NOTICE";  shift ;;
+    --unlink)     event='UNLINK';     color="$ESC_C_DANGER";  shift ;;
     -*) abort "invalid option: $1" ;;
     *) abort 'option required' ;;
   esac
