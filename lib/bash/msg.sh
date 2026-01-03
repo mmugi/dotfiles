@@ -13,6 +13,11 @@ then
   exit 1
 fi
 
+if ! python3 --version >/dev/null 2>&1; then
+  MSG_PYTHON3_UNAVAILABLE=true
+  log::warn 'python3 is not available; falling back to simplified mode'
+fi
+
 if [[ -t 1 ]]; then
   : "${MSG_DELAY:=0.1}"
 else
@@ -482,6 +487,17 @@ msg::box() {
 
   opts_prompt=( --prompt "$prompt" )
 
+  if [[ "${MSG_PYTHON3_UNAVAILABLE:-false}" == 'true' ]]; then
+    (( ${#logo_lines[@]} > 0 )) && {
+      MSG_INDENT=0 msg -b --no-prompt -c "$base_color" "$MSG_LOGO"
+      newline
+    }
+    for msg in "$@"; do
+      msg -b "${opts_prompt[@]}" -c "$base_color" "$msg"
+    done
+    return 0
+  fi
+
   for line in "$@"; do
     messages+=( "$line" )
   done
@@ -489,17 +505,37 @@ msg::box() {
   # 表示幅の計算
   # msg() に渡す文字列には `<hl></hl>` やエスケープシーケンスなどの
   # 表示時の文字数に反映されない文字が含まれることがあるため、--plain で
-  # 装飾なしの実際に表示される文字列を取得して、表示幅を計算する
+  # 装飾なしの実際に表示される文字列を取得して、表示幅を計算する。
+  # pythonが利用できる場合、unicodedataから表示幅を計算する。
+
+  msg::_box_calc_width() {
+    python3 - "$1" <<'PYTHON'
+import os, sys, unicodedata
+
+dotfiles_path = os.environ.get('DOTFILES_PATH')
+if dotfiles_path is None:
+  raise RuntimeError('DOTFILES_PATH is not set')
+
+sys.path.append(os.path.join(dotfiles_path, 'lib/python/_vendor'))
+from wcwidth import wcswidth
+
+s = sys.argv[1]
+w = wcswidth(s)
+if w >= 0:
+  print(w)
+  raise SystemExit
+PYTHON
+  }
 
   for line in "${logo_lines[@]}"; do
     plain_text="$(MSG_INDENT=0 msg --no-prompt --plain --strip "$line")"
-    len="${#plain_text}"
+    len="$(msg::_box_calc_width "$plain_text")"
     (( len > max )) && max="$len"
   done
 
   for line in "${messages[@]}"; do
     plain_text="$(msg "${opts_prompt[@]}" --plain --strip "$line")"
-    len="${#plain_text}"
+    len="$(msg::_box_calc_width "$plain_text")"
     (( len > max )) && max="$len"
   done
 
@@ -510,10 +546,15 @@ msg::box() {
     max=$(( $(tput cols) - padding * 2 - 2 ))
   fi
 
+  log::debug "max: ${max}"
+
   # boxの上面と底面を作成
   local inner_width="$(( max + padding * 2 ))"
   local top='┌' mid='│' bot='└'
   local i
+
+  log::debug "inner_width: ${inner_width}"
+
   for ((i=0; i<inner_width; i++)); do
     top+='─'
     bot+='─'
@@ -536,9 +577,10 @@ msg::box() {
   # logo出力
   for line in "${logo_lines[@]}"; do
     plain_text="$(MSG_INDENT=0 msg --no-prompt --plain --strip "$line")"
+    len="$(msg::_box_calc_width "$plain_text")"
     printf '%b│%*s' "$box_color" "$padding" ""
     MSG_INDENT=0 msg -b -n --no-prompt -c "$base_color" "$line"
-    printf '%*s' $(( max - ${#plain_text} )) ""
+    printf '%*s' $(( max - len )) ""
     printf '%*s%b│\n' "$padding" "" "$box_color"
   done
 
@@ -547,9 +589,10 @@ msg::box() {
   # 本文出力
   for line in "${messages[@]}"; do
     plain_text="$(msg "${opts_prompt[@]}" --plain --strip "$line")"
+    len="$(msg::_box_calc_width "$plain_text")"
     printf '%b│%*s' "$box_color" "$padding" ""
     msg -n "${opts_prompt[@]}" -c "$base_color" "$line"
-    printf '%*s' $(( max - ${#plain_text} )) ""
+    printf '%*s' $(( max - len )) ""
     printf '%*s%b│\n' "$padding" "" "$box_color"
   done
 
