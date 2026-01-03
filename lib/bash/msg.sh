@@ -664,7 +664,7 @@ msg::marker() {
     esac
     shift
   done
-  msg::box --base-color="$base_color" --prompt="$prompt" -- "$*"
+  msg::box --base-color="$base_color" --prompt="$prompt" -- "<b>$*</b>"
   [[ "$newline" == 'true' ]] && newline
   return 0
 }
