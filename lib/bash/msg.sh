@@ -602,6 +602,13 @@ PYTHON
   printf '%b%s%b\n' "$box_color" "$bot" "$ESC_RESET"
 }
 
+msg::read() {
+  local input
+  msg -n -B --prompt-color "$ESC_C_WARNING" --prompt='!' -- "$* " >/dev/tty
+  IFS= read -r input </dev/tty
+  printf '%s' "$input"
+}
+
 msg::confirm() {
   local input
   local mode
