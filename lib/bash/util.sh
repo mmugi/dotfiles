@@ -6,6 +6,10 @@
   [[ "${1:-}" = '__META_PROBE__' ]] && return 0
 }
 
+# msg::chk 結果キャッシュ
+#   値: 0 = 存在する / 1 = 存在しない
+declare -gA _UTIL_CHK_CMD_CACHE=()
+
 util::sysinfo() {
   local selector property
   local silent=false
@@ -71,20 +75,17 @@ util::chk() {
   # options
   #   -2: msgの-2オプションを有効化
   #   -c: command
+  #   -o: キャッシュを上書きする
   #   -q: 結果を出力しない
 
   local selector target msg
-  local quiet=false
+  local quiet=false override=false
   local -a msg_opts=()
   local -r usage='usage: [-c] [-q] target'
 
   while (( $# > 0 )); do
     case "$1" in
-      --)
-        shift
-        positional_args+=("$@")
-        set --
-        ;;
+      --) shift; break ;;
       -*)
         for (( i=1; i<${#1}; i++ )); do
           case "${1:$i:1}" in
@@ -93,6 +94,7 @@ util::chk() {
               [[ -n "${selector:-}" ]] && abort "$usage"
               selector=command
               ;;
+            o) override=true ;;
             q) quiet=true ;;
             *)
               abort "invalid option: $1"
@@ -101,28 +103,29 @@ util::chk() {
         done
         shift
         ;;
-      *)
-        positional_args+=("$1")
-        shift
-        ;;
+      *) break ;;
     esac
   done
 
-  [[ "${#positional_args[@]}" -eq 0 ]] && abort "$usage"
+  [[ $# -eq 0 ]] && abort "$usage"
   [[ -z "${selector:-}" ]] && abort "$usage"
 
-  set -- "${positional_args[@]}"
-  target="$1"
+  target="$*"
 
   case "$selector" in
     command)
+      if [[ "$override" != 'true' && -n "${_UTIL_CHK_CMD_CACHE["$target"]:-}" ]]; then
+        return "${_UTIL_CHK_CMD_CACHE["$target"]}"
+      fi
       msg="checking for the <b><hl>${target}</b></hl> command"
       [[ "$quiet" != 'true' ]] && msg "${msg_opts[@]}" -n -p "$msg"
       if type "$target" >/dev/null 2>&1; then
         [[ "$quiet" != 'true' ]] && msg "${msg_opts[@]}" -r --ok='EXIST' "$msg"
+        _UTIL_CHK_CMD_CACHE["$target"]=0
         return 0
       else
         [[ "$quiet" != 'true' ]] && msg "${msg_opts[@]}" -r --ng='NOTFOUND' "$msg"
+        _UTIL_CHK_CMD_CACHE["$target"]=1
         return 1
       fi
       ;;
