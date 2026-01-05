@@ -2,76 +2,71 @@
 
 ## Installation
 
-### ▼ One-Liner
+### > One-Line Install
+
+Install the dotfiles with a single command:
+
 
 ``` shell
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/mmugi/dotfiles/HEAD/install.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/mmugi/dotfiles/HEAD/bootstrap.sh)"
 ```
 
-### ▼ Using Git
+### > Install via Git
 
-You can "git clone" this repository to `~/.dotfiles` and run the installation script.
+Alternatively, clone the repository and run the installation using make:
 
 ``` shell
 git clone git@github.com:mmugi/dotfiles.git ~/.dotfiles
 cd ~/.dotfiles && make install
 ```
 
-### ▼ Installation Options
+### > Installation Options
 
-#### > Environment Variables
+#### Environment Variables
 
-You can customize the installation by setting environment variables.
+You can customize the installation behavior by setting the following environment variables:
 
-- `DOTFILES_BRANCH`
-  - Specify the branch to download.
-  - Example:
-    - `DOTFILES_BRANCH='develop'`
+| Variable | Description |
+| --- | --- |
+| DOTFILES_BRANCH | Specify which branch to use (e.g., develop). |
+| DOTFILES_DOWNLOADER | Choose a downloader (git, curl, or wget). If unset, the installer will try them in that order. |
 
-- `DOTFILES_DOWNLOADER`
-  - Choose the downloader for fetching the repository.
-  - Available options:
-    - git
-    - curl
-    - wget
-  - If not specified, the installer tries git, then curl, and finally wget.
-  - Example:
-    - `DOTFILES_DOWNLOADER='curl'`
+#### Ignoring Configuration Files
 
-- `DOTFILES_INIT`
-  - Control the initialization behavior.
-  - If the environment variable has value, the installation will execute the initialization process.
-  - The following processes will be executed:
-    - Initial configuration of the package manager
-    - Modification of OS settings
-    - Installation of applications and configuration updates
-  - Example:
-    - `export DOTFILES_INIT=true && ~/.dotfiles/install.sh`
-    - `DOTFILES_INIT=true make install`
+By default, the installation will stop when existing configuration files are detected to prevent accidental overwrites.
 
-#### > Ignoring Configuration Files
+If you prefer to keep your existing files and skip overwriting them, add a `.dotignore` file in your dotfiles directory:
 
-You can also control which configuration files are deployed.
-
-By default, the installation will be stopped when configuration files already exists.
-If you wish to prioritize existing configuration files, place a .dotignore file at `~/.dotfiles/.dotignore` and list the patterns that match paths relative to your home directory.
-
-Pattern matching is performed using prefix matching. For example, if you specify `.config`, all configuration files under the `.config/` directory will be ignored.
-
-Example `.dotignore` file:
-
-``` shell
-$ cat ~/.dotfiles/.dotignore
-.bashrc
-.config/tmux/
-.config/fish/config.fish
+``` plaintext
+.vimrc
+.config/git/ignore
 ```
 
+Each line in `.dotignore` should be a prefix pattern relative to your home directory.
+
+## Initialization
+
+This repository includes optional initialization tasks intended for one-time system setup.
+
+Initialization tasks are not idempotent.
+To prevent accidental execution, they are available **only when the following environment variable is set**:
+
+``` shell
+export DOTFILES_INIT=true
+make init
+```
+
+If `DOTFILES_INIT` is not set, any attempt to run initialization tasks will fail.
+
 ## Uninstallation
+
+To remove the installed dotfiles:
 
 ``` shell
 cd ~/.dotfiles && make uninstall
 ```
+
+This will remove the symlinks and any managed config files that were deployed by the install process.
 
 ## Help
 

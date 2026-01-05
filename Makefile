@@ -1,12 +1,8 @@
 MAKEFILE      := $(firstword $(MAKEFILE_LIST))
 DOTFILES_ROOT := $(realpath $(dir $(MAKEFILE)))
-SHELL         = /usr/bin/env bash
-
-INSTALLER     := $(DOTFILES_ROOT)/install.sh
-UNINSTALLER   := $(DOTFILES_ROOT)/uninstall.sh
-
 SCRIPT_DIR    := $(DOTFILES_ROOT)/scripts
-BREWFILE      := $(DOTFILES_ROOT)/misc/brew/Brewfile
+
+SHELL         = /usr/bin/env bash
 
 
 .DEFAULT_GOAL := help
@@ -15,53 +11,27 @@ help: ## Show this help message.
 	@$(SCRIPT_DIR)/make/help.sh "$(MAKEFILE)"
 
 
-###  dotfiles  ###
 .PHONY: install uninstall
 install: ## Install dotfiles.
-	@$(INSTALLER)
+	@$(SCRIPT_DIR)/install.sh
 uninstall: ## Uninstall dotfiles.
-	@$(UNINSTALLER)
-
-# individual installer tasks
-
-.PHONY: deploy-configs initialize-package-manager install-packages configure-all-apps configure-git configure-starship configure-tmux configure-vim
-deploy-configs: ## Create symlinks and directories for dotfiles.
-	@$(INSTALLER) --deploy-configs
-initialize-package-manager: ## Install and configure the package manager.
-	@DOTFILES_INIT=true $(INSTALLER) --initialize-package-manager
-install-packages: ## Install packages.
-	@DOTFILES_INIT=true $(INSTALLER) --install-packages
-configure-all-apps: ## Configure all applications.
-	@DOTFILES_INIT=true $(INSTALLER) --configure-all-apps
-configure-fish: ## Configure Fish Shell.
-	@DOTFILES_INIT=true $(INSTALLER) --configure-fish
-configure-git: ## Configure Git.
-	@DOTFILES_INIT=true $(INSTALLER) --configure-git
-configure-starship: ## Configure Starship.
-	@DOTFILES_INIT=true $(INSTALLER) --configure-starship
-configure-tmux: ## Configure Tmux.
-	@DOTFILES_INIT=true $(INSTALLER) --configure-tmux
-configure-vim: ## Configure Vim.
-	@DOTFILES_INIT=true $(INSTALLER) --configure-vim
-
-# individual uninstaller tasks
-
-.PHONY: delete-configs
-delete-configs: ## Delete symlinks and directories for dotfiles.
-	@$(UNINSTALLER) --delete-configs
+	@$(SCRIPT_DIR)/uninstall.sh
+uninstall-dryrun: ## Show what would be uninstalled without making any changes.
+	@$(SCRIPT_DIR)/uninstall.sh --dryrun
 
 
-###  utils  ###
+.PHONY: init init-os init-git-sign
+init: ## Run all initial setup tasks.
+	@$(SCRIPT_DIR)/init/init.sh --all
+init-os: ## Perform the initial setup specific to your operating system.
+	@$(SCRIPT_DIR)/init/os.sh
+init-git-sign: ## Initialize all git commit signing settings.
+	@$(SCRIPT_DIR)/init/git-sign.sh
 
-.PHONY: brew-list brew-dump brew-diff
-brew-list: ## List all packages managed by the Brewfile in dotfiles.
-	@cat "$(BREWFILE)"
-brew-dump: ## Write all installed packages into a Brewfile in dotfiles.
-	@$(SCRIPT_DIR)/make/brew-dump.sh "$(BREWFILE)"
+
+
+.PHONY: brew-diff brew-dump
 brew-diff: ## Show differences between installed brew package and those in the dotfiles Brewfile.
-	@brew bundle dump --global --force
-	@if type git >/dev/null 2>&1; then \
-             git diff "$(BREWFILE)" "${HOME}/.Brewfile"; \
-         else \
-             diff -u "$(BREWFILE)" "${HOME}/.Brewfile"; \
-         fi || true
+	@$(SCRIPT_DIR)/brew/brew-diff.sh
+brew-dump: ## Write all installed packages into a Brewfile in dotfiles.
+	@$(SCRIPT_DIR)/brew/brew-dump.sh

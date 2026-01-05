@@ -1,61 +1,68 @@
-" Generals "
+" packages
+"   package manager: vim-jetpack (https://github.com/tani/vim-jetpack)
+"   インストール後に JetpackSync を実行
+let s:jetpackfile = expand('$HOME') . '/.vim/pack/jetpack/opt/vim-jetpack/plugin/jetpack.vim'
+if filereadable(s:jetpackfile)
+  packadd vim-jetpack
+  call jetpack#begin()
+    Jetpack 'tani/vim-jetpack', { 'opt': 1 } " bootstrap
+    Jetpack 'wadackel/vim-dogrun', { 'as': 'dogrun' }
+    Jetpack 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
+  call jetpack#end()
+endif
 
-set mouse=a
+" generals
 set clipboard=unnamed
-set number
-set cursorline
-set cursorcolumn
-set hlsearch
 set incsearch
-set listchars=tab:>.,trail:_,extends:»,precedes:«,nbsp:%
-set list
-set expandtab
-set laststatus=2
-set statusline=\ %F\ %m%r%h%w%=%{&fileencoding}\ \|\ ^%l>%c\ \|\ %p%%\ 
+set mouse=a
 set wildmenu
-" F12でmouse利用/行番号のオンオフ
-" マウスでterminal側の選択コピー等を利用できるように
-noremap <F12> <ESC>:set number!<CR>:exec &mouse!=""? "set mouse=" : "set mouse=a"<CR>
+set nowrapscan
 
-" xでyankしない
+" tab & space
+set autoindent
+set expandtab
+set shiftwidth=2
+set softtabstop=-1
+set tabstop=4
+
+" keymaps
+let mapleader = "\<space>"
+nnoremap <silent> <leader>h :set hlsearch!<cr>
+nnoremap <silent> <leader>i :<cr>
+nnoremap <silent> <leader>j :bprev<cr>
+nnoremap <silent> <leader>k :bnext<cr>
+nnoremap <silent> <leader>l :ls<cr>
+nnoremap <silent> <leader>m
+  \ :exec &mouse!="" ? "set mouse=" : "set mouse=a"<cr>
+  \ :echo 'mouse:'.(&mouse!='' ? 'enabled' : 'disabled')<cr>
+nnoremap <silent> <leader>n :set number!<cr>:set cursorcolumn!<cr>
+nnoremap <silent> <leader>t :tabnew<cr>
+nnoremap <silent> <leader><tab> :tabnext<cr>
+nnoremap <silent> <leader><s-tab> :tabprevious<cr>
+
+nnoremap <silent> <esc><esc> :nohlsearc<cr>
+" xXでyankしない
 nnoremap x "_x
 nnoremap X "_X
 
-
-" Packages "
-"   Package Manager: vim-jetpack (https://github.com/tani/vim-jetpack)
-"   Install後にJetpackSyncを実行
-
-let s:jetpackfile = $HOME .. '/.vim/pack/jetpack/opt/vim-jetpack/plugin/jetpack.vim'
-if filereadable(s:jetpackfile)
-    packadd vim-jetpack
-    call jetpack#begin()
-        Jetpack 'tani/vim-jetpack', { 'opt': 1 } " bootstrap
-        Jetpack 'wadackel/vim-dogrun', { 'as': 'dogrun' }
-        Jetpack 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
-    call jetpack#end()
-endif
-
-
-" Theme "
-
+" appearance
+set background=dark
+set cursorline
+"set cursorcolumn
+set hlsearch
+"set number
+set statusline=\ %F\ %m%r%h%w%=%{&fileencoding}\ \|\ ^%l>%c\ \|\ %p%%\ 
+set list
+set laststatus=2
+set listchars=tab:>-,trail:+,extends:»,precedes:«,nbsp:%
 syntax enable
-
-" Default settings
-highlight CursorLine cterm=underline ctermbg=none
-highlight CursorLineNr cterm=underline ctermbg=none ctermfg=63
-highlight EndOfBuffer ctermbg=none
-highlight LineNr ctermbg=none ctermfg=63
-highlight NonText ctermfg=63
-highlight Normal ctermbg=none ctermfg=none
-highlight Search ctermbg=220 ctermfg=black
-highlight StatusLine cterm=none ctermbg=63 ctermfg=white
-
-" Apply color scheme
-if filereadable(s:jetpackfile)
-    autocmd colorscheme dogrun highlight LineNr ctermfg=240
-    colorscheme dogrun
-endif
-
-" Override settings
 highlight SpecialKey ctermbg=red ctermfg=white
+highlight EndOfBuffer ctermbg=none
+highlight LineNr ctermbg=none
+highlight CursorLineNr ctermbg=none cterm=underline
+highlight StatusLine ctermbg=63 ctermfg=white cterm=none
+highlight CursorLine ctermbg=none cterm=underline
+highlight Normal ctermbg=none
+highlight TabLine ctermbg=white ctermfg=black cterm=none
+highlight TabLineSel ctermbg=63 ctermfg=white cterm=bold
+highlight TabLineFill ctermbg=none cterm=none
