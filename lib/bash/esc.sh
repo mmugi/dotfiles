@@ -307,6 +307,7 @@ esc::sgr_base() {
   ESC_BLUE=
   ESC_PURPLE=
   ESC_PINK=
+  ESC_CYAN=
   ESC_BRIGHT_CYAN=
   ESC_DARK_GREEN=
 
@@ -319,6 +320,7 @@ esc::sgr_base() {
   ESC_STDERR_BLUE=
   ESC_STDERR_PURPLE=
   ESC_STDERR_PINK=
+  ESC_STDERR_CYAN=
   ESC_STDERR_BRIGHT_CYAN=
   ESC_STDERR_DARK_GREEN=
 
@@ -375,6 +377,7 @@ esc::scheme_rebecca() {
     ESC_BLUE="$(esc::sgr 75)"
     ESC_PURPLE="$(esc::sgr 105)"
     ESC_PINK="$(esc::sgr 175)"
+    ESC_CYAN="$(esc::sgr 122)"
     ESC_BRIGHT_CYAN="$(esc::sgr 195)"
     ESC_DARK_GREEN="$(esc::sgr 30)"
   fi
@@ -389,6 +392,7 @@ esc::scheme_rebecca() {
     ESC_STDERR_BLUE="$(esc::sgr 75)"
     ESC_STDERR_PURPLE="$(esc::sgr 105)"
     ESC_STDERR_PINK="$(esc::sgr 175)"
+    ESC_STDERR_CYAN="$(esc::sgr 122)"
     ESC_STDERR_BRIGHT_CYAN="$(esc::sgr 195)"
     ESC_STDERR_DARK_GREEN="$(esc::sgr 30)"
   fi
@@ -406,14 +410,14 @@ esc::scheme_rebecca() {
   ESC_C_PANIC="$ESC_SCARLET"
   ESC_C_CRITICAL="$ESC_RED"
   ESC_C_WARNING="$ESC_YELLOW"
-  ESC_C_NOTICE="$ESC_YELLOW"
+  ESC_C_NOTICE="$ESC_CYAN"
   ESC_C_INFO="$ESC_BLUE"
   ESC_C_DEBUG="$ESC_DARK_GREEN"
   # severity (stderr)
   ESC_C_STDERR_PANIC="$ESC_STDERR_SCARLET"
   ESC_C_STDERR_CRITICAL="$ESC_STDERR_RED"
   ESC_C_STDERR_WARNING="$ESC_STDERR_YELLOW"
-  ESC_C_STDERR_NOTICE="$ESC_STDERR_YELLOW"
+  ESC_C_STDERR_NOTICE="$ESC_STDERR_CYAN"
   ESC_C_STDERR_INFO="$ESC_STDERR_BLUE"
   ESC_C_STDERR_DEBUG="$ESC_STDERR_DARK_GREEN"
   # result
