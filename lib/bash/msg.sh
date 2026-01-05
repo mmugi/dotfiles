@@ -84,6 +84,15 @@ msg() {
   #   -C, --hl-color <ansi color code>
   #        <hl>タグのハイライト文字列色をANSI color codeで指定します。
   #
+  #   -h, --highlight <selector>
+  #        selectorに従い、強調表示を行います。
+  #
+  #        selector:
+  #          - complete
+  #          - warn
+  #          - note
+  #          - tip
+  #
   #   -n   末尾で改行しません。
   #
   #   -p, --progress
@@ -97,8 +106,6 @@ msg() {
   #        行ったうえで出力されます。
   #
   #   -r   \rで出力行をリセット後にメッセージを出力する。
-  #
-  #   -R   強調表示およびランダムな絵文字プロンプトで出力します。
   #
   #   -s, --strip
   #       制御文字(ANSI, ASCII)およびタグの除去をして出力します。
@@ -139,6 +146,7 @@ msg() {
   local prompt_indent='' no_prompt=false
   local bold base_color hl_color
   local result_str result_color
+  local hl_selector
   local p
 
   local -r dots='...'
@@ -193,6 +201,52 @@ msg() {
           shift
         fi
         ;;
+      -h | --highlight | --highlight=*)
+        if [[ "$1" =~ ^--highlight= ]]; then
+          hl_selector="${1#--highlight=}"
+        elif [[ -z "${2:-}" ]]; then
+          log::error "$1: expected string value"
+          return 1
+        elif [[ "$2" =~ ^-+ ]]; then
+          log::error "$1: must be one of selector. perhaps try --highlight=\"$2\"?"
+          return 1
+        else
+          hl_selector="$2"
+          shift
+        fi
+        case "$hl_selector" in
+          complete)
+            base_color="$ESC_C_COMPLETE"
+            p="$(( RANDOM % 7 + 1 ))"
+            case "$p" in
+              1) prompt_str='🛸' ;;
+              2) prompt_str='🛰️' ;;
+              3) prompt_str='🚀' ;;
+              4) prompt_str='🪐' ;;
+              5) prompt_str='👾' ;;
+              6) prompt_str='🌟' ;;
+              7) prompt_str='💫' ;;
+            esac
+            ;;
+          warn)
+            base_color="$ESC_C_WARNING"
+            prompt_str='⚡️'
+            ;;
+          return)
+            base_color="$ESC_C_NOTICE"
+            prompt_str='  '
+            ;;
+          tip)
+            base_color="$ESC_C_NOTICE"
+            prompt_color="$ESC_C_NOTICE"
+            prompt_str='🍪 tip:'
+            ;;
+          *)
+            log::error "must be one of 'warn'"
+            return 1
+            ;;
+        esac
+        ;;
       -n) newline=false ;;
       -p | --progress)
         progress_dots=true
@@ -200,16 +254,6 @@ msg() {
         ;;
       -P | --plain) style_plain=true ;;
       -r) line_reset=true ;;
-      -R)
-        base_color="$ESC_C_SUCCESS"
-        p="$(( RANDOM % 4 + 1 ))"
-        case "$p" in
-          1) prompt_str='🛸' ;;
-          2) prompt_str='🛰️' ;;
-          3) prompt_str='🚀' ;;
-          4) prompt_str='🪐' ;;
-        esac
-        ;;
       -s | --strip) strip=true ;;
       --spinner)
         # 無限ループするので呼び出し側でkillが必要です

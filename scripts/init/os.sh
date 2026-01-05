@@ -23,7 +23,7 @@ init_macos() {
 
   msg -p 'installing command line tools for xcode'
   if gcc --version >/dev/null 2>&1; then
-    msg -R 'command line tools are already installed!'
+    msg --highlight=complete 'command line tools are already installed!'
   else
     xcode-select --install
   fi
