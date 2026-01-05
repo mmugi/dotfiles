@@ -20,11 +20,14 @@ uninstall-dryrun: ## Show what would be uninstalled without making any changes.
 	@$(SCRIPT_DIR)/uninstall.sh --dryrun
 
 
-.PHONY: init init-os
+.PHONY: init init-os init-git-sign
 init: ## Run all initial setup tasks.
 	@$(SCRIPT_DIR)/init/init.sh --all
 init-os: ## Perform the initial setup specific to your operating system.
 	@$(SCRIPT_DIR)/init/os.sh
+init-git-sign: ## Initialize all git commit signing settings.
+	@$(SCRIPT_DIR)/init/git-sign.sh
+
 
 
 .PHONY: brew-diff brew-dump
