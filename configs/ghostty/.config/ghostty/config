@@ -25,7 +25,7 @@ background-blur = 10
 
 unfocused-split-opacity = 0.75
 
-keybind = option+shift+space=toggle_quick_terminal
+keybind = super+a=toggle_quick_terminal
 
 window-padding-x = 5
 window-padding-y = 5
@@ -35,7 +35,8 @@ copy-on-select = true
 
 quit-after-last-window-closed = true
 
-quick-terminal-position = bottom
+quick-terminal-position = center
+quick-terminal-size = 80%,80%
 quick-terminal-autohide = true
 
 shell-integration-features = no-cursor
