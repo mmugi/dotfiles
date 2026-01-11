@@ -1,7 +1,6 @@
 # starship configs
 
 format = """
-$all\
 $hostname_default\
 $hostname_prod\
 $directory\
@@ -12,6 +11,7 @@ $git_metrics\
 $git_status\
 $shlvl\
 $time\
+$all\
 $cmd_duration\
 $status\
 $line_break\
