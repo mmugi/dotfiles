@@ -21,6 +21,10 @@ $character"""
 add_newline = true
 palette = 'mypalette'
 
+[battery]
+charging_symbol = '🔌'
+discharging_symbol = '🪫'
+
 [custom.hostname_default]
 command = 'uname -n | cut -d. -f1'
 when = 'test -n "$SSH_CONNECTION" && test "$DOTFILES_ENV" != "PROD"'
