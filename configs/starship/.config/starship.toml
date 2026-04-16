@@ -1,8 +1,9 @@
 # starship configs
 
 format = """
-$hostname_default\
-$hostname_prod\
+${custom.hostname_default}\
+${custom.hostname_prod}\
+$hostname\
 $directory\
 $git_branch\
 $git_commit\
@@ -10,15 +11,16 @@ $git_state\
 $git_metrics\
 $git_status\
 $shlvl\
-$time\
 $all\
+$time\
 $cmd_duration\
+$battery\
 $status\
 $line_break\
 $username\
 $character"""
 
-add_newline = true
+add_newline = false
 palette = 'mypalette'
 
 [battery]
@@ -28,27 +30,18 @@ discharging_symbol = '🪫'
 [custom.hostname_default]
 command = 'uname -n | cut -d. -f1'
 when = 'test -n "$SSH_CONNECTION" && test "$DOTFILES_ENV" != "PROD"'
-symbol = '🌐'
 style = 'green'
-format = '[$symbol$output]($style) '
+format = '@[$symbol$output]($style) '
 
 [custom.hostname_prod]
 command = 'uname -n | cut -d. -f1'
 when = 'test -n "$SSH_CONNECTION" && test "$DOTFILES_ENV" == "PROD"'
-symbol = '🌐'
-style = 'red'
-format = '[$symbol$output]($style) '
-
-[palettes.mypalette]
-red = '167'
-green = '43'
-blue = '63'
-pink = '175'
-purple = '105'
+style = 'bold red'
+format = '@[$symbol$output]($style) '
 
 [character]
 success_symbol = '[>]()'
-error_symbol = '[!](bold red)'
+error_symbol = '[><](red)'
 
 [cmd_duration]
 format = '⌛[$duration]($style) '
@@ -59,6 +52,10 @@ truncation_length = 8
 truncation_symbol = '…/'
 truncate_to_repo = false
 style = ''
+
+[env_var.KUBECTL_ENV]
+format = '[$env_value]($style)'
+style = 'red'
 
 [gcloud]
 disabled = true
@@ -92,6 +89,13 @@ ssh_only = true
 format = '[$ssh_symbol$hostname]($style) '
 style = "green"
 
+[palettes.mypalette]
+red = '167'
+green = '43'
+blue = '63'
+pink = '175'
+purple = '105'
+
 [shlvl]
 disabled = false
 threshold = 3
@@ -109,9 +113,9 @@ map_symbol = true
 
 [time]
 disabled = false
-format = '[$time]($style) '
+format = '\[[$time]($style)\] '
 style = 'green'
-time_format = '%H:%M'
+time_format = '%Y%m%dT%H%M%S'
 utc_time_offset = '+9'
 
 [username]
