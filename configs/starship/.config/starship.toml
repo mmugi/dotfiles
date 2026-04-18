@@ -45,7 +45,7 @@ error_symbol = '[><](red)'
 
 [cmd_duration]
 format = '⌛[$duration]($style) '
-style = 'bold blue'
+style = 'bold slate-blue'
 
 [directory]
 truncation_length = 0
@@ -90,11 +90,15 @@ format = '[$ssh_symbol$hostname]($style) '
 style = "green"
 
 [palettes.mypalette]
-red = '167'
-green = '43'
-blue = '63'
-pink = '175'
-purple = '105'
+blue = '#79bff9'
+cyan = '#cbf9dc'
+green = '#04dbb5'
+lime = '#afff5f'
+pink = '#d787af'
+purple = '#8e80e8'
+red = '#eb5b4e'
+slate-blue = '#5f5fff'
+yellow = '#f9eb4f'
 
 [shlvl]
 disabled = false
