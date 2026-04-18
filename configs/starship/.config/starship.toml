@@ -36,7 +36,7 @@ format = '@[$symbol$output]($style) '
 [custom.hostname_prod]
 command = 'uname -n | cut -d. -f1'
 when = 'test -n "$SSH_CONNECTION" && test "$DOTFILES_ENV" == "PROD"'
-style = 'bold red'
+style = 'red'
 format = '@[$symbol$output]($style) '
 
 [character]
@@ -48,7 +48,7 @@ format = '⌛[$duration]($style) '
 style = 'bold blue'
 
 [directory]
-truncation_length = 8
+truncation_length = 0
 truncation_symbol = '…/'
 truncate_to_repo = false
 style = ''
@@ -113,9 +113,9 @@ map_symbol = true
 
 [time]
 disabled = false
-format = '\[[$time]($style)\] '
-style = 'green'
-time_format = '%Y%m%dT%H%M%S'
+format = '[$time]($style) '
+style = 'bright-black'
+time_format = '%Y-%m-%dT%H:%M:%S'
 utc_time_offset = '+9'
 
 [username]
