@@ -6,10 +6,9 @@ ${custom.hostname_prod}\
 $hostname\
 $directory\
 $git_branch\
+$git_status\
 $git_commit\
 $git_state\
-$git_metrics\
-$git_status\
 $shlvl\
 $all\
 $time\
@@ -72,20 +71,45 @@ asia-northeast1 = 'tokyo'
 asia-northeast2 = 'osaka'
 
 [git_branch]
-symbol = '🌱'
-format = '[$symbol$branch]($style) '
-style = 'bold blue'
+format = '[$symbol$branch]($style)'
+symbol = ''
+#symbol = '🌱'
+style = 'slate-blue'
 
 [git_commit]
-commit_hash_length = 4
-tag_symbol = '🔖'
+commit_hash_length = 7
+format = '[#$hash(:$tag)]($style) '
+style = 'green'
+tag_disabled = false
+tag_symbol = ''
 
 [git_state]
-format = '[\($state( $progress_current of $progress_total)\)]($style) '
-cherry_pick = '[🍒 PICKING](bold pink)'
+format = '[*$state(\($progress_current/$progress_total\))*]($style) '
+cherry_pick = '[🍒PICKING](bold pink)'
+style = 'bold'
 
 [git_status]
-style = 'bold purple'
+format = """
+[\
+  [$conflicted](yellow)\
+  [$deleted](red)\
+  [$renamed](lime)\
+  [$modified](pink)\
+  [$typechanged](purple)\
+  [$staged](green)\
+  [$untracked](bright-black)\
+  [( $ahead_behind$stashed)](cyan)\
+]($style) \
+"""
+style = ''
+conflicted = '!'
+deleted = '-'
+renamed = '^'
+modified = "*"
+typechanged = ""
+staged = "+"
+untracked = "?"
+stashed = "≡"
 
 [hostname]
 disabled = true
