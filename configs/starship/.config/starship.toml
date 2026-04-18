@@ -18,6 +18,11 @@ $battery\
 $status\
 $line_break\
 $username\
+(\
+  \\(\
+    ${env_var.KUBECTL_ENV}\
+  \\)\
+)\
 $character"""
 
 add_newline = false
