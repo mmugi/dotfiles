@@ -3,7 +3,7 @@
 options=(
   style=round
   order=above
-  width=3
+  width=5
   hidpi=on
   active_color=0xffecf5fe
 )
