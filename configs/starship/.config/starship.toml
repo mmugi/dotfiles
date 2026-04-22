@@ -24,7 +24,7 @@ $username\
 )\
 $character"""
 
-add_newline = false
+add_newline = true
 palette = 'mypalette'
 
 [battery]
