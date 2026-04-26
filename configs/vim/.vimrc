@@ -22,7 +22,7 @@ set nowrapscan
 set autoindent
 set expandtab
 set shiftwidth=2
-set softtabstop=-1
+set softtabstop=0
 set tabstop=4
 
 " keymaps
@@ -41,7 +41,11 @@ nnoremap <silent> <leader><tab> :tabnext<cr>
 nnoremap <silent> <leader><s-tab> :tabprevious<cr>
 
 nnoremap <silent> <esc><esc> :nohlsearc<cr>
-" xXでyankしない
+
+nnoremap c "_c
+nnoremap C "_C
+nnoremap s "_s
+nnoremap S "_S
 nnoremap x "_x
 nnoremap X "_X
 
@@ -54,9 +58,9 @@ set hlsearch
 set statusline=\ %F\ %m%r%h%w%=%{&fileencoding}\ \|\ ^%l>%c\ \|\ %p%%\ 
 set list
 set laststatus=2
-set listchars=tab:>-,trail:+,extends:»,precedes:«,nbsp:%
+set listchars=tab:>-,trail:-,extends:»,precedes:«,nbsp:%
 syntax enable
-highlight SpecialKey ctermbg=red ctermfg=white
+highlight SpecialKey ctermbg=red ctermfg=black
 highlight EndOfBuffer ctermbg=none
 highlight LineNr ctermbg=none
 highlight CursorLineNr ctermbg=none cterm=underline

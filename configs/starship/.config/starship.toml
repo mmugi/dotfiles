@@ -6,10 +6,9 @@ ${custom.hostname_prod}\
 $hostname\
 $directory\
 $git_branch\
+$git_status\
 $git_commit\
 $git_state\
-$git_metrics\
-$git_status\
 $shlvl\
 $all\
 $time\
@@ -18,9 +17,14 @@ $battery\
 $status\
 $line_break\
 $username\
+(\
+  \\(\
+    ${env_var.KUBECTL_ENV}\
+  \\)\
+)\
 $character"""
 
-add_newline = false
+add_newline = true
 palette = 'mypalette'
 
 [battery]
@@ -36,7 +40,7 @@ format = '@[$symbol$output]($style) '
 [custom.hostname_prod]
 command = 'uname -n | cut -d. -f1'
 when = 'test -n "$SSH_CONNECTION" && test "$DOTFILES_ENV" == "PROD"'
-style = 'bold red'
+style = 'red'
 format = '@[$symbol$output]($style) '
 
 [character]
@@ -45,10 +49,10 @@ error_symbol = '[><](red)'
 
 [cmd_duration]
 format = '⌛[$duration]($style) '
-style = 'bold blue'
+style = 'bold slate-blue'
 
 [directory]
-truncation_length = 8
+truncation_length = 0
 truncation_symbol = '…/'
 truncate_to_repo = false
 style = ''
@@ -67,20 +71,45 @@ asia-northeast1 = 'tokyo'
 asia-northeast2 = 'osaka'
 
 [git_branch]
-symbol = '🌱'
-format = '[$symbol$branch]($style) '
-style = 'bold blue'
+format = '[$symbol$branch]($style)'
+symbol = ''
+#symbol = '🌱'
+style = 'slate-blue'
 
 [git_commit]
-commit_hash_length = 4
-tag_symbol = '🔖'
+commit_hash_length = 7
+format = '[#$hash(:$tag)]($style) '
+style = 'green'
+tag_disabled = false
+tag_symbol = ''
 
 [git_state]
-format = '[\($state( $progress_current of $progress_total)\)]($style) '
-cherry_pick = '[🍒 PICKING](bold pink)'
+format = '[*$state(\($progress_current/$progress_total\))*]($style) '
+cherry_pick = '[🍒PICKING](bold pink)'
+style = 'bold'
 
 [git_status]
-style = 'bold purple'
+format = """
+[\
+  [$conflicted](yellow)\
+  [$deleted](red)\
+  [$renamed](lime)\
+  [$modified](pink)\
+  [$typechanged](purple)\
+  [$staged](green)\
+  [$untracked](bright-black)\
+  [( $ahead_behind$stashed)](cyan)\
+]($style) \
+"""
+style = ''
+conflicted = '!'
+deleted = '-'
+renamed = '^'
+modified = "*"
+typechanged = ""
+staged = "+"
+untracked = "?"
+stashed = "≡"
 
 [hostname]
 disabled = true
@@ -90,11 +119,15 @@ format = '[$ssh_symbol$hostname]($style) '
 style = "green"
 
 [palettes.mypalette]
-red = '167'
-green = '43'
-blue = '63'
-pink = '175'
-purple = '105'
+blue = '#79bff9'
+cyan = '#cbf9dc'
+green = '#04dbb5'
+lime = '#afff5f'
+pink = '#d787af'
+purple = '#8e80e8'
+red = '#eb5b4e'
+slate-blue = '#5f5fff'
+yellow = '#f9eb4f'
 
 [shlvl]
 disabled = false
@@ -113,9 +146,9 @@ map_symbol = true
 
 [time]
 disabled = false
-format = '\[[$time]($style)\] '
-style = 'green'
-time_format = '%Y%m%dT%H%M%S'
+format = '[$time]($style) '
+style = 'bright-black'
+time_format = '%Y-%m-%dT%H:%M:%S'
 utc_time_offset = '+9'
 
 [username]
