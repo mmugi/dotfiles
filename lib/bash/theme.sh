@@ -110,25 +110,31 @@ theme::_is_color_supported() {
 }
 
 theme::_apply_theme_stdout() {
+  local varname
   if theme::_is_color_supported 1; then
-    for var in "${THEME_PALETTE[@]}"; do
-      printf -v "${var}${THEME_VAR_STDOUT_SUFFIX}" '%s' "${!var}"
+    for theme_var in "${THEME_PALETTE[@]}"; do
+      varname="${theme_var}${THEME_VAR_STDOUT_SUFFIX}"
+      printf -v "$varname" '%s' "${!theme_var}"
     done
   else
-    for var in "${THEME_PALETTE[@]}"; do
-      printf -v "${var}${THEME_VAR_STDOUT_SUFFIX}" '%s' ''
+    for theme_var in "${THEME_PALETTE[@]}"; do
+      varname="${theme_var}${THEME_VAR_STDOUT_SUFFIX}"
+      printf -v "$varname" '%s' ''
     done
   fi
 }
 
 theme::_apply_theme_stderr() {
+  local varname
   if theme::_is_color_supported 2; then
-    for var in "${THEME_PALETTE[@]}"; do
-      printf -v "${var}${THEME_VAR_STDERR_SUFFIX}" '%s' "${!var}"
+    for theme_var in "${THEME_PALETTE[@]}"; do
+      varname="${theme_var}${THEME_VAR_STDERR_SUFFIX}"
+      printf -v "$varname" '%s' "${!theme_var}"
     done
   else
-    for var in "${THEME_PALETTE[@]}"; do
-      printf -v "${var}${THEME_VAR_STDERR_SUFFIX}" '%s' ''
+    for theme_var in "${THEME_PALETTE[@]}"; do
+      varname="${theme_var}${THEME_VAR_STDERR_SUFFIX}"
+      printf -v "$varname" '%s' ''
     done
   fi
 }
