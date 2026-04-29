@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 # shellcheck disable=SC2034
-LIB_DEPS=( core )
+LIB_DEPS=( core escseq )
 [[ "${1:-}" = '__META_PROBE__' ]] && return 0
 
 # USAGE:
@@ -28,6 +28,19 @@ LIB_DEPS=( core )
 readonly THEME_VAR_STDOUT_SUFFIX='_STDOUT'
 readonly THEME_VAR_STDERR_SUFFIX='_STDERR'
 readonly THEME_PALETTE=(
+  THEME_RESET
+
+  THEME_ATTR_BOLD
+  THEME_ATTR_FAINT
+  THEME_ATTR_ITALIC
+  THEME_ATTR_UNDERLINE
+  THEME_ATTR_BLINK
+  THEME_ATTR_RAPID_BLINK
+  THEME_ATTR_REVERSE
+  THEME_ATTR_CONCEAL
+  THEME_ATTR_STRIKE
+  THEME_ATTR_DEFAULT_INTENCITY
+
   THEME_COLOR_BASE
   THEME_COLOR_MAIN
   THEME_COLOR_SUB
@@ -50,6 +63,18 @@ readonly THEME_PALETTE=(
   THEME_COLOR_COMPLETE
   THEME_COLOR_DANGER
 )
+
+THEME_RESET="$(escseq::sgr reset)"
+THEME_ATTR_BOLD="$(escseq::sgr bold)"
+THEME_ATTR_FAINT="$(escseq::sgr faint)"
+THEME_ATTR_ITALIC="$(escseq::sgr italic)"
+THEME_ATTR_UNDERLINE="$(escseq::sgr underline)"
+THEME_ATTR_BLINK="$(escseq::sgr blink)"
+THEME_ATTR_RAPID_BLINK="$(escseq::sgr rapid_blink)"
+THEME_ATTR_REVERSE="$(escseq::sgr reverse)"
+THEME_ATTR_CONCEAL="$(escseq::sgr conceal)"
+THEME_ATTR_STRIKE="$(escseq::sgr strike)"
+THEME_ATTR_DEFAULT_INTENCITY="$(escseq::sgr default_intencity)"
 
 theme::_verificate() {
   local missing=false
