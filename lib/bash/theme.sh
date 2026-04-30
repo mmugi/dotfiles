@@ -10,7 +10,7 @@ LIB_DEPS=( core escseq )
 #   - themes/<theme_name>.sh をsourceする。
 #   - THEME_PALETTE に定義されるテーマ変数を themefile で定義する。
 #   - THEME_PALETTE の変数が定義されていない場合は読み込みエラーを確認して、
-#     temefile の変数を確認する。
+#     themefile の変数を確認する。
 #   - テーマ変数には指定のカラーのエスケープシーケンス出力を定義する。
 #   - 読み込んだテーマ変数から以下のサフィックスを付与したstdout, stderr用の
 #     変数を定義する。
