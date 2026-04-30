@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 # shellcheck disable=SC2034
-LIB_DEPS=( core escseq )
+LIB_DEPS=( core escseq termcap )
 [[ "${1:-}" = '__META_PROBE__' ]] && return 0
 
 # USAGE:
@@ -18,28 +18,25 @@ LIB_DEPS=( core escseq )
 #     - THEME_VAR_STDERR_SUFFIX: _STDERR
 #   - fd 1(stdout), 2(stderr)がターミナルに接続されているかどうかをチェックし、
 #     接続されていない場合はそれぞれの変数を空にセットする。
-#   - COLOR_MODE で上記の動作をオーバーライド可能。
+#   - TERMCAP_COLOR_MODE で上記の動作をオーバーライド可能。(termcap.sh参照)
 #     - auto: fdのターミナル接続をチェック
 #     - always: 常にエスケープシーケンスを定義
 #     - never: 常に空で定義 (NO_COLORを定義した場合と同じ動作)
-
-: "${COLOR_MODE:=auto}"
 
 readonly THEME_VAR_STDOUT_SUFFIX='_STDOUT'
 readonly THEME_VAR_STDERR_SUFFIX='_STDERR'
 readonly THEME_PALETTE=(
   THEME_RESET
-
-  THEME_ATTR_BOLD
-  THEME_ATTR_FAINT
-  THEME_ATTR_ITALIC
-  THEME_ATTR_UNDERLINE
-  THEME_ATTR_BLINK
-  THEME_ATTR_RAPID_BLINK
-  THEME_ATTR_REVERSE
-  THEME_ATTR_CONCEAL
-  THEME_ATTR_STRIKE
-  THEME_ATTR_DEFAULT_INTENCITY
+  THEME_BOLD
+  THEME_FAINT
+  THEME_ITALIC
+  THEME_UNDERLINE
+  THEME_BLINK
+  THEME_RAPID_BLINK
+  THEME_REVERSE
+  THEME_CONCEAL
+  THEME_STRIKE
+  THEME_DEFAULT_INTENCITY
 
   THEME_COLOR_BASE
   THEME_COLOR_MAIN
@@ -65,16 +62,16 @@ readonly THEME_PALETTE=(
 )
 
 THEME_RESET="$(escseq::sgr reset)"
-THEME_ATTR_BOLD="$(escseq::sgr bold)"
-THEME_ATTR_FAINT="$(escseq::sgr faint)"
-THEME_ATTR_ITALIC="$(escseq::sgr italic)"
-THEME_ATTR_UNDERLINE="$(escseq::sgr underline)"
-THEME_ATTR_BLINK="$(escseq::sgr blink)"
-THEME_ATTR_RAPID_BLINK="$(escseq::sgr rapid_blink)"
-THEME_ATTR_REVERSE="$(escseq::sgr reverse)"
-THEME_ATTR_CONCEAL="$(escseq::sgr conceal)"
-THEME_ATTR_STRIKE="$(escseq::sgr strike)"
-THEME_ATTR_DEFAULT_INTENCITY="$(escseq::sgr default_intencity)"
+THEME_BOLD="$(escseq::sgr bold)"
+THEME_FAINT="$(escseq::sgr faint)"
+THEME_ITALIC="$(escseq::sgr italic)"
+THEME_UNDERLINE="$(escseq::sgr underline)"
+THEME_BLINK="$(escseq::sgr blink)"
+THEME_RAPID_BLINK="$(escseq::sgr rapid_blink)"
+THEME_REVERSE="$(escseq::sgr reverse)"
+THEME_CONCEAL="$(escseq::sgr conceal)"
+THEME_STRIKE="$(escseq::sgr strike)"
+THEME_DEFAULT_INTENCITY="$(escseq::sgr default_intencity)"
 
 theme::_verificate() {
   local missing=false
@@ -96,22 +93,9 @@ theme::_verificate() {
   return 0
 }
 
-theme::_is_color_supported() {
-  local fd="${1:-1}"
-
-  [[ -n "${NO_COLOR:-}" ]] && return 1
-
-  case "$COLOR_MODE" in
-    always) return 0 ;;
-    never) return 1 ;;
-    auto) [[ -t "$fd" ]] ;;
-    *) return 1 ;;
-  esac
-}
-
 theme::_apply_theme_stdout() {
   local varname
-  if theme::_is_color_supported 1; then
+  if termcap::is_color_supported 1; then
     for theme_var in "${THEME_PALETTE[@]}"; do
       varname="${theme_var}${THEME_VAR_STDOUT_SUFFIX}"
       printf -v "$varname" '%s' "${!theme_var}"
@@ -126,7 +110,7 @@ theme::_apply_theme_stdout() {
 
 theme::_apply_theme_stderr() {
   local varname
-  if theme::_is_color_supported 2; then
+  if termcap::is_color_supported 2; then
     for theme_var in "${THEME_PALETTE[@]}"; do
       varname="${theme_var}${THEME_VAR_STDERR_SUFFIX}"
       printf -v "$varname" '%s' "${!theme_var}"
