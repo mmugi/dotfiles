@@ -9,7 +9,7 @@ THEME_COLOR_MUTED="$(escseq::sgr --fg-rgb '104:116:179')"
 
 THEME_COLOR_FATAL="$(escseq::sgr --fg-rgb '255:0:0')"
 THEME_COLOR_ERROR="$(escseq::sgr --fg-rgb '234:89:80')"
-THEME_COLOR_WARN="$(escseq::sgr --fg-rgb '250:239:81')"
+THEME_COLOR_WARN="$(escseq::sgr --fg-rgb '252:222:0')"
 THEME_COLOR_NOTICE="$(escseq::sgr --fg-rgb '201:249:220')"
 THEME_COLOR_INFO="$(escseq::sgr --fg-rgb '125:187:250')"
 THEME_COLOR_DEBUG="$(escseq::sgr --fg-rgb '104:116:179')"
