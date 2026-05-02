@@ -21,7 +21,8 @@ cursor-style = block
 cursor-style-blink = true
 
 background-opacity = 0.9
-background-blur = true
+#background-blur = true
+background-blur = macos-glass-clear
 
 unfocused-split-opacity = 1
 
