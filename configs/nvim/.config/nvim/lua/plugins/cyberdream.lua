@@ -1,0 +1,26 @@
+return {
+  "scottmckendry/cyberdream.nvim",
+  lazy = false,
+  priority = 1000,
+  opts = {
+    transparent = true,
+    highlights = {
+      CursorColumn = { fg = "NONE", bg = "#404c8b" },
+      CurSearch = { fg = "#222641", bg = "#7dbbfa" },
+      EndOfBuffer = { fg = "#6874b3", bg = "NONE" },
+      WinSeparator = { fg = "#eff7fe", bg = "NONE" },
+      IncSearch = { fg = "#222641", bg = "#7dbbfa" },
+      LineNr = { fg = "#6874b3", bg = "NONE" },
+      CursorLineNr = { fg = "#eff7fe", bg = "NONE" },
+      FloatBorder = { fg = "#eff7fe", bg = "NONE" },
+      Pmenu = { fg = "#eff7fe", bg = "NONE" },
+      PmenuSel = { fg = "#eff7fe", bg = "#5f5fff" },
+      PmenuSbar = { fg = "NONE", bg = "#948cf3" },
+      PmenuMatch = { fg = "#fcdc00", bg = "NONE" },
+      PmenuMatchSel = { fg = "#fcdc00", bg = "#5f5fff" },
+      PmenuBorder = { fg = "#eff7fe", bg = "NONE" },
+      Search = { fg = "#eff7fe", bg = "#4f6e8d" },
+      Visual = { fg = "#eff7fe", bg = "#948cf3" },
+    },
+  },
+}
