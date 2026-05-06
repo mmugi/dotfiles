@@ -1,6 +1,6 @@
 local custom_openers = {
-  man = { command = "Man" },
-  help = { command = "help" },
+  man = { command = "tab Man" },
+  help = { command = "tab help" },
 }
 
 local function custom_open(kind)
