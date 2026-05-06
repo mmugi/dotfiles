@@ -5,7 +5,8 @@ vim.opt.wrapscan = false
 vim.opt.ignorecase = true
 
 -- 4 displaying text
-vim.opt.cmdheight = 0
+-- vim.opt.cmdheight = 0 -- affects message output.
+vim.opt.cmdheight = 1
 vim.opt.list = true
 vim.opt.listchars = {
   extends = '»',
@@ -42,6 +43,7 @@ vim.opt.softtabstop = 0
 vim.opt.expandtab = true
 
 -- 20 command line editing
-vim.opt.wildmode = "full"
-vim.opt.wildoptions = "pum"
+vim.opt.wildmode = "longest,full:noselect"
+vim.opt.wildoptions = "pum,fuzzy"
 vim.opt.wildmenu = true
+vim.opt.cmdwinheight = 15
