@@ -60,8 +60,8 @@ return {
       --  filename_first = { reverse_directories = false }
       --},
       mappings = {
-        n = { ["<ESC>"] = require("telescope.actions").close },
-        i = { ["<ESC>"] = require("telescope.actions").close },
+        n = { ["<esc>"] = require("telescope.actions").close },
+        i = { ["<esc>"] = require("telescope.actions").close },
       },
       file_ignore_patterns = { ".git/" },
     },
@@ -73,9 +73,9 @@ return {
       command_history = { theme = "dropdown" },
       search_history = { theme = "dropdown" },
       vim_options = { theme = "dropdown" },
-      help_tags = { mappings = { i = { ["<CR>"] = custom_open("help") } } },
-      man_pages = { mappings = { i = { ["<CR>"] = custom_open("man") } } },
       buffers = { sort_lastused = true, select_current = true },
+      help_tags = { mappings = { i = { ["<cr>"] = custom_open("help") } } },
+      man_pages = { mappings = { i = { ["<cr>"] = custom_open("man") } } },
       colorscheme = { enable_preview = true },
       marks = { mark_type = "local" },
       registers = { theme = "dropdown" },
