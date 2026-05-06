@@ -25,8 +25,8 @@ function M.setup(opts)
 end
 
 function M.load()
-  local palette = require("mmer.palette")
-  local groups = require("mmer.groups").setup(palette)
+  local palette = require("mmerr.palette")
+  local groups = require("mmerr.groups").setup(palette)
 
   if vim.g.colors_name then
     vim.cmd("highlight clear")
@@ -38,7 +38,7 @@ function M.load()
 
   vim.opt.background = "dark"
   vim.opt.termguicolors = true
-  vim.g.colors_name = "mmer"
+  vim.g.colors_name = "mmerr"
 
   -- set highlight bg to nil of TRANSPARENT_HIGHLIGHT_GROUPS
   if M.options.transparent_bg then

@@ -1,4 +1,4 @@
-require("mmer").setup({
+require("mmerr").setup({
   transparent_bg = true,
 })
-vim.cmd.colorscheme("mmer")
+vim.cmd.colorscheme("mmerr")
