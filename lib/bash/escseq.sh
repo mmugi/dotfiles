@@ -5,6 +5,18 @@ LIB_DEPS=( core )
 
 escseq::_print_csi() { printf '\033[%sm' "$1"; }
 
+escseq::_hexcc2rgb() {
+  local cc="${1#\#}"
+  if [[ ! "$cc" =~ ^[0-9a-fA-F]{6}$ ]]; then
+    core::error "invalid colorcode format: ${cc}"
+    return 1
+  fi
+  printf '%d;%d;%d' \
+    "0x${cc:0:2}" \
+    "0x${cc:2:2}" \
+    "0x${cc:4:2}"
+}
+
 escseq::sgr() {
   local -r reset=0
   local -r bold=1
@@ -59,7 +71,7 @@ escseq::sgr() {
     return 0
   fi
 
-  local code_arr=()
+  local rgb code_arr=()
   while (( $# > 0 )); do
     case "$1" in
       # attributes
@@ -117,6 +129,35 @@ escseq::sgr() {
         ;;
 
       # true colors
+      --fg-tc)
+        if [[ -z "${2:-}" ]]; then
+          core::error "missing color argument: $1"
+        elif [[ "$2" =~ ^[0-9]+(:|;)[0-9]+(:|;)[0-9]+$ ]]; then
+          code_arr+=( "${fg_set_color};2;${2//:/;}" )
+          shift
+        elif [[ "$2" =~ ^#?[0-9a-zA-Z]{6}$ ]]; then
+          rgb="$(escseq::_hexcc2rgb "$2")"
+          code_arr+=( "${fg_set_color};2;${rgb}" )
+          shift
+        else
+          core::error "$1: invalid color code (expected: \"R:G:B\" or \"#RRGGBB\"): $2"
+        fi
+        ;;
+      --bg-tc)
+        if [[ -z "${2:-}" ]]; then
+          core::error "missing color argument: $1"
+        elif [[ "$2" =~ ^[0-9]+(:|;)[0-9]+(:|;)[0-9]+$ ]]; then
+          code_arr+=( "${bg_set_color};2;${2//:/;}" )
+          shift
+        elif [[ "$2" =~ ^#?[0-9a-zA-Z]{6}$ ]]; then
+          rgb="$(escseq::_hexcc2rgb "$2")"
+          code_arr+=( "${bg_set_color};2;${rgb}" )
+          shift
+        else
+          core::error "$1: invalid color code (expected: \"R:G:B\" or \"#RRGGBB\"): $2"
+        fi
+        ;;
+
       --fg-rgb)
         if [[ -z "${2:-}" ]]; then
           core::error "color code required: $1"
