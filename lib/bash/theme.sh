@@ -25,6 +25,11 @@ LIB_DEPS=( core escseq termcap )
 #   theme::clear で適用したテーマ(定義した配列)を初期化します。テーマ読み込み後に theme::load を
 #   再実行した場合も一度初期化され、再適用されます。
 #
+#   THEME_STYLE_COMMON に定義されたstyleはどのテーマも共通して適用されます。
+#   作成したテーマのstyle配列に THEME_STYLE_COMMON と重複するキーが含まれる場合、エラーとともに
+#   status 1 でテーマの適用を中止します。テーマのキーを重複しない値に変更してください。
+#   また、テーマ内で重複するキーがある場合は、あとに定義しているものが優先されます。
+#
 #   [<theme>::setup() の構成]
 #     - 次の連想配列がグローバルで定義されればOK
 #
@@ -77,8 +82,23 @@ theme::clear() {
   declare -g -A "${THEME_STYLE_MAP_NAME_STDERR}=()"
 }
 
-theme::_init_styles() {
-  local fd="$1" init_map_name
+theme::_check_duplicate_map_key() {
+  local -n map1="$1"
+  local -n map2="$2"
+  local duplicated=0
+
+  for key in "${!map1[@]}"; do
+    if [[ -v "map2["$key"]" ]]; then
+      core::error "duplicate map key: ${key}"
+      duplicated=1
+    fi
+  done
+
+  return "$duplicated"
+}
+
+theme::_apply_styles() {
+  local fd="$1" init_map_name key
 
   case "$fd" in
     1) init_map_name="$THEME_STYLE_MAP_NAME_STDOUT" ;;
@@ -91,6 +111,11 @@ theme::_init_styles() {
 
   local -n style_map="$THEME_STYLE_MAP_NAME"
   local -n init_map="$init_map_name"
+
+  if ! theme::_check_duplicate_map_key 'THEME_STYLE_COMMON' "$THEME_STYLE_MAP_NAME"; then
+    theme::clear
+    return 1
+  fi
 
   if termcap::is_color_supported "$fd"; then
     for key in "${!THEME_STYLE_COMMON[@]}"; do
@@ -193,6 +218,6 @@ theme::load() {
     return 1
   fi
 
-  theme::_init_styles 1
-  theme::_init_styles 2
+  theme::_apply_styles 1
+  theme::_apply_styles 2
 }
