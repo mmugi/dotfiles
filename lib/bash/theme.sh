@@ -78,7 +78,7 @@ declare -g -rA THEME_STYLE_COMMON=(
 theme::_check_duplicate_map_key() {
   local -n map1="$1"
   local -n map2="$2"
-  local duplicated=0
+  local key duplicated=0
 
   for key in "${!map1[@]}"; do
     if [[ -v "map2["$key"]" ]]; then
@@ -170,7 +170,8 @@ theme::load() {
 }
 
 theme::list_styles() {
-  local reset bold count=0
+  local reset bold key
+  local count=0
   local -n style_map="$THEME_STYLE_MAP_NAME"
   local -n style_map_stdout="$THEME_STYLE_MAP_NAME_STDOUT"
   local -n style_map_stderr="$THEME_STYLE_MAP_NAME_STDERR"
