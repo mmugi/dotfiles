@@ -75,13 +75,6 @@ declare -g -rA THEME_STYLE_COMMON=(
   ['sgr_default_intensity']="$(escseq::sgr --default-intensity)"
 )
 
-theme::clear() {
-  declare -g -A "${THEME_PALETTE_MAP_NAME}=()"
-  declare -g -A "${THEME_STYLE_MAP_NAME}=()"
-  declare -g -A "${THEME_STYLE_MAP_NAME_STDOUT}=()"
-  declare -g -A "${THEME_STYLE_MAP_NAME_STDERR}=()"
-}
-
 theme::_check_duplicate_map_key() {
   local -n map1="$1"
   local -n map2="$2"
@@ -132,6 +125,48 @@ theme::_apply_styles() {
       unset init_map["$key"]
     done
   fi
+}
+
+theme::clear() {
+  declare -g -A "${THEME_PALETTE_MAP_NAME}=()"
+  declare -g -A "${THEME_STYLE_MAP_NAME}=()"
+  declare -g -A "${THEME_STYLE_MAP_NAME_STDOUT}=()"
+  declare -g -A "${THEME_STYLE_MAP_NAME_STDERR}=()"
+}
+
+theme::load() {
+  local script_dir
+  script_dir="$(dirname "$(realpath -- "${BASH_SOURCE[0]}")")"
+
+  if (( $# > 1 )); then
+    core::error "illegal options: $*"
+    return 1
+  fi
+
+  local theme="${1:-"$THEME_DEFAULT"}"
+  local theme_dir="${script_dir}/themes"
+  local theme_file
+
+  if [[ -f "${theme_dir}/${theme}.sh" ]]; then
+    theme_file="${theme_dir}/${theme}.sh"
+  elif [[ -f "${theme_dir}/${theme}/init.sh" ]]; then
+    theme_file="${theme_dir}/${theme}/init.sh"
+  else
+    core::error "cannot find theme: ${theme}"
+    return 1
+  fi
+
+  theme::clear
+
+  # shellcheck source=/dev/null
+  source "$theme_file"
+  if ! "${theme}::setup"; then
+    core::error 'setup failed'
+    return 1
+  fi
+
+  theme::_apply_styles 1
+  theme::_apply_styles 2
 }
 
 theme::list_styles() {
@@ -185,39 +220,4 @@ theme::list_styles() {
     printf "%b< %s styles listed >%b\n" "$bold" "$count" "$reset"
     count=0
   fi
-}
-
-theme::load() {
-  local script_dir
-  script_dir="$(dirname "$(realpath -- "${BASH_SOURCE[0]}")")"
-
-  if (( $# > 1 )); then
-    core::error "illegal options: $*"
-    return 1
-  fi
-
-  local theme="${1:-"$THEME_DEFAULT"}"
-  local theme_dir="${script_dir}/themes"
-  local theme_file
-
-  if [[ -f "${theme_dir}/${theme}.sh" ]]; then
-    theme_file="${theme_dir}/${theme}.sh"
-  elif [[ -f "${theme_dir}/${theme}/init.sh" ]]; then
-    theme_file="${theme_dir}/${theme}/init.sh"
-  else
-    core::error "cannot find theme: ${theme}"
-    return 1
-  fi
-
-  theme::clear
-
-  # shellcheck source=/dev/null
-  source "$theme_file"
-  if ! "${theme}::setup"; then
-    core::error 'setup failed'
-    return 1
-  fi
-
-  theme::_apply_styles 1
-  theme::_apply_styles 2
 }
