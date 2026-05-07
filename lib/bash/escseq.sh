@@ -85,7 +85,7 @@ escseq::sgr() {
       --reverse)            code_arr+=( "$reverse" ) ;;
       --conceal)            code_arr+=( "$conceal" ) ;;
       --strike)             code_arr+=( "$strike" ) ;;
-      --default-intencity)  code_arr+=( "$default_intensity" ) ;;
+      --default-intensity)  code_arr+=( "$default_intensity" ) ;;
 
       # named colors
       --black)           code_arr+=( "$fg_black" ) ;;
