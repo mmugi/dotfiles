@@ -81,7 +81,7 @@ theme::_check_duplicate_map_key() {
   local key duplicated=0
 
   for key in "${!map1[@]}"; do
-    if [[ -v "map2["$key"]" ]]; then
+    if [[ -v "map2[${key}]" ]]; then
       core::error "duplicate map key: ${key}"
       duplicated=1
     fi
@@ -118,12 +118,7 @@ theme::_apply_styles() {
       init_map["$key"]="${style_map["$key"]}"
     done
   else
-    for key in "${!THEME_STYLE_COMMON[@]}"; do
-      unset init_map["$key"]
-    done
-    for key in "${!style_map[@]}"; do
-      unset init_map["$key"]
-    done
+    declare -g -A init_map=()
   fi
 }
 
