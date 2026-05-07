@@ -62,7 +62,7 @@ readonly THEME_STYLE_MAP_NAME_STDOUT='STYLE_STDOUT'
 readonly THEME_STYLE_MAP_NAME_STDERR='STYLE_STDERR'
 
 declare -g -rA THEME_STYLE_COMMON=(
-  ['sgr_reset']="$(escseq::sgr --reset)"
+  ['rst']="$(escseq::sgr --reset)"
   ['sgr_bold']="$(escseq::sgr --bold)"
   ['sgr_faint']="$(escseq::sgr --faint)"
   ['sgr_italic']="$(escseq::sgr --italic)"
