@@ -66,6 +66,7 @@ function M.setup(palette)
 
     -- syntax
     NonText = { fg = palette.lavender },
+    Error = { fg = palette.scarlet },
 
     -- customs
     ErrTrailingWhitespace = { fg = palette.white, bg = palette.red },
@@ -82,6 +83,13 @@ function M.setup(palette)
     --TelescopeResultsDiffDelete = { fg = palette.red },
     --TelescopeResultsDiffChange = { fg = palette.yellow },
     --TelescopeResultsDiffAdd = { fg = palette.pink },
+
+    -- incline
+    InclineNormal = { fg = palette.white },
+    InclineNormalNC = { fg = palette.lavender },
+    InclineInsert = { fg = palette.pink, italic = true },
+    InclineVisual = { fg = palette.neon_green, italic = true },
+    InclineModified = { fg = palette.black, bg = palette.yellow },
   }
 end
 

@@ -1,12 +1,16 @@
 return {
-  bg = "#222641", -- navy
-  fg = "#eff7fe", -- white
+  bg = "#222641",
+  fg = "#eff7fe",
   white = "#eff7fe",
   black = "#050a15",
+  gray = "#5e6164",
+  light_gray = "#b3bbc4",
+  dark_gray = "#3e4245",
+  light_gray = "#919ba1",
   red = "#ea5950",
+  scarlet = "#ff2400",
   pink = "#ec94ad",
   neon_pink = "#e26b8c",
-  navy = "#222641",
   muted_blue = "#4f6e8d",
   skyblue = "#7dbbfa",
   blue_purple = "#5f5fff",
