@@ -4,6 +4,7 @@ return {
   white = "#eff7fe",
   black = "#050a15",
   red = "#ea5950",
+  scarlet = "#ff2400",
   pink = "#ec94ad",
   neon_pink = "#e26b8c",
   navy = "#222641",

@@ -66,6 +66,7 @@ function M.setup(palette)
 
     -- syntax
     NonText = { fg = palette.lavender },
+    Error = { fg = palette.scarlet },
 
     -- customs
     ErrTrailingWhitespace = { fg = palette.white, bg = palette.red },
