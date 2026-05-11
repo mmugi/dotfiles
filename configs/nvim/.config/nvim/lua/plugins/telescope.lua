@@ -59,10 +59,6 @@ return {
       --path_display = {
       --  filename_first = { reverse_directories = false }
       --},
-      mappings = {
-        n = { ["<esc>"] = require("telescope.actions").close },
-        i = { ["<esc>"] = require("telescope.actions").close },
-      },
       file_ignore_patterns = { ".git/" },
     },
     pickers = {
@@ -83,4 +79,12 @@ return {
       filetypes = { theme = "dropdown" },
     },
   },
+  config = function(_, opts)
+    local actions = require("telescope.actions")
+    opts.defaults.mappings = {
+      n = { ["<esc>"] = require("telescope.actions").close },
+      i = { ["<esc>"] = require("telescope.actions").close },
+    }
+    require("telescope").setup(opts)
+  end,
 }
