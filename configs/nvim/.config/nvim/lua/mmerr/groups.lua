@@ -30,8 +30,9 @@ function M.setup(palette)
     FoldColumn = { link = "SignColumn" },
     CursorLineFold = { link = "SignColumn" },
 
-    -- winseparator
-    WinSeparator = { link = "LineNr" },
+    -- separator
+    WinSeparator = { fg = palette.lavender },
+    MsgSeparator = { link = "WinSeparator" },
 
     -- search
     Search = { fg = palette.white, bg = palette.muted_blue },
@@ -89,7 +90,7 @@ function M.setup(palette)
     InclineNormalNC = { fg = palette.lavender },
     InclineInsert = { fg = palette.pink, italic = true },
     InclineVisual = { fg = palette.neon_green, italic = true },
-    InclineModified = { fg = palette.black, bg = palette.yellow },
+    InclineModified = { fg = palette.neon_pink },
   }
 end
 

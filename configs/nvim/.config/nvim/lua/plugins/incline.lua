@@ -18,8 +18,12 @@ return {
   },
   config = function(_, opts)
     vim.opt.laststatus = 0
+    vim.opt.statusline = "─"
+    vim.opt.fillchars = { stl = "─", stlnc = "─" }
     vim.opt.ruler = false
     vim.opt.showcmd = false
+    vim.opt.showmode = false
+    vim.api.nvim_set_hl(0, "StatusLine", { link = "WinSeparator" })
 
     local _, mini_icons = pcall(require, "mini.icons")
     local function get_icon(filepath)
