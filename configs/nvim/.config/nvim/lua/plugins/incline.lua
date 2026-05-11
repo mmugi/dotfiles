@@ -1,3 +1,5 @@
+local icon_enabled = false
+
 return {
   "b0o/incline.nvim",
   event = "VeryLazy",
@@ -21,7 +23,7 @@ return {
 
     local _, mini_icons = pcall(require, "mini.icons")
     local function get_icon(filepath)
-      if not _G.MiniIcons then -- checking if mini.icons is loaded
+      if not icon_enabled or not _G.MiniIcons then -- checking if mini.icons is loaded
         return nil, nil
       end
 
@@ -65,11 +67,10 @@ return {
       return {
         icon and { " ", icon, group = icon_hl } or "",
         { " ", filename, gui = modified and "italic" or "" },
-        modified and " " or "",
-        modified and { " MODIFIDED ", group = "InclineModified" } or "",
-        { " " .. row .. "/" .. total_lines .. ":" .. col, group = "LineNr" },
-        visual_info and { " <<VISUAL ", visual_info, " ", group = "InclineVisual" } or "",
-        insert and { " <<INSERT", visual_info, " ", group = "InclineInsert" } or "",
+        modified and { "*", group = "InclineModified" } or "",
+        { " [" .. row .. "/" .. total_lines .. ":" .. col .. "]", group = "LineNr" },
+        visual_info and { " <<VISUAL ", visual_info, group = "InclineVisual" } or "",
+        insert and { " <<INSERT", visual_info, group = "InclineInsert" } or "",
       }
     end
 
