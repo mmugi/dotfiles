@@ -187,28 +187,6 @@ escseq::sgr() {
           core::error "$1: invalid color code (expected: \"R:G:B\" or \"#RRGGBB\"): $2"
         fi
         ;;
-
-      --fg-rgb)
-        if [[ -z "${2:-}" ]]; then
-          core::error "color code required: $1"
-        elif [[ "$2" =~ ^[0-9]+(:|;)[0-9]+(:|;)[0-9]+$ ]]; then
-          code_arr+=( "${fg_set_color};2;${2//:/;}" )
-          shift
-        else
-          core::error "$1: invalid color code (expected: \"r:g:b\" or \"r;g;b\"): $2"
-        fi
-        ;;
-      --bg-rgb)
-        if [[ -z "${2:-}" ]]; then
-          core::error "color code required: $1"
-        elif [[ "$2" =~ ^[0-9]+(:|;)[0-9]+(:|;)[0-9]+$ ]]; then
-          code_arr+=( "${bg_set_color};2;${2//:/;}" )
-          shift
-        else
-          core::error "$1: invalid color code (expected: \"r:g:b\"): $2"
-        fi
-        ;;
-
       *) core::error "illegal option: $1" ;;
     esac
     shift
