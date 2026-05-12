@@ -4,7 +4,36 @@ LIB_VERSION='1.0.0'
 LIB_DEPS=( core )
 [[ "${1:-}" = '__IMPORT__' ]] && return 0
 
-escseq::_print_csi() { printf '\033[%sm' "$1"; }
+# Escape Sequence <escseq.sh>
+#
+# References:
+#   - https://en.wikipedia.org/wiki/ANSI_escape_code
+#   - https://akinomyoga.github.io/contra/escseq.html
+
+ESCSEQ_ESC="$(printf '\x1b')"
+
+escseq::csi() {
+  local -r csi="${ESCSEQ_ESC}\x5b"
+  local -r sgr='\x6d'
+
+  local type
+
+  if (( $# != 2 )); then
+    core::error 'usage: escseq::csi <type> <parameter string>'
+    return 1
+  fi
+
+  case "$1" in
+    --sgr) type="$sgr" ;;
+    *)
+      core::error "invalid type: $1"
+      return 1
+      ;;
+  esac
+  shift
+
+  printf '%b%s%b' "$csi" "${1:-}" "$type"
+}
 
 escseq::_hexcc2rgb() {
   local cc="${1#\#}"
@@ -68,7 +97,7 @@ escseq::sgr() {
   local -r bg_bright_white=107
 
   if (( $# == 0 )); then
-    escseq::_print_csi "$reset"
+    escseq::csi --sgr "$reset"
     return 0
   fi
 
@@ -187,5 +216,5 @@ escseq::sgr() {
 
   local joined_code
   IFS=';' joined_code="${code_arr[*]}"
-  escseq::_print_csi "$joined_code"
+  escseq::csi --sgr "$joined_code"
 }
