@@ -1,10 +1,8 @@
 # shellcheck shell=bash
-# shellcheck disable=SC2034
-{
-  LIB_VERSION='1.0.0';
-  LIB_DEPS=( esc trap log )
-  [[ "${1:-}" = '__META_PROBE__' ]] && return 0;
-}
+
+LIB_VERSION='1.0.0';
+LIB_DEPS=( esc trap log )
+[[ "${1:-}" = '__IMPORT__' ]] && return 0;
 
 if (( "${BASH_VERSINFO[0]}" < 4 )) || \
    (( "${BASH_VERSINFO[0]}" == 4 && "${BASH_VERSINFO[1]}" < 1 ))

@@ -43,7 +43,7 @@
 #     # shellcheck disable=SC2034
 #     LIB_VERSION='v0.0.0'
 #     LIB_DEPS=()
-#     [[ "${1:-}" = '__META_PROBE__' ]] && return 0
+#     [[ "${1:-}" = '__IMPORT__' ]] && return 0
 #     ```
 #
 #   そのライブラリが依存するライブラリ名を `LIB_DEPS` に配列として保持します。
@@ -87,7 +87,7 @@ else
 fi
 
 declare -A IMPORT_IMPORTED_LIBS=()
-declare -r _IMPORT_LIB_MARKER='__META_PROBE__'
+declare -r _IMPORT_MARKER='__IMPORT__'
 declare -a _IMPORT_RESOLVING_STACK=()
 
 import::_hl() { printf '%b%s%b' "${_import_bold}${_import_green}" "$*" "$_import_reset"; }
@@ -189,8 +189,8 @@ import() {
       import::_debug "library file found: $(import::_hl_keyword "$libfile")"
     fi
 
-    if ! grep "$_IMPORT_LIB_MARKER" "$libfile" >/dev/null 2>&1; then
-      import::_abort "library marker not found: ${_IMPORT_LIB_MARKER}: ${libfile}"
+    if ! grep "$_IMPORT_MARKER" "$libfile" >/dev/null 2>&1; then
+      import::_abort "library marker not found: ${_IMPORT_MARKER}: ${libfile}"
     fi
 
     # メタ情報取得
@@ -198,7 +198,7 @@ import() {
     declare LIB_VERSION=
     declare -a LIB_DEPS=()
     # shellcheck source=/dev/null
-    if ! source "$libfile" "$_IMPORT_LIB_MARKER"; then
+    if ! source "$libfile" "$_IMPORT_MARKER"; then
       import::_abort "failed to retrieve library metadata: ${libfile}"
     else
       if [[ -z "${LIB_VERSION:-}" ]]; then

@@ -1,10 +1,8 @@
 # shellcheck shell=bash
-# shellcheck disable=SC2034
-{
-  LIB_VERSION='1.0.0'
-  LIB_DEPS=( esc msg log )
-  [[ "${1:-}" = '__META_PROBE__' ]] && return 0
-}
+
+LIB_VERSION='1.0.0'
+LIB_DEPS=( esc msg log )
+[[ "${1:-}" = '__IMPORT__' ]] && return 0
 
 # msg::chk 結果キャッシュ
 #   値: 0 = 存在する / 1 = 存在しない

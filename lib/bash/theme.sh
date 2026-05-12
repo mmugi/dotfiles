@@ -1,7 +1,8 @@
 # shellcheck shell=bash
-# shellcheck disable=SC2034
+
+LIB_VERSION='1.0.0'
 LIB_DEPS=( core escseq termcap )
-[[ "${1:-}" = '__META_PROBE__' ]] && return 0
+[[ "${1:-}" = '__IMPORT__' ]] && return 0
 
 # Bash Theme Loader <theme.sh>
 #
@@ -152,6 +153,7 @@ theme::_apply_styles() {
       init_map["$key"]="${style_map["$key"]}"
     done
   else
+    # shellcheck disable=SC2034
     declare -g -A init_map=()
   fi
 }

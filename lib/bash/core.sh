@@ -1,7 +1,8 @@
 # shellcheck shell=bash
-# shellcheck disable=SC2034
+
+LIB_VERSION='1.0.0'
 LIB_DEPS=()
-[[ "${1:-}" = '__META_PROBE__' ]] && return 0
+[[ "${1:-}" = '__IMPORT__' ]] && return 0
 
 core::_log_header() {
   local line subroutine file type
