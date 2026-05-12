@@ -3,56 +3,79 @@
 LIB_DEPS=( core escseq termcap )
 [[ "${1:-}" = '__META_PROBE__' ]] && return 0
 
-# USAGE:
+# Bash Theme Loader <theme.sh>
+#
+# * Usage *
+#
+#   # テーマの読み込み
 #   theme::load <theme>
 #
-# DESCRIPTION:
-#   themes/<theme>.sh もしくは themes/<theme>/init.sh をsourceして <theme>::setup() を実行します。
+#   # テーマのリセット
+#   theme::clear
 #
-#   <theme>::setup() で定義されるstyle配列(<theme>::setup() の構成 を参照)をもとに、
-#   THEME_STYLE_MAP_NAME_STDOUT, THEME_STYLE_MAP_NAME_STDERR に示す名前の配列を定義します。
-#   theme::load 実行時の標準出力(fd 1), 標準エラー出力(fd 2)がターミナルに接続されているかどうかを
-#   判定し、接続されていない場合はそれぞれの配列を空にセットします。
-#   TERMCAP_COLOR_MODE で上記の動作をオーバーライド可能です。(termcap.sh参照)
+# * Description *
+#
+#   `themes/<theme>.sh` もしくは `themes/<theme>/init.sh` をsourceして `<theme>::setup()` を実行します。
+#
+#   themeには、`<theme>::setup()` が定義される必要があります( `Theme Requirements` を参照)。
+#   setupが実行されると、palette mapとpalette mapをもとに構成されるstyle mapが定義されます。
+#
+#   `theme::load` では、setupで定義されたstyle mapを元にして、`THEME_STYLE_MAP_NAME_STDOUT` ,
+#   `THEME_STYLE_MAP_NAME_STDERR` に示す名前の連想配列を生成します。
+#   この配列は、スタイルを適用したい場面にあわせて利用してください。
+#   キーの構成はテーマによって定義されるため、キーが空になる場合があります。
+#   そのため、利用側でfallbackを行うようにしてください。
+#
+#   `THEME_STYLE_MAP_NAME_STDOUT`、`THEME_STYLE_MAP_NAME_STDERR` はそれぞれ、標準出力・標準エラー出力用
+#   に定義されます。`theme::load` 実行時に、標準出力(fd 1)、標準エラー出力(fd 2)がターミナルに
+#   接続されているかどうかを判定し、接続されていない場合はそれぞれの配列を空にセットします。
+#
+#   `TERMCAP_COLOR_MODE` で上記の動作をオーバーライド可能です。(termcap.sh参照)
 #     - auto: fdのターミナル接続をチェック (default)
 #     - always: 常にエスケープシーケンスを定義
 #     - never: 常に空で定義 (NO_COLORを定義しても同じ動作になります)
-
-#   テーマロード後は、スタイルを適用したい場面にあわせて THEME_STYLE_MAP_NAME_STDOUT もしくは
-#   THEME_STYLE_MAP_NAME_STDERR が示す配列を利用します。
-#   テーマによって値が空になる場合があるため、利用側でfallbackを行うようにしてください。
 #
-#   theme::clear で適用したテーマ(定義した配列)を初期化します。テーマ読み込み後に theme::load を
-#   再実行した場合も一度初期化され、再適用されます。
+#   `theme::clear` で適用したテーマ(定義した配列)を初期化します。
+#   `theme::clear` は、`theme::load` を実行時にも呼ばれ、配列を初期化したのち
+#   テーマが再適用されます。
 #
-#   THEME_STYLE_COMMON に定義されたstyleはどのテーマも共通して適用されます。
-#   作成したテーマのstyle配列に THEME_STYLE_COMMON と重複するキーが含まれる場合、エラーとともに
+#   `THEME_STYLE_COMMON` に定義されたstyleはどのテーマも共通して適用されます。
+#   作成したテーマのstyle mapに `THEME_STYLE_COMMON` と重複するキーが含まれる場合、エラーとともに
 #   status 1 でテーマの適用を中止します。テーマのキーを重複しない値に変更してください。
 #   また、テーマ内で重複するキーがある場合は、あとに定義しているものが優先されます。
 #
-#   [<theme>::setup() の構成]
-#     - 次の連想配列がグローバルで定義されればOK
+# * Theme Requirements *
 #
-#       THEME_PALETTE_MAP_NAME と同名の連想配列:
-#         - 使用するカラーコード一覧を定義(RGB形式でも指定可(区切り文字: `:` or `;`))
-#         - 例:
-#              declare -g -A THEME_PALETTE=(
-#                ['white']='#000000'
-#                ['red']='#ff0000'
-#                ['blue']='0;0;255'
-#                ['yellow']='255:255:0'
-#                ...
-#              )
+#   1. themeファイルは以下のどちらかの形式をとる。
+#     - `themes/<theme名>.sh`
+#     - `themes/<theme名>/init.sh`
+#       - `themes/<theme名>.sh` の形式が取れない場合は、`themes/<theme名>/init.sh` の形式を利用し、
+#         関連ファイルを、`themes/<theme名>/` 配下に配置する。
 #
-#       THEME_STYLE_MAP_NAME と同名の連想配列:
-#         - エスケープシーケンスを定義
-#         - 標準のテーマではエスケープシーケンスの出力に escseq.sh を利用
-#         - 例:
-#              declare -g -A THEME_STYLE=(
-#                ['error']="$(escseq::sgr --fg-tc "${THEME_PALETTE['red']}")"
-#                ['info']="$(escseq::sgr --fg-tc "${THEME_PALETTE['blue']}")"
-#                ...
-#              )
+#   2. themeファイルに `<theme名>::setup()` 関数が定義されている。
+#
+#   3. setupの実行で、以下2つの連想配列をグローバルに定義される。
+#
+#     THEME_PALETTE_MAP_NAME と同名の連想配列:
+#       - 使用するカラーコード一覧を定義(RGB形式でも指定可(区切り文字: `:` or `;`))
+#       - 例:
+#            declare -g -A THEME_PALETTE=(
+#              ['white']='#000000'
+#              ['red']='#ff0000'
+#              ['blue']='0;0;255'
+#              ['yellow']='255:255:0'
+#              ...
+#            )
+#
+#     THEME_STYLE_MAP_NAME と同名の連想配列:
+#       - エスケープシーケンスを定義
+#       - 標準のテーマではエスケープシーケンスの出力に escseq.sh を利用
+#       - 例:
+#            declare -g -A THEME_STYLE=(
+#              ['error']="$(escseq::sgr --fg-tc "${THEME_PALETTE['red']}")"
+#              ['info']="$(escseq::sgr --fg-tc "${THEME_PALETTE['blue']}")"
+#              ...
+#            )
 #
 
 if [[ "${_IMPORT_INITIALIZED:-false}" == 'true' ]]; then
