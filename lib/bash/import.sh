@@ -104,11 +104,6 @@ import::_depth() {
   printf '%d\n' "$(( depth - 1 ))"
 }
 
-import::_error() {
-  printf '[IMPORT ERROR] %b%s%b\n' "$_import_red" "$*" "$_import_reset" >&2
-  exit 1
-}
-
 import::_debug() {
   local tab=2
   local spaces=''
@@ -117,6 +112,15 @@ import::_debug() {
   depth="$(import::_depth)"
   (( depth > 0 )) && spaces="$(printf '%*s' "$(( depth * tab ))" '')"
   printf '[IMPORT DEBUG] depth[%02d]: %s%s\n' "$depth" "$spaces" "$*" >&2
+}
+
+import::_error() {
+  printf '[IMPORT ERROR] %b%s%b\n' "$_import_red" "$*" "$_import_reset" >&2
+}
+
+import::_abort() {
+  import::_error "$@"
+  exit 1
 }
 
 import::_find_library_file() {
@@ -148,7 +152,7 @@ import::path_init() {
 }
 
 import() {
-  local lib libfile
+  local lib libfile libver
 
   import::_debug \
     "currently imported libraries: $(import::_hl_bold "${!IMPORT_IMPORTED_LIBS[@]}")"
@@ -167,7 +171,7 @@ import() {
     # 循環検出
     import::_debug "checking if $(import::_hl_bold "$lib") is in the resolving stack..."
     if import::_resolving_stack_contains "$lib"; then
-      import::_error \
+      import::_abort \
         "circular library dependency detected: ${_IMPORT_RESOLVING_STACK[*]} -> ${lib}"
     else
       import::_debug "$(import::_hl_bold "$lib") is not in the resolving stack."
@@ -180,24 +184,32 @@ import() {
     # モジュール探索
     import::_debug "searching library file $(import::_hl_bold "${lib}.sh")..."
     if ! libfile=$(import::_find_library_file "$lib"); then
-      import::_error "library file not found: ${lib} (searched: ${DOTFILES_IMPORT_PATH[*]})"
+      import::_abort "library file not found: ${lib} (searched: ${DOTFILES_IMPORT_PATH[*]})"
     else
       import::_debug "library file found: $(import::_hl_keyword "$libfile")"
     fi
 
     if ! grep "$_IMPORT_LIB_MARKER" "$libfile" >/dev/null 2>&1; then
-      import::_error "library marker not found: ${_IMPORT_LIB_MARKER}: ${libfile}"
+      import::_abort "library marker not found: ${_IMPORT_LIB_MARKER}: ${libfile}"
     fi
 
     # メタ情報取得
+    import::_debug "retrieving metadata..."
     declare LIB_VERSION=
     declare -a LIB_DEPS=()
-    import::_debug "retrieving metadata..."
     # shellcheck source=/dev/null
     if ! source "$libfile" "$_IMPORT_LIB_MARKER"; then
-      import::_error "failed to retrieve library metadata: ${libfile}"
+      import::_abort "failed to retrieve library metadata: ${libfile}"
     else
-      import::_debug "library version: $(import::_hl_keyword "${LIB_VERSION:-undefined}")"
+      if [[ -z "${LIB_VERSION:-}" ]]; then
+        libver='undefined'
+      elif [[ "${LIB_VERSION,,}" =~ ^[0-9]\.[0-9]\.[0-9]$ ]]; then
+        libver="$LIB_VERSION"
+      else
+        import::_error "invalid version format. epected: x.y.z: ${LIB_VERSION}"
+        libver='???'
+      fi
+      import::_debug "library version: $(import::_hl_keyword "$libver")"
       import::_debug "dependent librarys: $(import::_hl_keyword "${LIB_DEPS[*]:-none}")"
     fi
 
@@ -211,10 +223,10 @@ import() {
     # ライブラリ読み込み
     import::_debug "loading $(import::_hl_bold "$lib")..."
     # shellcheck source=/dev/null
-    source "$libfile" || import::_error "failed to source ${libfile}"
+    source "$libfile" || import::_abort "failed to source ${libfile}"
     import::_debug 'removinging from resolving stack...'
     unset '_IMPORT_RESOLVING_STACK[${#_IMPORT_RESOLVING_STACK[@]}-1]'
-    IMPORT_IMPORTED_LIBS["$lib"]="${LIB_VERSION:-unknown}"
+    IMPORT_IMPORTED_LIBS["$lib"]="$libver"
     import::_debug "$(import::_hl_lib '<<<') imported $(import::_hl_lib "$lib")"
   done
 
