@@ -55,11 +55,22 @@ LIB_DEPS=( core escseq termcap )
 #              )
 #
 
+if [[ "${_IMPORT_INITIALIZED:-false}" == 'true' ]]; then
+  return 0
+else
+  _IMPORT_INITIALIZED=true
+fi
+
 readonly THEME_DEFAULT='mmerr'
 readonly THEME_PALETTE_MAP_NAME='THEME_PALETTE'
 readonly THEME_STYLE_MAP_NAME='THEME_STYLE'
 readonly THEME_STYLE_MAP_NAME_STDOUT='STYLE_STDOUT'
 readonly THEME_STYLE_MAP_NAME_STDERR='STYLE_STDERR'
+
+declare -gA "${THEME_PALETTE_MAP_NAME}=()"
+declare -gA "${THEME_STYLE_MAP_NAME}=()"
+declare -gA "${THEME_STYLE_MAP_NAME_STDOUT}=()"
+declare -gA "${THEME_STYLE_MAP_NAME_STDERR}=()"
 
 declare -g -rA THEME_STYLE_COMMON=(
   ['rst']="$(escseq::sgr --reset)"

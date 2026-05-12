@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 # shellcheck disable=SC2034
-LIB_DEPS=( core )
+LIB_DEPS=( core theme )
 [[ "${1:-}" = '__META_PROBE__' ]] && return 0
 
 # ログレベル
