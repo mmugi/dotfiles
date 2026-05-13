@@ -70,6 +70,7 @@ import::_debug() {
   local depth
   [[ "${IMPORT_DEBUG:-false}" == 'true' ]] || return 0
   depth="$(import::_depth)"
+  depth="$(( depth < 0 ? 0 : depth ))"
   (( depth > 0 )) && spaces="$(printf '%*s' "$(( depth * tab ))" '')"
   printf '[IMPORT DEBUG] depth[%02d]: %s%s\n' "$depth" "$spaces" "$*" >&2
 }
@@ -286,6 +287,9 @@ import::_init() {
     _import_blue="$(printf '\033[34m')"
     _import_cyan="$(printf '\033[36m')"
   fi
+
+  import::_debug "bash version ${BASH_VERSION}"
+  import::_debug "initializing..."
 
   if ! import::_version_satisfies "$requires_bash"; then
     import::_error "bash ${requires_bash} is required (current: ${BASH_VERSION})"
