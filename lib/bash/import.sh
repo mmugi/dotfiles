@@ -254,8 +254,7 @@ import() {
     fi
 
     if ! import::_version_satisfies "${LIB_REQUIRES_BASH:=">=0"}"; then
-      import::_error "${lib}: bash ${LIB_REQUIRES_BASH} is required (current: ${BASH_VERSION})"
-      exit 1
+      import::_abort "${lib}: bash ${LIB_REQUIRES_BASH} is required (current: ${BASH_VERSION})"
     fi
 
     # 依存ライブラリ解決
@@ -308,13 +307,11 @@ import::_init() {
   import::_debug "initializing..."
 
   if ! import::_version_satisfies "$requires_bash"; then
-    import::_error "bash ${requires_bash} is required (current: ${BASH_VERSION})"
-    exit 1
+    import::_abort "bash ${requires_bash} is required (current: ${BASH_VERSION})"
   fi
 
   if [[ -z "${DOTFILES_PATH:-}" ]]; then
-    import::_error 'DOTFILES_PATH is not defined.' >&2
-    exit 1
+    import::_abort 'DOTFILES_PATH is not defined.' >&2
   fi
 
   declare -gA IMPORT_IMPORTED_LIBS=()
