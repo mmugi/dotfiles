@@ -43,11 +43,18 @@
 #     # shellcheck disable=SC2034
 #     LIB_VERSION='v0.0.0'
 #     LIB_DEPS=()
+#     LIB_REQUIRES_BASH='>=0.0.0'
 #     [[ "${1:-}" = '__IMPORT__' ]] && return 0
 #     ```
 #
 #   そのライブラリが依存するライブラリ名を `LIB_DEPS` に配列として保持します。
 #   `LIB_DEPS` が空でない場合、`import()` の引数として再帰的に依存ライブラリの解決を行います。#
+#
+#   `LIB_REQUIRES_BASH` には、そのライブラリが要求するbashバージョンを `<version specifier><version>`
+#   の形式の文字列で指定します。
+#   使用可能な指定子は `==` 、`!=` 、`>=` 、`<=` 、`>` 、`<` です。
+#   この変数は定義しないこともできます。その場合は、`>=0` として判定されます。
+#   条件が満たされない場合は、エラーでimportを停止します。
 #
 # * Debug *
 #
@@ -226,6 +233,8 @@ import() {
     import::_debug "retrieving metadata..."
     declare LIB_VERSION=
     declare -a LIB_DEPS=()
+    declare LIB_REQUIRES_BASH=
+
     # shellcheck source=/dev/null
     if ! source "$libfile" "$_IMPORT_MARKER"; then
       import::_abort "failed to retrieve library metadata: ${libfile}"
@@ -238,8 +247,15 @@ import() {
         import::_error "invalid version format. epected: x.y.z: ${LIB_VERSION}"
         libver='???'
       fi
+
       import::_debug "library version: $(import::_hl_keyword "$libver")"
       import::_debug "dependent librarys: $(import::_hl_keyword "${LIB_DEPS[*]:-none}")"
+      import::_debug "library reqruies bash version: $(import::_hl_keyword "${LIB_REQUIRES_BASH:-*}")"
+    fi
+
+    if ! import::_version_satisfies "${LIB_REQUIRES_BASH:=">=0"}"; then
+      import::_error "${lib}: bash ${LIB_REQUIRES_BASH} is required (current: ${BASH_VERSION})"
+      exit 1
     fi
 
     # 依存ライブラリ解決
