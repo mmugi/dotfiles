@@ -89,22 +89,76 @@ import::_hl_deps() { printf '%b%s%b' "$_import_blue" "$*" "$_import_reset"; }
 import::_hl_bold() { printf '%b%s%b' "$_import_bold" "$*" "$_import_reset"; }
 import::_hl_keyword() { printf '%b%s%b' "$_import_cyan" "$*" "$_import_reset"; }
 
-import::_require_bash_version() {
-  if [[ -z "${1:-}" ]]; then
-    return 0
+import::_version_compere() {
+  # usage: import::_version_compere "a_version" "b_version"
+  # a = b: 0
+  # a > b: 1
+  # a > b: -1
+
+  local a_version="$1"
+  local b_version="$2"
+  local a_versions=()
+  local b_versions=()
+
+  IFS='.' read -ra a_versions <<< "$a_version"
+  IFS='.' read -ra b_versions <<< "$b_version"
+
+  local i
+  local max="${#a_versions[@]}"
+  (( ${#b_versions[@]} > max )) && max="${#b_versions[@]}"
+
+   for (( i = 0; i < max; i++ )); do
+     local a="${a_versions[i]:-0}"
+     local b="${b_versions[i]:-0}"
+
+     if (( a > b )); then
+       printf '%d' 1
+       return 0
+     fi
+
+     if (( a < b )); then
+       printf '%d' -1
+       return 0
+     fi
+   done
+
+   printf '%d' 0
+   return 0
+}
+
+import::_version_satisfies() {
+  local requirement="$1"
+  local version="${2:-"${BASH_VERSION}"}"
+  local op required cmp
+
+  if [[ "$requirement" =~ ^([><=!]=?)([0-9]+(\.[0-9]+)*)$ ]]; then
+    op="${BASH_REMATCH[1]}"
+    required="${BASH_REMATCH[2]}"
+  else
+    import::_error "invalid version requirement: ${requirement}"
+    return 1
   fi
 
-  local required_major="$1"
-  local required_minor="${2:-0}"
-  local major="${BASH_VERSINFO[0]}"
-  local minor="${BASH_VERSINFO[1]}"
-
-  if (( major < required_major )) || \
-     (( major == required_major && minor < required_minor ))
-  then
-    import::_abort \
-      "bash ${required_major}.${required_minor}+ is required (current: ${BASH_VERSION})"
+  if [[ "$version" =~ ^([0-9]+(\.[0-9]+)*).*$ ]]; then
+    version="${BASH_REMATCH[1]}"
+  else
+    import::_error "invalid version: ${version}"
+    return 1
   fi
+
+  cmp="$(import::_version_compere "$version" "$required")"
+  case "$op" in
+    '==') (( cmp == 0 )) ;;
+    '!=') (( cmp != 0 )) ;;
+    '>')  (( cmp > 0 )) ;;
+    '>=') (( cmp >= 0 )) ;;
+    '<')  (( cmp < 0 )) ;;
+    '<=') (( cmp <= 0 )) ;;
+    *)
+      import::_error "unsupported operator: ${op}"
+      return 1
+      ;;
+  esac
 }
 
 import::_find_library_file() {
@@ -210,6 +264,8 @@ import() {
 }
 
 import::_init() {
+  local requires_bash='>=4.0'
+
   if [ -z "${BASH_VERSION:-}" ]; then
     printf 'import: must be sourced from bash.\n' >&2
     exit 1
@@ -231,7 +287,10 @@ import::_init() {
     _import_cyan="$(printf '\033[36m')"
   fi
 
-  import::_require_bash_version 4 0 || exit 1
+  if ! import::_version_satisfies "$requires_bash"; then
+    import::_error "bash ${requires_bash} is required (current: ${BASH_VERSION})"
+    exit 1
+  fi
 
   if [[ -z "${DOTFILES_PATH:-}" ]]; then
     import::_error 'DOTFILES_PATH is not defined.' >&2
