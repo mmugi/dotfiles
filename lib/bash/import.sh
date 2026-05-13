@@ -53,48 +53,8 @@
 #
 #   IMPORT_DEBUG 変数に `true` を設定することで、詳細なdebug情報を出力します。
 
+: "${DOTFILES_IMPORT_PATH:=}"
 : "${IMPORT_DEBUG:=false}"
-
-if [ -z "${BASH_VERSION:-}" ]; then
-  printf 'import: please source this library with bash\n' >&2
-  exit 1
-fi
-
-if (( "${BASH_VERSINFO[0]:-0}" < 4 )); then
-  printf 'import: requires bash 4 or newer\n' >&2
-  exit 1
-fi
-
-if [[ -z "${DOTFILES_PATH:-}" ]]; then
-  printf 'import: DOTFILES_PATH is not defined\n' >&2
-  exit 1
-fi
-
-if [[ -t 2  && -z "${NO_COLOR:-}" ]]; then
-  _import_reset="$(printf '\033[m')"
-  _import_bold="$(printf '\033[1m')"
-  _import_red="$(printf '\033[31m')"
-  _import_green="$(printf '\033[32m')"
-  _import_blue="$(printf '\033[34m')"
-  _import_cyan="$(printf '\033[36m')"
-else
-  _import_reset=
-  _import_bold=
-  _import_red=
-  _import_green=
-  _import_blue=
-  _import_cyan=
-fi
-
-declare -A IMPORT_IMPORTED_LIBS=()
-declare -r _IMPORT_MARKER='__IMPORT__'
-declare -a _IMPORT_RESOLVING_STACK=()
-
-import::_hl() { printf '%b%s%b' "${_import_bold}${_import_green}" "$*" "$_import_reset"; }
-import::_hl_lib() { printf '%b%s%b' "$_import_green" "$*" "$_import_reset"; }
-import::_hl_deps() { printf '%b%s%b' "$_import_blue" "$*" "$_import_reset"; }
-import::_hl_bold() { printf '%b%s%b' "$_import_bold" "$*" "$_import_reset"; }
-import::_hl_keyword() { printf '%b%s%b' "$_import_cyan" "$*" "$_import_reset"; }
 
 import::_depth() {
   local func depth=0
@@ -123,6 +83,30 @@ import::_abort() {
   exit 1
 }
 
+import::_hl() { printf '%b%s%b' "${_import_bold}${_import_green}" "$*" "$_import_reset"; }
+import::_hl_lib() { printf '%b%s%b' "$_import_green" "$*" "$_import_reset"; }
+import::_hl_deps() { printf '%b%s%b' "$_import_blue" "$*" "$_import_reset"; }
+import::_hl_bold() { printf '%b%s%b' "$_import_bold" "$*" "$_import_reset"; }
+import::_hl_keyword() { printf '%b%s%b' "$_import_cyan" "$*" "$_import_reset"; }
+
+import::_require_bash_version() {
+  if [[ -z "${1:-}" ]]; then
+    return 0
+  fi
+
+  local required_major="$1"
+  local required_minor="${2:-0}"
+  local major="${BASH_VERSINFO[0]}"
+  local minor="${BASH_VERSINFO[1]}"
+
+  if (( major < required_major )) || \
+     (( major == required_major && minor < required_minor ))
+  then
+    import::_abort \
+      "bash ${required_major}.${required_minor}+ is required (current: ${BASH_VERSION})"
+  fi
+}
+
 import::_find_library_file() {
   local lib="$1"
   local p filepath
@@ -139,16 +123,6 @@ import::_resolving_stack_contains(){
     [[ "$item" == "$target" ]] && return 0
   done
   return 1
-}
-
-import::path_init() {
-  declare -a _import_path_default=( "${DOTFILES_PATH}/lib/bash" )
-  if [[ -n "${DOTFILES_IMPORT_PATH:-}" ]]; then
-    IFS=':' read -r -a _import_path_extra <<< "$DOTFILES_IMPORT_PATH"
-    DOTFILES_IMPORT_PATH=( "${_import_path_extra[@]}" "${_import_path_default[@]}" )
-  else
-    DOTFILES_IMPORT_PATH=( "${_import_path_default[@]}" )
-  fi
 }
 
 import() {
@@ -235,4 +209,48 @@ import() {
   fi
 }
 
-import::path_init
+import::_init() {
+  if [ -z "${BASH_VERSION:-}" ]; then
+    printf 'import: must be sourced from bash.\n' >&2
+    exit 1
+  fi
+
+  _import_reset=
+  _import_bold=
+  _import_red=
+  _import_green=
+  _import_blue=
+  _import_cyan=
+
+  if [[ -t 2  && -z "${NO_COLOR:-}" ]]; then
+    _import_reset="$(printf '\033[m')"
+    _import_bold="$(printf '\033[1m')"
+    _import_red="$(printf '\033[31m')"
+    _import_green="$(printf '\033[32m')"
+    _import_blue="$(printf '\033[34m')"
+    _import_cyan="$(printf '\033[36m')"
+  fi
+
+  import::_require_bash_version 4 0 || exit 1
+
+  if [[ -z "${DOTFILES_PATH:-}" ]]; then
+    import::_error 'DOTFILES_PATH is not defined.' >&2
+    exit 1
+  fi
+
+  declare -gA IMPORT_IMPORTED_LIBS=()
+  declare -ga _IMPORT_RESOLVING_STACK=()
+  declare -gr _IMPORT_MARKER='__IMPORT__'
+  declare -ra _IMPORT_PATH_DEFAULT=( "${DOTFILES_PATH}/lib/bash" )
+
+  # path初期化
+  local _import_path_extra
+  if [[ -n "${DOTFILES_IMPORT_PATH:-}" ]]; then
+    IFS=':' read -r -a _import_path_extra <<< "$DOTFILES_IMPORT_PATH"
+    DOTFILES_IMPORT_PATH=( "${_import_path_extra[@]}" "${_IMPORT_PATH_DEFAULT[@]}" )
+  else
+    DOTFILES_IMPORT_PATH=( "${_IMPORT_PATH_DEFAULT[@]}" )
+  fi
+}
+
+import::_init
