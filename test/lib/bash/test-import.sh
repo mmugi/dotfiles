@@ -3,6 +3,8 @@
 set -ueo pipefail
 
 DOTFILES_PATH=~/.dotfiles
+IMPORT_DEBUG=true
+
 source "${DOTFILES_PATH}/lib/bash/import.sh"
 
 print_header() {
@@ -32,8 +34,6 @@ list_imported_libs() {
     printf '%-24s %s\n' "$key" "${IMPORT_IMPORTED_LIBS[${key}]}"
   done
 }
-
-IMPORT_DEBUG=true
 
 import core esc util log theme escseq msg dotfiles trap termcap
 
