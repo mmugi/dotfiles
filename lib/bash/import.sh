@@ -84,7 +84,7 @@ import::_debug() {
 }
 
 import::_error() {
-  printf '[IMPORT ERROR] %b%s%b\n' "$_import_red" "$*" "$_import_reset" >&2
+  printf '[IMPORT ERROR] %b%s%b\n' "$_IMPORT_RED" "$*" "$_IMPORT_RESET" >&2
 }
 
 import::_abort() {
@@ -92,11 +92,11 @@ import::_abort() {
   exit 1
 }
 
-import::_hl() { printf '%b%s%b' "${_import_bold}${_import_green}" "$*" "$_import_reset"; }
-import::_hl_lib() { printf '%b%s%b' "$_import_green" "$*" "$_import_reset"; }
-import::_hl_deps() { printf '%b%s%b' "$_import_blue" "$*" "$_import_reset"; }
-import::_hl_bold() { printf '%b%s%b' "$_import_bold" "$*" "$_import_reset"; }
-import::_hl_keyword() { printf '%b%s%b' "$_import_cyan" "$*" "$_import_reset"; }
+import::_hl() { printf '%b%s%b' "${_IMPORT_BOLD}${_IMPORT_GREEN}" "$*" "$_IMPORT_RESET"; }
+import::_hl_lib() { printf '%b%s%b' "$_IMPORT_GREEN" "$*" "$_IMPORT_RESET"; }
+import::_hl_deps() { printf '%b%s%b' "$_IMPORT_BLUE" "$*" "$_IMPORT_RESET"; }
+import::_hl_bold() { printf '%b%s%b' "$_IMPORT_BOLD" "$*" "$_IMPORT_RESET"; }
+import::_hl_keyword() { printf '%b%s%b' "$_IMPORT_CYAN" "$*" "$_IMPORT_RESET"; }
 
 import::_version_compere() {
   # usage: import::_version_compere "a_version" "b_version"
@@ -291,20 +291,20 @@ import::_init() {
 
   [[ "${IMPORT_INITIALIZED:-false}" == 'true' ]] && return 0
 
-  _import_reset=
-  _import_bold=
-  _import_red=
-  _import_green=
-  _import_blue=
-  _import_cyan=
+  declare -g _IMPORT_RESET=
+  declare -g _IMPORT_BOLD=
+  declare -g _IMPORT_RED=
+  declare -g _IMPORT_GREEN=
+  declare -g _IMPORT_BLUE=
+  declare -g _IMPORT_CYAN=
 
   if [[ -t 2  && -z "${NO_COLOR:-}" ]]; then
-    _import_reset="$(printf '\033[m')"
-    _import_bold="$(printf '\033[1m')"
-    _import_red="$(printf '\033[31m')"
-    _import_green="$(printf '\033[32m')"
-    _import_blue="$(printf '\033[34m')"
-    _import_cyan="$(printf '\033[36m')"
+    _IMPORT_RESET="$(printf '\033[m')"
+    _IMPORT_BOLD="$(printf '\033[1m')"
+    _IMPORT_RED="$(printf '\033[31m')"
+    _IMPORT_GREEN="$(printf '\033[32m')"
+    _IMPORT_BLUE="$(printf '\033[34m')"
+    _IMPORT_CYAN="$(printf '\033[36m')"
   fi
 
   import::_debug "bash version ${BASH_VERSION}"
@@ -321,15 +321,15 @@ import::_init() {
   declare -gA IMPORT_IMPORTED_LIBS=()
   declare -ga _IMPORT_RESOLVING_STACK=()
   declare -gr _IMPORT_MARKER='__IMPORT__'
-  declare -ra _IMPORT_PATH_DEFAULT=( "${DOTFILES_PATH}/lib/bash" )
 
-  # path初期化
+  import::_debug "import path initializing..."
+  local _import_path_default=( "${DOTFILES_PATH}/lib/bash" )
   local _import_path_extra
   if [[ -n "${DOTFILES_IMPORT_PATH:-}" ]]; then
     IFS=':' read -r -a _import_path_extra <<< "$DOTFILES_IMPORT_PATH"
-    DOTFILES_IMPORT_PATH=( "${_import_path_extra[@]}" "${_IMPORT_PATH_DEFAULT[@]}" )
+    DOTFILES_IMPORT_PATH=( "${_import_path_extra[@]}" "${_import_path_default[@]}" )
   else
-    DOTFILES_IMPORT_PATH=( "${_IMPORT_PATH_DEFAULT[@]}" )
+    DOTFILES_IMPORT_PATH=( "${_import_path_default[@]}" )
   fi
 
   import::_debug "preloading core libraries..."
