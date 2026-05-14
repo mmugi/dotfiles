@@ -60,8 +60,9 @@
 #
 #   IMPORT_DEBUG 変数に `true` を設定することで、詳細なdebug情報を出力します。
 
-: "${DOTFILES_IMPORT_PATH:=}"
+: "${IMPORT_INITIALIZED=false}"
 : "${IMPORT_DEBUG:=false}"
+: "${DOTFILES_IMPORT_PATH:=}"
 
 import::_depth() {
   local func depth=0
@@ -287,6 +288,8 @@ import::_init() {
     exit 1
   fi
 
+  [[ "${IMPORT_INITIALIZED:-false}" == 'true' ]] && return 0
+
   _import_reset=
   _import_bold=
   _import_red=
@@ -327,6 +330,8 @@ import::_init() {
   else
     DOTFILES_IMPORT_PATH=( "${_IMPORT_PATH_DEFAULT[@]}" )
   fi
+
+  IMPORT_INITIALIZED=true
 }
 
 import::_init
