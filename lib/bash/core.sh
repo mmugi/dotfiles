@@ -8,7 +8,7 @@ core::_log_header() {
   local line subroutine file type
   type="${1:?}"
   read -r line subroutine file < <(caller 1)
-  printf '[%s:%s] [%s] %s:' "$file" "$line" "$type" "$subroutine" >&2
+  printf '[CORE: %5s] [%s:%s] [%s]' "$type" "$file" "$line" "$subroutine" >&2
 }
 
 core::_log_body() {
@@ -17,3 +17,4 @@ core::_log_body() {
 }
 
 core::error() { core::_log_header 'ERROR'; core::_log_body "$@"; }
+core::warn()  { core::_log_header 'WARN'; core::_log_body "$@"; }
