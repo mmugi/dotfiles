@@ -282,6 +282,7 @@ import() {
 
 import::_init() {
   local requires_bash='>=4.0'
+  local preload_libs=( core )
 
   if [ -z "${BASH_VERSION:-}" ]; then
     printf 'import: must be sourced from bash.\n' >&2
@@ -330,6 +331,9 @@ import::_init() {
   else
     DOTFILES_IMPORT_PATH=( "${_IMPORT_PATH_DEFAULT[@]}" )
   fi
+
+  import::_debug "preloading core libraries..."
+  import "${preload_libs[@]}"
 
   IMPORT_INITIALIZED=true
 }
