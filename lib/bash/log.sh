@@ -100,7 +100,7 @@ log::_log_stacktrace() {
   done
 }
 
-log::logger() {
+logger() {
   local level level_ts_fmt level_num style stacktrace
   local verbose=false
 

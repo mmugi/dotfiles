@@ -39,10 +39,10 @@ bar
 debug 'theme not loaded'
 LOG_TRACE_ERROR=true
 echo "LOG_TRACE_ERROR: ${LOG_TRACE_ERROR:-null}"
-log::logger --debug -v 'log test debug'
-log::logger --info -v 'log test info'
-log::logger --warn -v 'log test warn'
-log::logger --error -v 'log test error'
+logger --debug -v 'log test debug'
+logger --info -v 'log test info'
+logger --warn -v 'log test warn'
+logger --error -v 'log test error'
 bar
 
 debug 'theme load'
@@ -54,11 +54,11 @@ bar
 debug 'logger test'
 LOG_LEVEL=0
 echo "LOG_LEVEL: ${LOG_LEVEL:-null}"
-log::logger --debug -v 'log test debug'
-log::logger --info -v 'log test info'
-log::logger --warn -v 'log test warn'
-log::logger --error -v 'log test error'
-#log::logger --fatal -v 'log test fatal'
+logger --debug -v 'log test debug'
+logger --info -v 'log test info'
+logger --warn -v 'log test warn'
+logger --error -v 'log test error'
+#logger --fatal -v 'log test fatal'
 bar
 
 debug 'theme.sh re:source'
@@ -70,11 +70,11 @@ bar
 
 debug 'logger test in function'
 f1() {
-  log::logger --error 'f1 log'
+  logger --error 'f1 log'
   f2
 }
 f2() {
-  log::logger --error 'f2 log'
+  logger --error 'f2 log'
 }
 f1
 bar
@@ -97,11 +97,11 @@ echo "LOG_TRACE_ERROR: ${LOG_TRACE_ERROR:-null}"
 echo "LOG_TRACE_WARN: ${LOG_TRACE_WARN:-null}"
 echo "LOG_TRACE_INFO: ${LOG_TRACE_INFO:-null}"
 echo "LOG_TRACE_DEBUG: ${LOG_TRACE_DEBUG:-null}"
-log::logger --debug -v 'log test debug'
-log::logger --info -v 'log test info'
-log::logger --warn -v 'log test warn'
-log::logger --error -v 'log test error'
-#log::logger --fatal -v 'log test fatal'
+logger --debug -v 'log test debug'
+logger --info -v 'log test info'
+logger --warn -v 'log test warn'
+logger --error -v 'log test error'
+#logger --fatal -v 'log test fatal'
 f1
 LOG_TS=false
 LOG_LEVEL=2
@@ -111,11 +111,11 @@ echo "LOG_TS: ${LOG_TS:-null}"
 echo "LOG_LEVEL: ${LOG_LEVEL:-null}"
 echo "LOG_ABSPATH: ${LOG_ABSPATH:-null}"
 echo "LOG_TRACE_ABSPATH: ${LOG_TRACE_ABSPATH:-null}"
-log::logger --debug -v 'log test debug'
-log::logger --info -v 'log test info'
-log::logger --warn -v 'log test warn'
-log::logger --error -v 'log test error'
-#log::logger --fatal -v 'log test fatal'
+logger --debug -v 'log test debug'
+logger --info -v 'log test info'
+logger --warn -v 'log test warn'
+logger --error -v 'log test error'
+#logger --fatal -v 'log test fatal'
 f1
 bar
 
@@ -125,16 +125,16 @@ LOG_LEVEL=0
 LOG_ABSPATH=true
 LOG_TRACE_ABSPATH=true
 theme::clear
-log::logger --info -v 'log test info'
+logger --info -v 'log test info'
 bar
 
 debug 'fatal log check'
 theme::load
 LOG_FATAL_EXIT=false
 echo "LOG_FATAL_EXIT: ${LOG_FATAL_EXIT:-null}"
-log::logger --fatal -v 'log test fatal' ||:
+logger --fatal -v 'log test fatal' ||:
 LOG_FATAL_EXIT=true
 echo "LOG_FATAL_EXIT: ${LOG_FATAL_EXIT:-null}"
-log::logger --fatal -v 'log test fatal' ||:
+logger --fatal -v 'log test fatal' ||:
 
 debug EOS
