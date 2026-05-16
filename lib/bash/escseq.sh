@@ -117,24 +117,46 @@ escseq::sgr() {
       --strike)             code_arr+=( "$strike" ) ;;
       --default-intensity)  code_arr+=( "$default_intensity" ) ;;
 
-      # named colors
-      --black)           code_arr+=( "$fg_black" ) ;;
-      --red)             code_arr+=( "$fg_red" ) ;;
-      --green)           code_arr+=( "$fg_green" ) ;;
-      --yellow)          code_arr+=( "$fg_yellow" ) ;;
-      --blue)            code_arr+=( "$fg_blue" ) ;;
-      --magenta)         code_arr+=( "$fg_magenta" ) ;;
-      --cyan)            code_arr+=( "$fg_cyan" ) ;;
-      --white)           code_arr+=( "$fg_white" ) ;;
-      --default)         code_arr+=( "$fg_default" ) ;;
-      --bright-black)    code_arr+=( "$fg_bright_black" ) ;;
-      --bright-red)      code_arr+=( "$fg_bright_red" ) ;;
-      --bright-green)    code_arr+=( "$fg_bright_green" );;
-      --bright-yellow)   code_arr+=( "$fg_bright_yellow" ) ;;
-      --bright-blue)     code_arr+=( "$fg_bright_blue" ) ;;
-      --bright-magenta)  code_arr+=( "$fg_bright_magenta" ) ;;
-      --bright-cyan)     code_arr+=( "$fg_bright_cyan" ) ;;
-      --bright-white)    code_arr+=( "$fg_bright_white" ) ;;
+      # named colors (4bit colors)
+      --black)              code_arr+=( "$fg_black" ) ;;
+      --red)                code_arr+=( "$fg_red" ) ;;
+      --green)              code_arr+=( "$fg_green" ) ;;
+      --yellow)             code_arr+=( "$fg_yellow" ) ;;
+      --blue)               code_arr+=( "$fg_blue" ) ;;
+      --magenta)            code_arr+=( "$fg_magenta" ) ;;
+      --cyan)               code_arr+=( "$fg_cyan" ) ;;
+      --white)              code_arr+=( "$fg_white" ) ;;
+
+      --fg-default)         code_arr+=( "$fg_default" ) ;;
+
+      --bg-black)           code_arr+=( "$bg_black" ) ;;
+      --bg-red)             code_arr+=( "$bg_red" ) ;;
+      --bg-green)           code_arr+=( "$bg_green" ) ;;
+      --bg-yellow)          code_arr+=( "$bg_yellow" ) ;;
+      --bg-blue)            code_arr+=( "$bg_blue" ) ;;
+      --bg-magenta)         code_arr+=( "$bg_magenta" ) ;;
+      --bg-cyan)            code_arr+=( "$bg_cyan" ) ;;
+      --bg-white)           code_arr+=( "$bg_white" ) ;;
+
+      --bg-default)         code_arr+=( "$bg_default" ) ;;
+
+      --bright-black)       code_arr+=( "$fg_bright_black" ) ;;
+      --bright-red)         code_arr+=( "$fg_bright_red" ) ;;
+      --bright-green)       code_arr+=( "$fg_bright_green" );;
+      --bright-yellow)      code_arr+=( "$fg_bright_yellow" ) ;;
+      --bright-blue)        code_arr+=( "$fg_bright_blue" ) ;;
+      --bright-magenta)     code_arr+=( "$fg_bright_magenta" ) ;;
+      --bright-cyan)        code_arr+=( "$fg_bright_cyan" ) ;;
+      --bright-white)       code_arr+=( "$fg_bright_white" ) ;;
+
+      --bg-bright-black)    code_arr+=( "$bg_bright_black" ) ;;
+      --bg-bright-red)      code_arr+=( "$bg_bright_red" ) ;;
+      --bg-bright-green)    code_arr+=( "$bg_bright_green" );;
+      --bg-bright-yellow)   code_arr+=( "$bg_bright_yellow" ) ;;
+      --bg-bright-blue)     code_arr+=( "$bg_bright_blue" ) ;;
+      --bg-bright-magenta)  code_arr+=( "$bg_bright_magenta" ) ;;
+      --bg-bright-cyan)     code_arr+=( "$bg_bright_cyan" ) ;;
+      --bg-bright-white)    code_arr+=( "$bg_bright_white" ) ;;
 
       # 8bit colors
       --fg-256)
