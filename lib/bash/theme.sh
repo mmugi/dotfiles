@@ -98,16 +98,16 @@ declare -gA "${THEME_STYLE_MAP_NAME_STDERR}=()"
 
 declare -g -rA THEME_STYLE_COMMON=(
   ['rst']="$(escseq::sgr --reset)"
-  ['sgr_bold']="$(escseq::sgr --bold)"
-  ['sgr_faint']="$(escseq::sgr --faint)"
-  ['sgr_italic']="$(escseq::sgr --italic)"
-  ['sgr_underline']="$(escseq::sgr --underline)"
-  ['sgr_blink']="$(escseq::sgr --blink)"
-  ['sgr_rapid_blink']="$(escseq::sgr --rapid_blink)"
-  ['sgr_reverse']="$(escseq::sgr --reverse)"
-  ['sgr_conceal']="$(escseq::sgr --conceal)"
-  ['sgr_strike']="$(escseq::sgr --strike)"
-  ['sgr_default_intensity']="$(escseq::sgr --default-intensity)"
+  ['bold']="$(escseq::sgr --bold)"
+  ['faint']="$(escseq::sgr --faint)"
+  ['italic']="$(escseq::sgr --italic)"
+  ['underline']="$(escseq::sgr --underline)"
+  ['blink']="$(escseq::sgr --blink)"
+  ['rapid_blink']="$(escseq::sgr --rapid_blink)"
+  ['reverse']="$(escseq::sgr --reverse)"
+  ['conceal']="$(escseq::sgr --conceal)"
+  ['strike']="$(escseq::sgr --strike)"
+  ['default_intensity']="$(escseq::sgr --default-intensity)"
 )
 
 theme::_check_duplicate_map_key() {
