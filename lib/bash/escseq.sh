@@ -68,7 +68,7 @@ escseq::sgr() {
   local -r fg_cyan=36
   local -r fg_white=37
   local -r fg_set_color=38
-  local -r fg_default=39
+  local -r default_fg=39
   local -r bg_black=40
   local -r bg_red=41
   local -r bg_green=42
@@ -78,7 +78,7 @@ escseq::sgr() {
   local -r bg_cyan=46
   local -r bg_white=47
   local -r bg_set_color=48
-  local -r bg_default=49
+  local -r default_bg=49
   local -r fg_bright_black=90
   local -r fg_bright_red=91
   local -r fg_bright_green=92
@@ -127,7 +127,7 @@ escseq::sgr() {
       --cyan)               code_arr+=( "$fg_cyan" ) ;;
       --white)              code_arr+=( "$fg_white" ) ;;
 
-      --fg-default)         code_arr+=( "$fg_default" ) ;;
+      --default-fg)         code_arr+=( "$default_fg" ) ;;
 
       --bg-black)           code_arr+=( "$bg_black" ) ;;
       --bg-red)             code_arr+=( "$bg_red" ) ;;
@@ -138,7 +138,7 @@ escseq::sgr() {
       --bg-cyan)            code_arr+=( "$bg_cyan" ) ;;
       --bg-white)           code_arr+=( "$bg_white" ) ;;
 
-      --bg-default)         code_arr+=( "$bg_default" ) ;;
+      --default-bg)         code_arr+=( "$default_bg" ) ;;
 
       --bright-black)       code_arr+=( "$fg_bright_black" ) ;;
       --bright-red)         code_arr+=( "$fg_bright_red" ) ;;

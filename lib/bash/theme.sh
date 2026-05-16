@@ -108,7 +108,8 @@ declare -g -rA THEME_STYLE_COMMON=(
   ['conceal']="$(escseq::sgr --conceal)"
   ['strike']="$(escseq::sgr --strike)"
   ['default_intensity']="$(escseq::sgr --default-intensity)"
-  ['fg_default']="$(escseq::sgr --default)"
+  ['default_fg']="$(escseq::sgr --default-fg)"
+  ['default_bg']="$(escseq::sgr --default-bg)"
 )
 
 theme::_check_duplicate_map_key() {
