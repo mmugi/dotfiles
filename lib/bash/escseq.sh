@@ -59,6 +59,12 @@ escseq::sgr() {
   local -r conceal=8
   local -r strike=9
   local -r default_intensity=22
+  local -r noitalic=23
+  local -r nounderline=24
+  local -r noblink=25
+  local -r noreverse=27
+  local -r reveal=28
+  local -r nostrike=29
   local -r fg_black=30
   local -r fg_red=31
   local -r fg_green=32
@@ -106,6 +112,7 @@ escseq::sgr() {
     case "$1" in
       # attributes
       --reset)              code_arr+=( "$reset" ) ;;
+
       --bold)               code_arr+=( "$bold" ) ;;
       --faint)              code_arr+=( "$faint" ) ;;
       --italic)             code_arr+=( "$italic" ) ;;
@@ -115,7 +122,14 @@ escseq::sgr() {
       --reverse)            code_arr+=( "$reverse" ) ;;
       --conceal)            code_arr+=( "$conceal" ) ;;
       --strike)             code_arr+=( "$strike" ) ;;
+
       --default-intensity)  code_arr+=( "$default_intensity" ) ;;
+      --noitalic)           code_arr+=( "$noitalic" ) ;;
+      --nounderline)        code_arr+=( "$nounderline" ) ;;
+      --noblink)            code_arr+=( "$noblink" ) ;;
+      --noreverse)          code_arr+=( "$noreverse" ) ;;
+      --reveal)             code_arr+=( "$reveal" ) ;;
+      --nostrike)           code_arr+=( "$nostrike" ) ;;
 
       # named colors (4bit colors)
       --black)              code_arr+=( "$fg_black" ) ;;

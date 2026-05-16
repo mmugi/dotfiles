@@ -108,6 +108,12 @@ declare -g -rA THEME_STYLE_COMMON=(
   ['conceal']="$(escseq::sgr --conceal)"
   ['strike']="$(escseq::sgr --strike)"
   ['default_intensity']="$(escseq::sgr --default-intensity)"
+  ['noitalic']="$(escseq::sgr --noitalic)"
+  ['nounderline']="$(escseq::sgr --nounderline)"
+  ['noblink']="$(escseq::sgr --noblink)"
+  ['noreverse']="$(escseq::sgr --noreverse)"
+  ['reveal']="$(escseq::sgr --reveal)"
+  ['nostrike']="$(escseq::sgr --nostrike)"
   ['default_fg']="$(escseq::sgr --default-fg)"
   ['default_bg']="$(escseq::sgr --default-bg)"
 )
