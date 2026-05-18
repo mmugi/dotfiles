@@ -15,22 +15,22 @@ LIB_DEPS=( core theme )
 # 負の値を設定することで、ログ出力を完全に抑制します。
 : "${LOG_LEVEL:=1}"
 
-# タイムスタンプを付与 (true/false)
-: "${LOG_TS:=false}"
+# タイムスタンプを付与
+: "${LOG_TS:=0}"
 
-# スタックトレース設定 (true/false)
-: "${LOG_TRACE_FATAL:=true}"
-: "${LOG_TRACE_ERROR:=false}"
-: "${LOG_TRACE_WARN:=false}"
-: "${LOG_TRACE_INFO:=false}"
-: "${LOG_TRACE_DEBUG:=false}"
+# スタックトレース設定
+: "${LOG_TRACE_FATAL:=1}"
+: "${LOG_TRACE_ERROR:=0}"
+: "${LOG_TRACE_WARN:=0}"
+: "${LOG_TRACE_INFO:=0}"
+: "${LOG_TRACE_DEBUG:=0}"
 
-# ファイル名を絶対パスで出力 (true/false)
-: "${LOG_ABSPATH:=false}"
-: "${LOG_TRACE_ABSPATH:=false}"
+# ファイル名を絶対パスで出力
+: "${LOG_ABSPATH:=0}"
+: "${LOG_TRACE_ABSPATH:=0}"
 
-# fatal関数でexit 1する (falseを指定してreturn 1)
-: "${LOG_FATAL_EXIT:=true}"
+# fatal関数でexit 1する
+: "${LOG_FATAL_EXIT:=1}"
 
 log::_fmt_filename() {
   local f="$1" filename filepath
@@ -39,17 +39,15 @@ log::_fmt_filename() {
   filename="$(basename -- "$filepath")"
 
   if [[ ! -f "$filepath" ]]; then
-    core::error "no such file or directory: ${filepath}" >&2
+    core::error "no such file or directory: ${filepath}"
     return 1
   fi
 
   if [[ \
         ( \
-          "${FUNCNAME[1]}" == 'log::_log_stacktrace' \
-            && "$LOG_TRACE_ABSPATH" == 'true' \
+          "${FUNCNAME[1]}" == 'log::_log_stacktrace' && (( LOG_TRACE_ABSPATH )) \
         ) || ( \
-          "${FUNCNAME[1]}" == 'log::_log_emit' \
-            && "$LOG_ABSPATH" == 'true' \
+          "${FUNCNAME[1]}" == 'log::_log_emit' && (( LOG_ABSPATH )) \
         ) \
      ]]
   then
@@ -63,7 +61,7 @@ log::_log_emit() {
   local level="$1" style="$2" verbose="$3"; shift 3
   local line file fmt_file
 
-  if [[ "$verbose" == 'true' ]]; then
+  if (( verbose )); then
     read -r line _ file < <(caller 1)
     fmt_file="$(log::_fmt_filename "$file")"
   else
@@ -71,7 +69,7 @@ log::_log_emit() {
     fmt_file=
   fi
 
-  if [[ "$LOG_TS" == 'true' ]]; then
+  if (( LOG_TS )); then
     printf '%s [%s]%s%s %s\n' \
       "${STYLE_STDERR['log_timestamp']:-}$(TZ='JST-9' date -Iseconds)${STYLE_STDERR['rst']:-}" \
       "${style}${level}${STYLE_STDERR['rst']:-}" \
@@ -102,7 +100,7 @@ log::_log_stacktrace() {
 
 logger() {
   local level level_ts_fmt level_num style stacktrace
-  local verbose=false
+  local verbose=0
 
   while (( $# > 0 )); do
     case "$1" in
@@ -142,7 +140,7 @@ logger() {
         style="${STYLE_STDERR['log_debug']:-}"
         stacktrace="$LOG_TRACE_DEBUG"
         ;;
-      -v|--verbose) verbose=true ;;
+      -v|--verbose) verbose=1 ;;
       *) break ;;
     esac
     shift
@@ -157,17 +155,17 @@ logger() {
     return 0
   fi
 
-  if [[ "$LOG_TS" == 'true' ]]; then
+  if (( LOG_TS )); then
     log::_log_emit "$level_ts_fmt" "$style" "$verbose" "$@"
   else
     log::_log_emit "$level" "$style" "$verbose" "$@"
   fi
 
-  if [[ "$stacktrace" == 'true' ]]; then
+  if (( stacktrace )); then
     log::_log_stacktrace
   fi
 
-  if [[ "$level" == 'FATAL' && "$LOG_FATAL_EXIT" == 'true' ]]; then
+  if [[ "$level" == 'FATAL' ]] && (( LOG_FATAL_EXIT )); then
     exit 1
   fi
 }

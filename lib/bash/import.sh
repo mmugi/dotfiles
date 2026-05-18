@@ -58,10 +58,10 @@
 #
 # * Debug *
 #
-#   IMPORT_DEBUG 変数に `true` を設定することで、詳細なdebug情報を出力します。
+#   IMPORT_DEBUG=1 を設定することで、詳細なdebug情報を出力します。
 
-: "${IMPORT_INITIALIZED=false}"
-: "${IMPORT_DEBUG:=false}"
+: "${IMPORT_INITIALIZED=0}"
+: "${IMPORT_DEBUG:=0}"
 : "${DOTFILES_IMPORT_PATH:=}"
 
 import::_depth() {
@@ -76,7 +76,7 @@ import::_debug() {
   local tab=2
   local spaces=''
   local depth
-  [[ "${IMPORT_DEBUG:-false}" == 'true' ]] || return 0
+  (( IMPORT_DEBUG )) || return 0
   depth="$(import::_depth)"
   depth="$(( depth < 0 ? 0 : depth ))"
   (( depth > 0 )) && spaces="$(printf '%*s' "$(( depth * tab ))" '')"
@@ -289,7 +289,7 @@ import::_init() {
     exit 1
   fi
 
-  [[ "${IMPORT_INITIALIZED:-false}" == 'true' ]] && return 0
+  (( IMPORT_INITIALIZED )) && return 0
 
   declare -g _IMPORT_RESET=
   declare -g _IMPORT_BOLD=
@@ -335,7 +335,7 @@ import::_init() {
   import::_debug "preloading core libraries..."
   import "${preload_libs[@]}"
 
-  IMPORT_INITIALIZED=true
+  IMPORT_INITIALIZED=1
 }
 
 import::_init

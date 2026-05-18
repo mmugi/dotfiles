@@ -79,10 +79,10 @@ LIB_DEPS=( core escseq termcap )
 #            )
 #
 
-if [[ "${_IMPORT_INITIALIZED:-false}" == 'true' ]]; then
+if (( ${_THEME_INITIALIZED:-0} )); then
   return 0
 else
-  _IMPORT_INITIALIZED=true
+  _THEME_INITIALIZED=1
 fi
 
 readonly THEME_DEFAULT='mmerr'
@@ -215,12 +215,16 @@ theme::list_styles() {
   local -n style_map_stdout="$THEME_STYLE_MAP_NAME_STDOUT"
   local -n style_map_stderr="$THEME_STYLE_MAP_NAME_STDERR"
 
-  local orig=true all=false stdout=false stderr=false
+  local orig=1
+  local all=0
+  local stdout=0
+  local stderr=0
+
   while (( $# > 0 )); do
     case "$1" in
-      --all)    all=true ;;
-      --stdout) orig=false; stdout=true ;;
-      --stderr) orig=false; stderr=true ;;
+      --all)    all=1 ;;
+      --stdout) orig=0; stdout=1 ;;
+      --stderr) orig=0; stderr=1 ;;
       *)
         core::error "illegal option: $1"
         return 1
@@ -231,7 +235,7 @@ theme::list_styles() {
   reset="$(printf '\033[0m')"
   bold="$(printf '\033[1m')"
 
-  if [[ "$all" == 'true' || "$orig" == 'true' ]]; then
+  if (( all )) || (( orig )); then
     printf '%b< %s >%b\n' "$bold" "$THEME_STYLE_MAP_NAME" "$reset"
     for key in "${!style_map[@]}"; do
       printf '%-25s %b%s%b\n' "$key" "${style_map["$key"]}" 'TEST MESSAGE' "$reset"
@@ -241,7 +245,7 @@ theme::list_styles() {
     count=0
   fi
 
-  if [[ "$all" == 'true' || "$stdout" == 'true' ]]; then
+  if (( all )) || (( stdout )); then
     printf '%b< %s >%b\n' "$bold" "$THEME_STYLE_MAP_NAME_STDOUT" "$reset"
     for key in "${!style_map_stdout[@]}"; do
       printf '%-25s %b%s%b\n' "$key" "${style_map_stdout["$key"]}" 'TEST MESSAGE' "$reset"
@@ -251,7 +255,7 @@ theme::list_styles() {
     count=0
   fi
 
-  if [[ "$all" == 'true' || "$stdout" == 'true' ]]; then
+  if (( all )) || (( stderr )); then
     printf '%b< %s >%b\n' "$bold" "$THEME_STYLE_MAP_NAME_STDERR" "$reset"
     for key in "${!style_map_stderr[@]}"; do
       printf '%-25s %b%s%b\n' "$key" "${style_map_stderr["$key"]}" 'TEST MESSAGE' "$reset"
