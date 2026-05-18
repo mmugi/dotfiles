@@ -85,18 +85,12 @@ else
   _THEME_INITIALIZED=1
 fi
 
-readonly THEME_DEFAULT='mmerr'
-readonly THEME_PALETTE_MAP_NAME='THEME_PALETTE'
-readonly THEME_STYLE_MAP_NAME='THEME_STYLE'
-readonly THEME_STYLE_MAP_NAME_STDOUT='STYLE_STDOUT'
-readonly THEME_STYLE_MAP_NAME_STDERR='STYLE_STDERR'
-
-declare -gA "${THEME_PALETTE_MAP_NAME}=()"
-declare -gA "${THEME_STYLE_MAP_NAME}=()"
-declare -gA "${THEME_STYLE_MAP_NAME_STDOUT}=()"
-declare -gA "${THEME_STYLE_MAP_NAME_STDERR}=()"
-
-declare -g -rA THEME_STYLE_COMMON=(
+declare -gr THEME_DEFAULT='mmerr'
+declare -gr THEME_PALETTE_MAP_NAME='THEME_PALETTE'
+declare -gr THEME_STYLE_MAP_NAME='THEME_STYLE'
+declare -gr THEME_STYLE_MAP_NAME_STDOUT='STYLE_STDOUT'
+declare -gr THEME_STYLE_MAP_NAME_STDERR='STYLE_STDERR'
+declare -grA THEME_STYLE_COMMON=(
   ['rst']="$(escseq::sgr --reset)"
   ['bold']="$(escseq::sgr --bold)"
   ['faint']="$(escseq::sgr --faint)"
@@ -117,6 +111,11 @@ declare -g -rA THEME_STYLE_COMMON=(
   ['default_fg']="$(escseq::sgr --default-fg)"
   ['default_bg']="$(escseq::sgr --default-bg)"
 )
+
+declare -gA "${THEME_PALETTE_MAP_NAME}=()"
+declare -gA "${THEME_STYLE_MAP_NAME}=()"
+declare -gA "${THEME_STYLE_MAP_NAME_STDOUT}=()"
+declare -gA "${THEME_STYLE_MAP_NAME_STDERR}=()"
 
 theme::_check_duplicate_map_key() {
   local -n map1="$1"
