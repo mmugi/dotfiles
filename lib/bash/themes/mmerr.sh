@@ -24,6 +24,10 @@ mmerr::setup() {
     ['gray']='#5e6164'
   )
   declare -g -A THEME_STYLE=(
+    ['normal']="$(escseq::sgr --fg-tc "${THEME_PALETTE['white']}")"
+    ['highlight']="$(escseq::sgr --fg-tc "${THEME_PALETTE['pink']}")"
+    ['prompt']="$(escseq::sgr --fg-tc "${THEME_PALETTE['blue_purple']}")"
+    ['box']="$(escseq::sgr --fg-tc "${THEME_PALETTE['blue_purple']}")"
     ['log_fatal']="$(escseq::sgr --fg-tc "${THEME_PALETTE['scarlet']}")"
     ['log_error']="$(escseq::sgr --fg-tc "${THEME_PALETTE['red']}")"
     ['log_warn']="$(escseq::sgr --fg-tc "${THEME_PALETTE['yellow']}")"
