@@ -59,6 +59,7 @@ msg::_tokenizer_debug() {
 msg::_tokenizer_init() {
   declare -ga _MSG_TOKENIZER_OUTPUT_TYPE=()
   declare -ga _MSG_TOKENIZER_OUTPUT_VALUE=()
+  declare -gA _MSG_TOKENIZER_OUTPUT_ATTR=()
   declare -gi _MSG_TOKENIZER_INITIALIZED=1
   msg::_tokenizer_debug 'MSG TOKENIZER INITIALIZED!'
 }
@@ -72,7 +73,7 @@ msg::_tokenizer_isinit() {
   fi
 }
 
-msg::_tokenizer_peek_type() {
+msg::_peek_token_type_stack() {
   msg::_tokenizer_isinit || return 1
 
   local last_idx
@@ -85,7 +86,7 @@ msg::_tokenizer_peek_type() {
   fi
 }
 
-msg::_tokenizer_drop() {
+msg::_drop_token_stack() {
   msg::_tokenizer_isinit || return 1
 
   local last_idx type value
@@ -95,56 +96,51 @@ msg::_tokenizer_drop() {
     type="${_MSG_TOKENIZER_OUTPUT_TYPE[last_idx]}"
     value="${_MSG_TOKENIZER_OUTPUT_VALUE[last_idx]}"
 
-    msg::_tokenizer_debug "${type} ${value}"
+    msg::_tokenizer_debug "type=\"${type}\" value=\"${value}\""
 
     unset '_MSG_TOKENIZER_OUTPUT_TYPE[last_idx]'
     unset '_MSG_TOKENIZER_OUTPUT_VALUE[last_idx]'
-    _MSG_TOKENIZER_OUTPUT_TYPE=( "${_MSG_TOKENIZER_OUTPUT_TYPE[@]}" )
-    _MSG_TOKENIZER_OUTPUT_VALUE=( "${_MSG_TOKENIZER_OUTPUT_VALUE[@]}" )
+    for key in "${!_MSG_TOKENIZER_OUTPUT_ATTR[@]}"; do
+      [[ $key == "${last_idx}:"* ]] || continue
+      msg::_tokenizer_debug "index=\"${last_idx}\" key=\"${key}\""
+      unset '_MSG_TOKENIZER_OUTPUT_ATTR[$key]'
+    done
   fi
+
+  #msg::_tokenizer_debug "$(declare -p _MSG_TOKENIZER_OUTPUT_TYPE)"
+  #msg::_tokenizer_debug "$(declare -p _MSG_TOKENIZER_OUTPUT_VALUE)"
+  #msg::_tokenizer_debug "$(declare -p _MSG_TOKENIZER_OUTPUT_ATTR)"
 }
 
-msg::_tokenizer_push() {
+msg::_push_token_stack() {
   msg::_tokenizer_isinit || return 1
-  (( $# != 2 )) && { logger --error -v 'invalid token'; return 1; }
+  (( $# == 2 || $# == 3 )) || { logger --error -v 'invalid options'; return 1; }
 
   local type="$1"
   local value="$2"
+  local attrs="${3:-}"
+  local re_attr='([a-zA-Z0-9_-]+)="([^"]+)"'
 
-  msg::_tokenizer_debug "${type} ${value}"
+  msg::_tokenizer_debug "type=\"${type}\" value=\"${value}\""
 
   _MSG_TOKENIZER_OUTPUT_TYPE+=( "$type" )
   _MSG_TOKENIZER_OUTPUT_VALUE+=( "$value" )
-}
 
-msg::_tokenize_attr() {
-  msg::_tokenizer_isinit || return 1
-  (( $# != 2 )) && { logger --error -v 'invalid options'; return 1; }
+  if [[ -n "$attrs" ]]; then
+    local idx attr attr_value
+    idx=$(( ${#_MSG_TOKENIZER_OUTPUT_TYPE[@]} - 1 ))
+    while [[ "$attrs" =~ $re_attr ]]; do
+      attr="${BASH_REMATCH[1]}"
+      attr_value="${BASH_REMATCH[2]}"
+      msg::_tokenizer_debug "index=\"${idx}\" attr=\"${attr}\" attr_value=\"${attr_value}\""
+      _MSG_TOKENIZER_OUTPUT_ATTR["${idx}:${attr}"]="$attr_value"
+      attrs=${attrs#*"${BASH_REMATCH[0]}"}
+    done
+  fi
 
-  local tag="$1"
-  local attrs="$2"
-  local re_attr='([a-zA-Z0-9_-]+)="([^"]+)"'
-
-  while [[ "$attrs" =~ $re_attr ]]; do
-    attr="${BASH_REMATCH[1]}"
-    value="${BASH_REMATCH[2]}"
-    msg::_tokenizer_debug "attr=\"${attr}\",value=\"${value}\""
-
-    case "$tag" in
-      @indent)
-        case "$attr" in
-          width) msg::_tokenizer_push 'BLOCK_OPEN' "indent:${value}" ;;
-          *) logger --warn -v "unknown tag attribute: ${tag}: ${attr}" ;;
-        esac
-        ;;
-      *)
-        logger --error -v "invalid block tag: ${tag}"
-        return 1
-        ;;
-    esac
-
-    attrs=${attrs#*"${BASH_REMATCH[0]}"}
-  done
+  #msg::_tokenizer_debug "$(declare -p _MSG_TOKENIZER_OUTPUT_TYPE)"
+  #msg::_tokenizer_debug "$(declare -p _MSG_TOKENIZER_OUTPUT_VALUE)"
+  #msg::_tokenizer_debug "$(declare -p _MSG_TOKENIZER_OUTPUT_ATTR)"
 }
 
 msg::_tokenize_tag() {
@@ -152,8 +148,8 @@ msg::_tokenize_tag() {
   (( $# != 1 )) && { logger --error -v 'invalid tag'; return 1; }
 
   local re_tag='^<(/?@?[a-zA-Z0-9_-]+)( +.*)? *>$'
-  local re_attr='([a-zA-Z0-9_-]+)="([^"]+)"'
-  local tag attrs
+  local restore_newline=0
+  local tag attrs top
 
   if [[ "$1" =~ $re_tag ]]; then
     tag="${BASH_REMATCH[1]}"
@@ -163,45 +159,167 @@ msg::_tokenize_tag() {
     return 1
   fi
 
-  msg::_tokenizer_debug "tag=${tag}"
+  msg::_tokenizer_debug "tag=\"${tag}\""
 
   case "$tag" in
     @*)
       case "$tag" in
-        @noprompt) msg::_tokenizer_push 'BLOCK_OPEN' 'noprompt' ;;
-        @indent) msg::_tokenize_attr "$tag" "$attrs" ;;
-        @b) msg::_tokenizer_push 'BLOCK_OPEN' 'b' ;;
-        @hl) msg::_tokenizer_push 'BLOCK_OPEN' 'hl' ;;
+        @noprompt) msg::_push_token_stack 'BLOCK_OPEN' 'noprompt' ;;
+        @indent) msg::_push_token_stack 'BLOCK_OPEN' 'indent' "$attrs" ;;
+        @b) msg::_push_token_stack 'BLOCK_OPEN' 'b' ;;
+        @hl) msg::_push_token_stack 'BLOCK_OPEN' 'hl' ;;
         *)
           logger --error -v "invalid block tag: ${tag}"
           return 1
         ;;
       esac
       ;;
+
     /@*)
-      top="$(msg::_tokenizer_peek_type)"
+      top="$(msg::_peek_token_type_stack)"
       if [[ "$top" == 'NEWLINE' ]]; then
         restore_newline=1
-        msg::_tokenizer_drop
+        msg::_drop_token_stack
       fi
 
       case "$tag" in
-        /@noprompt) msg::_tokenizer_push 'BLOCK_CLOSE' 'noprompt' ;;
-        /@indent) msg::_tokenizer_push 'BLOCK_CLOSE' 'indent' ;;
-        /@b) msg::_tokenizer_push 'BLOCK_CLOSE' 'b' ;;
-        /@hl) msg::_tokenizer_push 'BLOCK_CLOSE' 'hl' ;;
+        /@noprompt) msg::_push_token_stack 'BLOCK_CLOSE' 'noprompt' ;;
+        /@indent) msg::_push_token_stack 'BLOCK_CLOSE' 'indent' ;;
+        /@b) msg::_push_token_stack 'BLOCK_CLOSE' 'b' ;;
+        /@hl) msg::_push_token_stack 'BLOCK_CLOSE' 'hl' ;;
         *)
           logger --error -v "invalid block tag: ${tag}"
           return 1
           ;;
       esac
 
-      (( restore_newline )) && msg::_tokenizer_push 'NEWLINE' '_'
+      (( restore_newline )) && msg::_push_token_stack 'NEWLINE' '_'
       ;;
+
+    /*)
+      case "$tag" in
+        /hl|/b) msg::_push_token_stack 'TAG_CLOSE' "${tag#/}" ;;
+        *)
+          logger --error -v "invalid tag: ${tag}"
+          return 1
+          ;;
+      esac
+      ;;
+
     *)
-      logger --warn -v "unknown tag: ${tag}"
+      case "$tag" in
+        hl|b) msg::_push_token_stack 'TAG_OPEN' "$tag" ;;
+        *)
+          logger --error -v "invalid tag: ${tag}"
+          return 1
+          ;;
+      esac
       ;;
   esac
+}
+
+msg::_tokenize_line() {
+  msg::_tokenizer_isinit || return 1
+  (( $# != 1 )) && { logger --error -v 'invalid option'; return 1; }
+
+  local -a types=()
+  local -a values=()
+  local line="$1"
+  local mode='TEXT'
+  local text=
+  local tag=
+  local quote=
+  local i c
+
+  msg::_tokenizer_debug "input[${line}]"
+
+  for (( i = 0; i < ${#line}; i++ )); do
+    c="${line:i:1}"
+
+    case "$mode" in
+      TEXT)
+        if [[ "$c" == '<' ]]; then
+          if [[ -n "$text" ]]; then
+            msg::_tokenizer_debug "│ TEXT=\"${text}\""
+            types+=( 'TEXT' )
+            values+=( "$text" )
+          fi
+          text=
+          tag='<'
+          mode='TAG'
+        else
+          text+="$c"
+        fi
+        ;;
+      TAG)
+        tag+="$c"
+
+        if [[ "$c" == '"' ]]; then
+          if [[ -z "$quote" ]]; then
+            quote='"'
+          else
+            quote=
+          fi
+        elif [[ "$c" == '>' && -z "$quote" ]]; then
+          msg::_tokenizer_debug "│ TAG=\"${tag}\""
+          types+=( 'TAG' )
+          values+=( "$tag" )
+          tag=
+          mode='TEXT'
+        fi
+        ;;
+    esac
+  done
+
+  # タグが閉じられていない場合
+  if [[ "$mode" == 'TAG' ]]; then
+    text+="$tag"
+  fi
+
+  if [[ -n "$text" ]]; then
+    msg::_tokenizer_debug "│ TEXT=\"${text}\""
+    types+=( 'TEXT' )
+    values+=( "$text" )
+  fi
+
+  msg::_tokenizer_debug '└'
+
+  # 入力が空行かどうか
+  local empty_line=0
+  [[ -z "$line" ]] && empty_line=1
+
+  # block tagのみの行かどうか
+  local block_tag_only=1
+  local re_space_only='^ *$'
+  local re_block_tag='^</?@'
+  if (( empty_line )); then
+    block_tag_only=0
+  else
+    for i in "${!types[@]}"; do
+      case "${types[i]}" in
+        TEXT) [[ "${values[i]}" =~ $re_space_only ]] || block_tag_only=0 ;;
+        TAG)  [[ "${values[i]}" =~ $re_block_tag ]]  || block_tag_only=0 ;;
+        *)
+          logger --error -v "invalid type: ${types[i]}"
+          return 1
+          ;;
+      esac
+    done
+  fi
+
+  msg::_tokenizer_debug "empty_line=\"${empty_line}\" block_tag_only=\"${block_tag_only}\""
+
+  (( block_tag_only )) || msg::_push_token_stack 'BEGIN_LINE' '_'
+
+  for i in "${!types[@]}"; do
+    case "${types[i]}" in
+      TAG) msg::_tokenize_tag "${values[i]}" ;;
+      *) (( block_tag_only )) || msg::_push_token_stack "${types[i]}" "${values[i]}" ;;
+    esac
+  done
+
+  (( block_tag_only )) || msg::_push_token_stack 'END_LINE' '_'
+  (( block_tag_only )) || msg::_push_token_stack 'NEWLINE' '_'
 }
 
 msg::_tokenize() {
@@ -209,88 +327,27 @@ msg::_tokenize() {
 
   local raw="$1"
   local -a lines=()
-  local line i next text tag top
+  local line i
 
   while IFS= read -r line; do
     lines+=( "$line" )
   done <<<"$raw"
 
   if (( _MSG_RENDERER_CONTEXT['raw'] )); then
-    msg::_tokenizer_push 'BEGIN' '_'
-    msg::_tokenizer_push 'TEXT' "$raw"
-    msg::_tokenizer_push 'NEWLINE' '_'
-    msg::_tokenizer_push 'END' '_'
+    msg::_push_token_stack 'BEGIN' '_'
+    msg::_push_token_stack 'TEXT' "$raw"
+    msg::_push_token_stack 'NEWLINE' '_'
+    msg::_push_token_stack 'END' '_'
     return 0
   fi
 
-  msg::_tokenizer_push 'BEGIN' '_'
+  msg::_push_token_stack 'BEGIN' '_'
 
   for i in "${!lines[@]}"; do
-    line="${lines[i]}"
-
-    msg::_tokenizer_debug "input line: ${line}"
-
-    local next="$line"
-    local restore_newline=0
-
-    # ブロックタグのトークナイズ
-    # タグのみの行をブロックタグ行として解釈
-    # <@tag1><@tag2>...
-    if [[ "$next" =~ ^(</?@[a-zA-Z0-9_-]+( +.*)? *>)+$ ]]; then
-      while [[ "$next" =~ ^(</?@[a-zA-Z0-9_-]+( +.*)? *>)(.*)$ ]]; do
-        tag=${BASH_REMATCH[1]}
-        next=${BASH_REMATCH[3]}
-
-        msg::_tokenizer_debug "block tag: ${tag}"
-        msg::_tokenizer_debug "block next tag: ${next:-none}"
-
-        msg::_tokenize_tag "$tag"
-      done
-      continue
-    fi
-
-    # 通常行のトークナイズ
-    msg::_tokenizer_push 'BEGIN_LINE' '_'
-
-    while [[ "$line" =~ ^([^<]*)(</?@?[a-zA-Z0-9_-]+>)(.*)$ ]]; do
-      text=${BASH_REMATCH[1]}
-      tag=${BASH_REMATCH[2]}
-      line=${BASH_REMATCH[3]}
-
-      msg::_tokenizer_debug "text: ${text:-none}"
-      msg::_tokenizer_debug "tag: ${tag:-none}"
-      msg::_tokenizer_debug "next: ${line:-none}"
-
-      # エスケープ '\\' -> '\', '\<' -> '<'
-      if [[ "$text" =~ \\\\$ ]]; then
-        text="${text%\\}"
-      elif [[ "$text" =~ \\$ ]]; then
-        text="${text%\\}"
-
-        [[ -n "$text" ]] && msg::_tokenizer_push 'TEXT' "$text"
-        msg::_tokenizer_push 'TEXT' "$tag"
-
-        continue
-      fi
-
-      [[ -n "$text" ]] && msg::_tokenizer_push 'TEXT' "$text"
-
-      case "$tag" in
-        '<b>')  msg::_tokenizer_push 'TAG_OPEN'  'b' ;;
-        '</b>') msg::_tokenizer_push 'TAG_CLOSE' 'b' ;;
-        '<hl>')  msg::_tokenizer_push  'TAG_OPEN' 'hl' ;;
-        '</hl>') msg::_tokenizer_push 'TAG_CLOSE' 'hl' ;;
-        *) msg::_tokenizer_push 'TEXT' "$tag" ;;
-      esac
-    done
-
-    [[ -n "$line" ]] && msg::_tokenizer_push 'TEXT' "$line"
-
-    msg::_tokenizer_push 'END_LINE' '_'
-    msg::_tokenizer_push 'NEWLINE' '_'
+    msg::_tokenize_line "${lines[i]}"
   done
 
-  msg::_tokenizer_push 'END' '_'
+  msg::_push_token_stack 'END' '_'
 
   return 0
 }
@@ -303,7 +360,6 @@ msg::_renderer_debug() {
 }
 
 msg::_renderer_init() {
-  declare -ga _MSG_RENDERER_STYLE_TAG_STACK=()
   declare -gA _MSG_RENDERER_CONTEXT=(
     ['indent_width']="$MSG_INDENT"
     ['prompt']="$MSG_PROMPT"
@@ -315,8 +371,8 @@ msg::_renderer_init() {
     ['highlight_style']='highlight'
     ['newline']=1
   )
-  declare -ga _MSG_TOKENIZER_OUTPUT_TYPE=()
-  declare -ga _MSG_TOKENIZER_OUTPUT_VALUE=()
+  declare -ga _MSG_RENDERER_STYLE_TAG_STACK=()
+  declare -ga _MSG_RENDERER_BLOCK_TAG_STACK=()
   declare -g _MSG_RENDER_OUTPUT=
   declare -gi _MSG_RENDERER_INITIALIZED=1
   msg::_renderer_debug 'MSG RENDERER INITIALIZED!'
@@ -455,24 +511,31 @@ msg::_render_token() {
     case "$type" in
       BEGIN)
         ;;
+
       BEGIN_LINE)
         msg::_render_indent
         msg::_render_prompt
         msg::_render_style
         ;;
+
       TEXT)
         _MSG_RENDER_OUTPUT+="$value"
         ;;
+
       TAG_OPEN)
         msg::_render_tag_open "$value"
         ;;
+
       TAG_CLOSE)
         msg::_render_tag_close "$value"
         ;;
+
       BLOCK_OPEN)
         case "$value" in
           noprompt)
             _MSG_RENDERER_CONTEXT['prompt']=
+            ;;
+          indent*)
             ;;
           b|hl)
             msg::_push_style_tag_stack "$value"
@@ -483,6 +546,7 @@ msg::_render_token() {
             ;;
         esac
         ;;
+
       BLOCK_CLOSE)
         case "$value" in
           noprompt)
@@ -497,16 +561,20 @@ msg::_render_token() {
             ;;
         esac
         ;;
+
       END_LINE)
         if (( ! _MSG_RENDERER_CONTEXT['plain'] )); then
           _MSG_RENDER_OUTPUT+="${STYLE_STDOUT['rst']:-}"
         fi
         ;;
+
       NEWLINE)
         _MSG_RENDER_OUTPUT+=$'\n'
         ;;
+
       END)
         ;;
+
       *)
         logger --error "invaid token type: ${type}"
         return 1
@@ -861,7 +929,7 @@ msg::box() {
 
   # body
   for i in "${!inner_rendered_lines[@]}"; do
-    pad="$(( max_width - ${inner_line_widths[i]} ))"
+    pad="$(( max_width - inner_line_widths[i] ))"
 
     printf '│%*s%b%*s%*s%b│\n' \
       "$box_padding_left" '' \
