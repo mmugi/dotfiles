@@ -5,8 +5,6 @@ LIB_DEPS=( trap log theme )
 LIB_REQUIRES_BASH='>=4.1'
 [[ "${1:-}" = '__IMPORT__' ]] && return 0;
 
-: "${MSG_PROMPT:=>}"
-: "${MSG_INDENT:=0}"
 : "${MSG_DELAY:=0.1}"
 : "${MSG_RENDERER_DEBUG:=0}"
 : "${MSG_TOKENIZER_DEBUG:=0}"
@@ -114,10 +112,10 @@ msg::_drop_token_stack() {
 
 msg::_push_token_stack() {
   msg::_tokenizer_isinit || return 1
-  (( $# == 2 || $# == 3 )) || { logger --error -v 'invalid options'; return 1; }
+  (( 1 <= $# <= 3 )) || { logger --error -v 'invalid options'; return 1; }
 
   local type="$1"
-  local value="$2"
+  local value="${2:-_}"
   local attrs="${3:-}"
   local re_attr='([a-zA-Z0-9_-]+)="([^"]+)"'
 
@@ -132,7 +130,9 @@ msg::_push_token_stack() {
     while [[ "$attrs" =~ $re_attr ]]; do
       attr="${BASH_REMATCH[1]}"
       attr_value="${BASH_REMATCH[2]}"
+
       msg::_tokenizer_debug "index=\"${idx}\" attr=\"${attr}\" attr_value=\"${attr_value}\""
+
       _MSG_TOKENIZER_OUTPUT_ATTR["${idx}:${attr}"]="$attr_value"
       attrs=${attrs#*"${BASH_REMATCH[0]}"}
     done
@@ -145,7 +145,7 @@ msg::_push_token_stack() {
 
 msg::_tokenize_tag() {
   msg::_tokenizer_isinit || return 1
-  (( $# != 1 )) && { logger --error -v 'invalid tag'; return 1; }
+  (( $# != 1 )) && { logger --error -v 'invalid option'; return 1; }
 
   local re_tag='^<(/?@?[a-zA-Z0-9_-]+)( +.*)? *>$'
   local restore_newline=0
@@ -161,6 +161,11 @@ msg::_tokenize_tag() {
 
   msg::_tokenizer_debug "tag=\"${tag}\""
 
+  if [[ ! "$tag" =~ ^/?(@(noprompt|indent|b|hl)|(b|hl))$ ]]; then
+    logger --warn -v "unsupported tag: ${tag}"
+    return 0
+  fi
+
   case "$tag" in
     @*)
       case "$tag" in
@@ -168,13 +173,8 @@ msg::_tokenize_tag() {
         @indent) msg::_push_token_stack 'BLOCK_OPEN' 'indent' "$attrs" ;;
         @b) msg::_push_token_stack 'BLOCK_OPEN' 'b' ;;
         @hl) msg::_push_token_stack 'BLOCK_OPEN' 'hl' ;;
-        *)
-          logger --error -v "invalid block tag: ${tag}"
-          return 1
-        ;;
       esac
       ;;
-
     /@*)
       top="$(msg::_peek_token_type_stack)"
       if [[ "$top" == 'NEWLINE' ]]; then
@@ -187,32 +187,18 @@ msg::_tokenize_tag() {
         /@indent) msg::_push_token_stack 'BLOCK_CLOSE' 'indent' ;;
         /@b) msg::_push_token_stack 'BLOCK_CLOSE' 'b' ;;
         /@hl) msg::_push_token_stack 'BLOCK_CLOSE' 'hl' ;;
-        *)
-          logger --error -v "invalid block tag: ${tag}"
-          return 1
-          ;;
       esac
 
-      (( restore_newline )) && msg::_push_token_stack 'NEWLINE' '_'
+      (( restore_newline )) && msg::_push_token_stack 'NEWLINE'
       ;;
-
     /*)
       case "$tag" in
         /hl|/b) msg::_push_token_stack 'TAG_CLOSE' "${tag#/}" ;;
-        *)
-          logger --error -v "invalid tag: ${tag}"
-          return 1
-          ;;
       esac
       ;;
-
     *)
       case "$tag" in
         hl|b) msg::_push_token_stack 'TAG_OPEN' "$tag" ;;
-        *)
-          logger --error -v "invalid tag: ${tag}"
-          return 1
-          ;;
       esac
       ;;
   esac
@@ -253,7 +239,6 @@ msg::_tokenize_line() {
         ;;
       TAG)
         tag+="$c"
-
         if [[ "$c" == '"' ]]; then
           if [[ -z "$quote" ]]; then
             quote='"'
@@ -309,7 +294,7 @@ msg::_tokenize_line() {
 
   msg::_tokenizer_debug "empty_line=\"${empty_line}\" block_tag_only=\"${block_tag_only}\""
 
-  (( block_tag_only )) || msg::_push_token_stack 'BEGIN_LINE' '_'
+  (( block_tag_only )) || msg::_push_token_stack 'BEGIN_LINE'
 
   for i in "${!types[@]}"; do
     case "${types[i]}" in
@@ -318,8 +303,8 @@ msg::_tokenize_line() {
     esac
   done
 
-  (( block_tag_only )) || msg::_push_token_stack 'END_LINE' '_'
-  (( block_tag_only )) || msg::_push_token_stack 'NEWLINE' '_'
+  (( block_tag_only )) || msg::_push_token_stack 'END_LINE'
+  (( block_tag_only )) || msg::_push_token_stack 'NEWLINE'
 }
 
 msg::_tokenize() {
@@ -334,20 +319,20 @@ msg::_tokenize() {
   done <<<"$raw"
 
   if (( _MSG_RENDERER_CONTEXT['raw'] )); then
-    msg::_push_token_stack 'BEGIN' '_'
+    msg::_push_token_stack 'BEGIN'
     msg::_push_token_stack 'TEXT' "$raw"
-    msg::_push_token_stack 'NEWLINE' '_'
-    msg::_push_token_stack 'END' '_'
+    msg::_push_token_stack 'NEWLINE'
+    msg::_push_token_stack 'END'
     return 0
   fi
 
-  msg::_push_token_stack 'BEGIN' '_'
+  msg::_push_token_stack 'BEGIN'
 
   for i in "${!lines[@]}"; do
     msg::_tokenize_line "${lines[i]}"
   done
 
-  msg::_push_token_stack 'END' '_'
+  msg::_push_token_stack 'END'
 
   return 0
 }
@@ -361,8 +346,8 @@ msg::_renderer_debug() {
 
 msg::_renderer_init() {
   declare -gA _MSG_RENDERER_CONTEXT=(
-    ['indent_width']="$MSG_INDENT"
-    ['prompt']="$MSG_PROMPT"
+    ['prompt_symbol']='>'
+    ['indent_width']=0
     ['plain']=0
     ['plain_prompt']=0
     ['raw']=0
@@ -371,8 +356,10 @@ msg::_renderer_init() {
     ['highlight_style']='highlight'
     ['newline']=1
   )
-  declare -ga _MSG_RENDERER_STYLE_TAG_STACK=()
-  declare -ga _MSG_RENDERER_BLOCK_TAG_STACK=()
+  declare -ga _MSG_RENDERER_INLINE_STYLE_TAG_STACK=()
+  declare -ga _MSG_RENDERER_BLOCK_STYLE_TAG_STACK=()
+  declare -ga _MSG_RENDERER_INDENT_STACK=()
+  declare -g _MSG_RENDERER_PROMPT_STACK=()
   declare -g _MSG_RENDER_OUTPUT=
   declare -gi _MSG_RENDERER_INITIALIZED=1
   msg::_renderer_debug 'MSG RENDERER INITIALIZED!'
@@ -390,10 +377,23 @@ msg::_renderer_isinit() {
 msg::_render_indent() {
   msg::_renderer_isinit || return 1
 
-  local indent
   local width="${_MSG_RENDERER_CONTEXT['indent_width']}"
+  local item indent
 
-  msg::_renderer_debug "rendering indent: width=${width}"
+  if [[ ! "$width" =~ ^[0-9]+$ ]]; then
+    logger --error -v "invalid width. expected numeric value: ${width}"
+    return 1
+  fi
+
+  for item in "${_MSG_RENDERER_INDENT_STACK[@]}"; do
+    if (( item == 0 )); then
+      width="${_MSG_RENDERER_CONTEXT['indent_width']}"
+      break;
+    fi
+    (( width += item ))
+  done
+
+  msg::_renderer_debug "rendering indent: width=\"${width}\""
 
   indent="$(printf '%*s' "$width" '')"
   _MSG_RENDER_OUTPUT+="$indent"
@@ -401,13 +401,22 @@ msg::_render_indent() {
 
 msg::_render_prompt() {
   msg::_renderer_isinit || return 1
-  [[ -z "${_MSG_RENDERER_CONTEXT['prompt']}" ]] && return 0
 
-  local char="${_MSG_RENDERER_CONTEXT['prompt']}"
-  msg::_renderer_debug "rendering prompt: char=${char}"
+  local last_idx=$(( ${#_MSG_RENDERER_PROMPT_STACK[@]} - 1 ))
+  local prompt
+
+  if (( last_idx < 0 )); then
+    prompt="${_MSG_RENDERER_CONTEXT['prompt_symbol']}"
+    msg::_renderer_debug "use default prompt: symbol=\"${prompt}\""
+  else
+    prompt="${_MSG_RENDERER_PROMPT_STACK[last_idx]}"
+    msg::_renderer_debug "use prompt stack: index=\"${last_idx}\" symbol=\"${prompt}\""
+  fi
+
+  [[ -z "$prompt" ]] && return 0
 
   (( _MSG_RENDERER_CONTEXT['plain_prompt'] )) || _MSG_RENDER_OUTPUT+="${STYLE_STDOUT['prompt']:-}"
-  _MSG_RENDER_OUTPUT+="${char} "
+  _MSG_RENDER_OUTPUT+="${prompt} "
   (( _MSG_RENDERER_CONTEXT['plain_prompt'] )) || _MSG_RENDER_OUTPUT+="${STYLE_STDOUT['rst']:-}"
 }
 
@@ -436,39 +445,114 @@ msg::_render_style() {
   (( _MSG_RENDERER_CONTEXT['bold'] )) && _MSG_RENDER_OUTPUT+="${STYLE_STDOUT['bold']:-}"
 
   # tag_stackを遡ってstyleを再描写
-  for frame in "${_MSG_RENDERER_STYLE_TAG_STACK[@]}"; do
+  for frame in "${_MSG_RENDERER_BLOCK_STYLE_TAG_STACK[@]}"; do
+    msg::_render_tag "$frame"
+  done
+  for frame in "${_MSG_RENDERER_INLINE_STYLE_TAG_STACK[@]}"; do
     msg::_render_tag "$frame"
   done
 }
 
-msg::_push_style_tag_stack() {
+msg::_push_block_style_tag_stack() {
   msg::_renderer_isinit || return 1
   (( $# != 1 )) && { logger --error -v 'invalid tag'; return 1; }
 
   local tag="$1"
-  msg::_renderer_debug "push to tag_stack: ${tag}"
-  _MSG_RENDERER_STYLE_TAG_STACK+=( "$tag" )
+  msg::_renderer_debug "tag=\"${tag}\""
+  _MSG_RENDERER_BLOCK_STYLE_TAG_STACK+=( "$tag" )
+  msg::_renderer_debug "$(declare -p _MSG_RENDERER_BLOCK_STYLE_TAG_STACK)"
 }
 
-msg::_pop_style_tag_stack() {
+msg::_pop_block_style_tag_stack() {
   msg::_renderer_isinit || return 1
   (( $# != 1 )) && { logger --error -v 'invalid tag'; return 1; }
-  (( ${#_MSG_RENDERER_STYLE_TAG_STACK[@]} == 0 )) && return 0
+  (( ${#_MSG_RENDERER_BLOCK_STYLE_TAG_STACK[@]} == 0 )) && return 0
+
+  local tag="$1"
+  local i
+
+  msg::_renderer_debug "tag=\"${tag}\""
+
+  for (( i = ${#_MSG_RENDERER_BLOCK_STYLE_TAG_STACK[@]} - 1; i >= 0; i-- )); do
+    if [[ "${_MSG_RENDERER_BLOCK_STYLE_TAG_STACK[i]}" == "$tag" ]]; then
+      unset '_MSG_RENDERER_BLOCK_STYLE_TAG_STACK[i]'
+      _MSG_RENDERER_BLOCK_STYLE_TAG_STACK=( "${_MSG_RENDERER_BLOCK_STYLE_TAG_STACK[@]}" )
+      msg::_renderer_debug "$(declare -p _MSG_RENDERER_BLOCK_STYLE_TAG_STACK)"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+msg::_push_inline_style_tag_stack() {
+  msg::_renderer_isinit || return 1
+  (( $# != 1 )) && { logger --error -v 'invalid tag'; return 1; }
+
+  local tag="$1"
+  msg::_renderer_debug "tag=\"${tag}\""
+  _MSG_RENDERER_INLINE_STYLE_TAG_STACK+=( "$tag" )
+  msg::_renderer_debug "$(declare -p _MSG_RENDERER_INLINE_STYLE_TAG_STACK)"
+}
+
+msg::_pop_inline_style_tag_stack() {
+  msg::_renderer_isinit || return 1
+  (( $# != 1 )) && { logger --error -v 'invalid tag'; return 1; }
+  (( ${#_MSG_RENDERER_INLINE_STYLE_TAG_STACK[@]} == 0 )) && return 0
 
   local tag="$1"
   local i
 
   msg::_renderer_debug "pop from tag_stack: ${tag}"
 
-  for (( i = ${#_MSG_RENDERER_STYLE_TAG_STACK[@]} - 1; i >= 0; i-- )); do
-    if [[ "${_MSG_RENDERER_STYLE_TAG_STACK[i]}" == "$tag" ]]; then
-      unset '_MSG_RENDERER_STYLE_TAG_STACK[i]'
-      _MSG_RENDERER_STYLE_TAG_STACK=( "${_MSG_RENDERER_STYLE_TAG_STACK[@]}" )
+  for (( i = ${#_MSG_RENDERER_INLINE_STYLE_TAG_STACK[@]} - 1; i >= 0; i-- )); do
+    if [[ "${_MSG_RENDERER_INLINE_STYLE_TAG_STACK[i]}" == "$tag" ]]; then
+      unset '_MSG_RENDERER_INLINE_STYLE_TAG_STACK[i]'
+      _MSG_RENDERER_INLINE_STYLE_TAG_STACK=( "${_MSG_RENDERER_INLINE_STYLE_TAG_STACK[@]}" )
+      msg::_renderer_debug "$(declare -p _MSG_RENDERER_INLINE_STYLE_TAG_STACK)"
       return 0
     fi
   done
 
   return 1
+}
+
+msg::_push_prompt_stack() {
+  msg::_renderer_isinit || return 1
+  (( $# != 1 )) && { logger --error -v 'invalid option'; return 1; }
+
+  local symbol="$1"
+  msg::_renderer_debug "symbol=\"${symbol}\""
+  _MSG_RENDERER_PROMPT_STACK+=( "$symbol" )
+  msg::_renderer_debug "$(declare -p _MSG_RENDERER_PROMPT_STACK)"
+}
+
+msg::_drop_prompt_stack() {
+  msg::_renderer_isinit || return 1
+  (( ${#_MSG_RENDERER_PROMPT_STACK[@]} == 0 )) && return 0
+
+  local last_idx=$(( ${#_MSG_RENDERER_PROMPT_STACK[@]} - 1 ))
+  unset "_MSG_RENDERER_PROMPT_STACK[${last_idx}]"
+  msg::_renderer_debug "$(declare -p _MSG_RENDERER_PROMPT_STACK)"
+}
+
+msg::_push_indent_stack() {
+  msg::_renderer_isinit || return 1
+  (( $# != 1 )) && { logger --error -v 'invalid option'; return 1; }
+
+  local width="$1"
+  msg::_renderer_debug "width=\"${width}\""
+  _MSG_RENDERER_INDENT_STACK+=( "$width" )
+  msg::_renderer_debug "$(declare -p _MSG_RENDERER_INDENT_STACK)"
+}
+
+msg::_drop_indent_stack() {
+  msg::_renderer_isinit || return 1
+  (( ${#_MSG_RENDERER_INDENT_STACK[@]} == 0 )) && return 0
+
+  local last_idx=$(( ${#_MSG_RENDERER_INDENT_STACK[@]} - 1 ))
+  unset "_MSG_RENDERER_INDENT_STACK[${last_idx}]"
+  msg::_renderer_debug "$(declare -p _MSG_RENDERER_INDENT_STACK)"
 }
 
 msg::_render_tag_open() {
@@ -478,9 +562,7 @@ msg::_render_tag_open() {
 
   local tag="$1"
 
-  msg::_push_style_tag_stack "$tag"
-  msg::_renderer_debug "$(declare -p '_MSG_RENDERER_STYLE_TAG_STACK')"
-
+  msg::_push_inline_style_tag_stack "$tag"
   msg::_render_tag "$tag"
 }
 
@@ -491,8 +573,7 @@ msg::_render_tag_close() {
 
   local tag="$1"
 
-  msg::_pop_style_tag_stack "$tag"
-  msg::_renderer_debug "$(declare -p '_MSG_RENDERER_STYLE_TAG_STACK')"
+  msg::_pop_inline_style_tag_stack "$tag"
   msg::_render_style
 }
 
@@ -511,34 +592,30 @@ msg::_render_token() {
     case "$type" in
       BEGIN)
         ;;
-
       BEGIN_LINE)
         msg::_render_indent
         msg::_render_prompt
         msg::_render_style
         ;;
-
       TEXT)
         _MSG_RENDER_OUTPUT+="$value"
         ;;
-
       TAG_OPEN)
         msg::_render_tag_open "$value"
         ;;
-
       TAG_CLOSE)
         msg::_render_tag_close "$value"
         ;;
-
       BLOCK_OPEN)
         case "$value" in
           noprompt)
-            _MSG_RENDERER_CONTEXT['prompt']=
+            msg::_push_prompt_stack ''
             ;;
-          indent*)
+          indent)
+            msg::_push_indent_stack "${_MSG_TOKENIZER_OUTPUT_ATTR[${i}:width]}"
             ;;
           b|hl)
-            msg::_push_style_tag_stack "$value"
+            msg::_push_block_style_tag_stack "$value"
             ;;
           *)
             logger --error -v "invalid value: ${value}"
@@ -546,14 +623,16 @@ msg::_render_token() {
             ;;
         esac
         ;;
-
       BLOCK_CLOSE)
         case "$value" in
           noprompt)
-            _MSG_RENDERER_CONTEXT['prompt']='>'
+            msg::_drop_prompt_stack
+            ;;
+          indent)
+            msg::_drop_indent_stack
             ;;
           b|hl)
-            msg::_pop_style_tag_stack "$value"
+            msg::_pop_block_style_tag_stack "$value"
             ;;
           *)
             logger --error -v "invalid value: ${value}"
@@ -561,20 +640,17 @@ msg::_render_token() {
             ;;
         esac
         ;;
-
       END_LINE)
+        unset '_MSG_RENDERER_INLINE_STYLE_TAG_STACK[@]'
         if (( ! _MSG_RENDERER_CONTEXT['plain'] )); then
           _MSG_RENDER_OUTPUT+="${STYLE_STDOUT['rst']:-}"
         fi
         ;;
-
       NEWLINE)
         _MSG_RENDER_OUTPUT+=$'\n'
         ;;
-
       END)
         ;;
-
       *)
         logger --error "invaid token type: ${type}"
         return 1
@@ -621,16 +697,31 @@ msg() {
   #
   # Environment Variables:
   #
-  #   MSG_INDENT
-  #        インデントの幅を数値で指定します(0でインデントなし)。
-  #
   #   MSG_DELAY
   #        メッセージ出力後のsleepの秒数。
   #        標準出力がターミナルに接続していない場合は、`MSG_DELAY=0` で実行されます。
   #
-  # Tags:
+  # Block Tags:
   #
-  #   引数に取る文字列は以下のタグを解釈します。
+  #   引数に取る文字列は以下のブロックタグを解釈します。
+  #
+  #     <@indent width="<width>">...</@indent>:
+  #       区間のインデントを<width>でオーバーライドする。
+  #
+  #     <@noprompt>...</@noprompt>
+  #       区間のプロンプトを非表示にする。
+  #
+  #     <@hl>...</@hl>
+  #       区間の文字をハイライトする。
+  #
+  #     <@b>...</@b>
+  #       区間の文字を太字にする。
+  #
+  # Inline Tags:
+  #
+  #   引数に取る文字列は以下のインラインタグを解釈します。
+  #   改行までの1行のなかでのみ有効です。
+  #
   #     <hl>...</hl>: 囲まれた範囲の文字をハイライトする。
   #     <b>...</b>: 囲まれた範囲の文字を太字にする。
   #
@@ -638,6 +729,12 @@ msg() {
   #   -b, --bold
   #
   #        メッセージ本文を太字で出力します。
+  #
+  #   -i, --indent <width>
+  #
+  #        インデント幅のデフォルトを数値で指定します。
+  #        ブロックタグ <@indent width="<attrwidth>"> が指定された場合は
+  #        <width> + <attrwidth> の幅でインデントされます。
   #
   #   -n   末尾で改行しません。
   #
@@ -660,17 +757,17 @@ msg() {
   #   -s, --base-style <style>
   #
   #        <style> 名を出力スタイルのデフォルトに設定します。
-  #        このスタイルは、スタイルを操作する他のオプションにオーバーライドされます。
+  #        このスタイルは、スタイルを操作するタグにオーバーライドされます。
   #
   #   -H, --highlight-style <style>
   #
   #        <style> 名を出力スタイルのデフォルトに設定します。
-  #        このスタイルは、スタイルを操作する他のオプションにオーバーライドされます。
+  #        このスタイルは、スタイルを操作するタグにオーバーライドされます。
   #
   #   --prompt <prompt string>
   #
   #        プロンプト文字列を指定します。
-  #        指定されない場合は、環境変数 `MSG_PROMPT` で指定された文字列を利用します。
+  #        デフォルト: `>`
   #
   #   --no-prompt
   #
@@ -685,6 +782,17 @@ msg() {
         break
         ;;
       -b | --bold) _MSG_RENDERER_CONTEXT['bold']=1 ;;
+      -i | --indent | --indent=)
+        if [[ "$1" =~ ^--indent= ]]; then
+          _MSG_RENDERER_CONTEXT['indent_width']="${1#--indent=}"
+        elif [[ -z "${2:-}" ]]; then
+          logger --error 'missing indent width'
+          return 1
+        else
+          _MSG_RENDERER_CONTEXT['indent_width']="$2"
+          shift
+        fi
+        ;;
       -n) _MSG_RENDERER_CONTEXT['newline']=0 ;;
       -p | --plain) _MSG_RENDERER_CONTEXT['plain']=1 ;;
       -pp | --plain-prompt) _MSG_RENDERER_CONTEXT['plain_prompt']=1 ;;
@@ -717,16 +825,16 @@ msg() {
         ;;
       --prompt | --prompt=*)
         if [[ "$1" =~ ^--prompt= ]]; then
-          _MSG_RENDERER_CONTEXT['prompt']="${1#--prompt=}"
+          _MSG_RENDERER_CONTEXT['prompt_symbol']="${1#--prompt=}"
         elif [[ -z "${2:-}" ]]; then
           logger --error 'missing prompt symbol'
           return 1
         else
-          _MSG_RENDERER_CONTEXT['prompt']="$2"
+          _MSG_RENDERER_CONTEXT['prompt_symbol']="$2"
           shift
         fi
         ;;
-      --no-prompt) _MSG_RENDERER_CONTEXT['prompt']= ;;
+      --no-prompt) _MSG_RENDERER_CONTEXT['prompt_symbol']= ;;
       -*) logger --error -v "invalid option: $1"; return 1 ;;
       *) break ;;
     esac
@@ -860,8 +968,7 @@ msg::box() {
           shift
         fi
         ;;
-      -*) msg_args+=( "$1" ) ;;
-      *) break ;;
+      *) msg_args+=( "$1" ) ;;
     esac
     shift
   done
