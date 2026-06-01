@@ -172,7 +172,7 @@ msg::_tokenize_tag() {
         @noprompt) msg::_push_token_stack 'BLOCK_OPEN' 'noprompt' ;;
         @indent) msg::_push_token_stack 'BLOCK_OPEN' 'indent' "$attrs" ;;
         @b) msg::_push_token_stack 'BLOCK_OPEN' 'b' ;;
-        @hl) msg::_push_token_stack 'BLOCK_OPEN' 'hl' ;;
+        @hl) msg::_push_token_stack 'BLOCK_OPEN' 'hl' "$attrs" ;;
       esac
       ;;
     /@*)
