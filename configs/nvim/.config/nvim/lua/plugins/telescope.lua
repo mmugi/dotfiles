@@ -1,28 +1,27 @@
-local custom_openers = {
-  man = { command = "tab Man" },
-  help = { command = "tab help" },
-}
-
-local function custom_open(kind)
-  return function(prompt_bufnr)
-    local actions = require("telescope.actions")
-    local actions_state = require("telescope.actions.state")
-
-    local entry = actions_state.get_selected_entry()
-    local opener = custom_openers[kind]
-
-    if not opener then
-      actions.close(prompt_bufnr)
-      error("Unknown telescope opener: " .. tostring(kind))
-    end
-
-    actions.close(prompt_bufnr)
-
-    vim.cmd.enew()
-    vim.cmd(opener.command .. " " .. entry.value)
-    vim.cmd.only()
-  end
-end
+--local custom_openers = {
+--  man = { command = "tab Man" },
+--  help = { command = "tab help" },
+--}
+--
+--local function custom_open(kind)
+--  return function(prompt_bufnr)
+--    local actions = require("telescope.actions")
+--    local actions_state = require("telescope.actions.state")
+--
+--    local entry = actions_state.get_selected_entry()
+--    local opener = custom_openers[kind]
+--
+--    if not opener then
+--      actions.close(prompt_bufnr)
+--      error("Unknown telescope opener: " .. tostring(kind))
+--    end
+--
+--    actions.close(prompt_bufnr)
+--
+--    vim.cmd(opener.command .. " " .. entry.value)
+--    vim.cmd.only()
+--  end
+--end
 
 return {
   "nvim-telescope/telescope.nvim",
@@ -69,8 +68,8 @@ return {
       command_history = { theme = "dropdown" },
       search_history = { theme = "dropdown" },
       vim_options = { theme = "dropdown" },
-      help_tags = { mappings = { i = { ["<cr>"] = custom_open("help") } } },
-      man_pages = { mappings = { i = { ["<cr>"] = custom_open("man") } } },
+      --help_tags = { mappings = { i = { ["<cr>"] = custom_open("help") } } },
+      --man_pages = { mappings = { i = { ["<cr>"] = custom_open("man") } } },
       buffers = { select_current = true },
       colorscheme = { enable_preview = true },
       marks = { mark_type = "local" },
@@ -83,7 +82,15 @@ return {
     local actions = require("telescope.actions")
     opts.defaults.mappings = {
       n = { ["<esc>"] = require("telescope.actions").close },
-      i = { ["<esc>"] = require("telescope.actions").close },
+      i = {
+        ["<esc>"] = require("telescope.actions").close,
+        -- emacs like keymaps
+        ["<C-f>"] = { "<right>", type = "command" },
+        ["<C-b>"] = { "<left>", type = "command" },
+        ["<C-a>"] = { "<home>", type = "command" },
+        ["<C-e>"] = { "<end>", type = "command" },
+        ["<C-k>"] = { "<C-o>D", type = "command" },
+      },
     }
     require("telescope").setup(opts)
   end,
