@@ -1,7 +1,8 @@
 font-size = 10
 font-feature = -dlig
-font-family = "BigBlueTermPlus Nerd Font Mono"
-font-family = "Fusion Pixel 10px Mono ja"
+font-family = "HackGen Console NF Regular"
+#font-family = "BigBlueTermPlus Nerd Font Mono"
+#font-family = "Fusion Pixel 10px Mono ja"
 
 #theme = aura
 #theme = "Apple System Colors"
@@ -44,4 +45,8 @@ quick-terminal-autohide = true
 
 shell-integration-features = no-cursor
 
+custom-shader = shaders/cursor_sweep.glsl
+custom-shader = shaders/ripple_cursor.glsl
+
 macos-titlebar-style = tabs
+macos-option-as-alt = true
