@@ -74,7 +74,7 @@ asia-northeast2 = 'osaka'
 format = '[$symbol$branch]($style)'
 symbol = ''
 #symbol = '🌱'
-style = 'slate-blue'
+style = 'purple'
 
 [git_commit]
 commit_hash_length = 7
@@ -95,7 +95,7 @@ format = """
   [$deleted](red)\
   [$renamed](lime)\
   [$modified](pink)\
-  [$typechanged](purple)\
+  [$typechanged](gray)\
   [$staged](green)\
   [$untracked](bright-black)\
   [( $ahead_behind$stashed)](cyan)\
