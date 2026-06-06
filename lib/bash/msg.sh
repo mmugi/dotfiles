@@ -6,8 +6,10 @@ LIB_REQUIRES_BASH='>=4.1'
 [[ "${1:-}" = '__IMPORT__' ]] && return 0;
 
 : "${MSG_DELAY:=0.1}"
+: "${MSG_INDENT:=0}"
 : "${MSG_RENDERER_DEBUG:=0}"
 : "${MSG_TOKENIZER_DEBUG:=0}"
+: "${MSG_BOX:=1}"
 
 msg::init() {
   (( ${MSG_INITIALIZED:-0} )) && return 0
@@ -346,8 +348,9 @@ msg::_renderer_debug() {
 
 msg::_renderer_init() {
   declare -gA _MSG_RENDERER_CONTEXT=(
-    ['prompt_symbol']='>'
-    ['indent_width']=0
+    ['prompt_symbol']='[>]'
+    ['prompt_style']='prompt'
+    ['indent_width']="$MSG_INDENT"
     ['plain']=0
     ['plain_prompt']=0
     ['raw']=0
@@ -405,6 +408,7 @@ msg::_render_prompt() {
   msg::_renderer_isinit || return 1
 
   local last_idx=$(( ${#_MSG_RENDERER_PROMPT_STACK[@]} - 1 ))
+  local prompt_style="${_MSG_RENDERER_CONTEXT['prompt_style']}"
   local prompt
 
   if (( last_idx < 0 )); then
@@ -417,7 +421,7 @@ msg::_render_prompt() {
 
   [[ -z "$prompt" ]] && return 0
 
-  (( _MSG_RENDERER_CONTEXT['plain_prompt'] )) || _MSG_RENDER_OUTPUT+="${STYLE_STDOUT['prompt']:-}"
+  (( _MSG_RENDERER_CONTEXT['plain_prompt'] )) || _MSG_RENDER_OUTPUT+="${STYLE_STDOUT[${prompt_style}]:-}"
   _MSG_RENDER_OUTPUT+="${prompt} "
   (( _MSG_RENDERER_CONTEXT['plain_prompt'] )) || _MSG_RENDER_OUTPUT+="${STYLE_STDOUT['rst']:-}"
 }
@@ -750,7 +754,7 @@ ${raw}"
     _MSG_RENDER_OUTPUT="${_MSG_RENDER_OUTPUT%$'\n'}"
   fi
 
-  # render output
+  # output
   msg::_renderer_debug "↓↓ rendering result ↓↓
 $(printf '%q' "$_MSG_RENDER_OUTPUT")"
   msg::_renderer_debug "↑↑ rendering result ↑↑"
@@ -769,6 +773,9 @@ msg() {
   #   MSG_DELAY
   #        メッセージ出力後のsleepの秒数。
   #        標準出力がターミナルに接続していない場合は、`MSG_DELAY=0` で実行されます。
+  #
+  #   MSG_INDENT
+  #        インデントの高さを数値で指定します(0でインデントなし)。
   #
   # Block Tags:
   #
@@ -903,6 +910,17 @@ msg() {
           shift
         fi
         ;;
+      --prompt-style | --prompt-style=*)
+        if [[ "$1" =~ ^--prompt-style= ]]; then
+          _MSG_RENDERER_CONTEXT['prompt_style']="${1#--prompt-style=}"
+        elif [[ -z "${2:-}" ]]; then
+          logger --error 'missing prompt style'
+          return 1
+        else
+          _MSG_RENDERER_CONTEXT['prompt_style']="$2"
+          shift
+        fi
+        ;;
       --no-prompt) _MSG_RENDERER_CONTEXT['prompt_symbol']= ;;
       -*) logger --error -v "invalid option: $1"; return 1 ;;
       *) break ;;
@@ -968,13 +986,40 @@ PYTHON
 }
 
 msg::box() {
-  # usage: msg::box [box options] [msg options] -- <message>...
+  # Usage:
+  #
+  #   msg::box [box options] [msg options] -- <message>...
+  #
+  # Environment Variables:
+  #
+  #   MSG_BOX
+  #        box表示を有効化する(0で非表示)。
+  #        デフォルト: 1
+  #
+  # Options:
+  #   `--` 以降の引数のメッセージをboxで囲んで出力します。
+  #   `--box-*` はbox出力に関する動作を変更します。
+  #   `--` 以前の `--box-*` 以外のオプションは `msg()` に直接渡されます。
+  #
+  #   --box-style
+  #
+  #        box枠のスタイル名を指定します。
+  #        デフォルト: box
+  #
+  #   --box-padding-<top|bottom|left|right>
+  #
+  #        box枠の上下左右のパディング幅を指定します。
+  #        デフォルト:
+  #            box_padding_top=0
+  #            box_padding_bottom=0
+  #            box_padding_left=1
+  #            box_padding_right=1
 
   msg::_isinit || return 1
 
   local box_style='box'
-  local box_padding_top=1
-  local box_padding_bottom=1
+  local box_padding_top=0
+  local box_padding_bottom=0
   local box_padding_left=1
   local box_padding_right=1
   local -a msg_args=()
@@ -1056,7 +1101,7 @@ msg::box() {
 
   # fallback
   # python3が利用できない場合、msg()にそのまま渡す
-  if (( _MSG_PYTHON3_UNAVAILABLE )); then
+  if (( _MSG_PYTHON3_UNAVAILABLE || ! MSG_BOX )); then
     for msg in "$@"; do
       msg "${msg_args[@]}" -- "$msg"
     done
