@@ -858,7 +858,7 @@ msg() {
         break
         ;;
       -b | --bold) _MSG_RENDERER_CONTEXT['bold']=1 ;;
-      -i | --indent | --indent=)
+      -i | --indent | --indent=*)
         if [[ "$1" =~ ^--indent= ]]; then
           _MSG_RENDERER_CONTEXT['indent_width']="${1#--indent=}"
         elif [[ -z "${2:-}" ]]; then
