@@ -43,13 +43,12 @@ log::_fmt_filename() {
     return 1
   fi
 
-  if [[ \
-        ( \
-          "${FUNCNAME[1]}" == 'log::_log_stacktrace' && (( LOG_TRACE_ABSPATH )) \
-        ) || ( \
-          "${FUNCNAME[1]}" == 'log::_log_emit' && (( LOG_ABSPATH )) \
-        ) \
-     ]]
+  if
+    (
+      [[ "${FUNCNAME[1]}" == 'log::_log_stacktrace' ]] && (( LOG_TRACE_ABSPATH ))
+    ) || (
+      [[ "${FUNCNAME[1]}" == 'log::_log_emit' ]] && (( LOG_ABSPATH ))
+    )
   then
     printf '%s' "$filepath"
   else
@@ -88,7 +87,7 @@ log::_log_emit() {
 log::_log_stacktrace() {
   local i=1 line subroutine file fmt_file
   printf 'stacktrace:\n' >&2
-  while read -r line subroutine file _ < <(caller "$i"); do
+  while read -r line subroutine file < <(caller "$i"); do
     fmt_file="$(log::_fmt_filename "$file")"
     printf '  #%d %s (%s)\n' \
       "$i" \
