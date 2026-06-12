@@ -20,14 +20,14 @@ LIB_DEPS=( core theme )
 
 # スタックトレース設定
 : "${LOG_TRACE_FATAL:=1}"
-: "${LOG_TRACE_ERROR:=0}"
+: "${LOG_TRACE_ERROR:=1}"
 : "${LOG_TRACE_WARN:=0}"
 : "${LOG_TRACE_INFO:=0}"
 : "${LOG_TRACE_DEBUG:=0}"
 
 # ファイル名を絶対パスで出力
 : "${LOG_ABSPATH:=0}"
-: "${LOG_TRACE_ABSPATH:=0}"
+: "${LOG_TRACE_ABSPATH:=1}"
 
 # fatal関数でexit 1する
 : "${LOG_FATAL_EXIT:=1}"
