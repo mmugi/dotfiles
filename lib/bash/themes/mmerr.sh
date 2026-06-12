@@ -28,11 +28,13 @@ mmerr::setup() {
     ['highlight']="$(escseq::sgr --fg-tc "${THEME_PALETTE['pink']}")"
     ['prompt']="$(escseq::sgr --fg-tc "${THEME_PALETTE['blue_purple']}")"
     ['box']="$(escseq::sgr --fg-tc "${THEME_PALETTE['blue_purple']}")"
-    ['log_fatal']="$(escseq::sgr --fg-tc "${THEME_PALETTE['scarlet']}")"
-    ['log_error']="$(escseq::sgr --fg-tc "${THEME_PALETTE['red']}")"
-    ['log_warn']="$(escseq::sgr --fg-tc "${THEME_PALETTE['yellow']}")"
-    ['log_info']="$(escseq::sgr --fg-tc "${THEME_PALETTE['skyblue']}")"
-    ['log_debug']="$(escseq::sgr --fg-tc "${THEME_PALETTE['lavender']}")"
+
+    ['fatal']="$(escseq::sgr --fg-tc "${THEME_PALETTE['scarlet']}")"
+    ['error']="$(escseq::sgr --fg-tc "${THEME_PALETTE['red']}")"
+    ['warning']="$(escseq::sgr --fg-tc "${THEME_PALETTE['yellow']}")"
+    ['info']="$(escseq::sgr --fg-tc "${THEME_PALETTE['skyblue']}")"
+    ['debug']="$(escseq::sgr --fg-tc "${THEME_PALETTE['lavender']}")"
+
     ['log_timestamp']="$(escseq::sgr --fg-tc "${THEME_PALETTE['purple']}")"
     ['log_stacktrace_function']="$(escseq::sgr --fg-tc "${THEME_PALETTE['blue_purple']}" --bold)"
     ['log_stacktrace_location']="$(escseq::sgr --fg-tc "${THEME_PALETTE['lavender']}")"

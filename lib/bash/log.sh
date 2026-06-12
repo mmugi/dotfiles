@@ -108,35 +108,35 @@ logger() {
         level='FATAL'
         level_ts_fmt='FATAL'
         level_num=4
-        style="${STYLE_STDERR['log_fatal']:-}"
+        style="${STYLE_STDERR['fatal']:-}"
         stacktrace="$LOG_TRACE_FATAL"
         ;;
       --error)
         level='ERROR'
         level_ts_fmt='ERR'
         level_num=3
-        style="${STYLE_STDERR['log_error']:-}"
+        style="${STYLE_STDERR['error']:-}"
         stacktrace="$LOG_TRACE_ERROR"
         ;;
-      --warn)
-        level='WARN'
+      --warning)
+        level='WARNING'
         level_ts_fmt='WRN'
         level_num=2
-        style="${STYLE_STDERR['log_warn']:-}"
+        style="${STYLE_STDERR['warning']:-}"
         stacktrace="$LOG_TRACE_WARN"
         ;;
       --info)
         level='INFO'
         level_ts_fmt='INF'
         level_num=1
-        style="${STYLE_STDERR['log_info']:-}"
+        style="${STYLE_STDERR['info']:-}"
         stacktrace="$LOG_TRACE_INFO"
         ;;
       --debug)
         level='DEBUG'
         level_ts_fmt='DBG'
         level_num=0
-        style="${STYLE_STDERR['log_debug']:-}"
+        style="${STYLE_STDERR['debug']:-}"
         stacktrace="$LOG_TRACE_DEBUG"
         ;;
       -v|--verbose) verbose=1 ;;
