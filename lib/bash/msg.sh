@@ -68,7 +68,7 @@ msg::_tokenizer_isinit() {
   if (( ${_MSG_TOKENIZER_INITIALIZED:-0} )); then
     return 0
   else
-    logger --error -v 'tokenizer is not initialized.'
+    logger --error 'tokenizer is not initialized.'
     return 1
   fi
 }
@@ -114,7 +114,7 @@ msg::_drop_token_stack() {
 
 msg::_push_token_stack() {
   msg::_tokenizer_isinit || return 1
-  (( 1 <= $# <= 3 )) || { logger --error -v 'invalid options'; return 1; }
+  (( 1 <= $# <= 3 )) || { logger --error 'invalid options'; return 1; }
 
   local type="$1"
   local value="${2:-_}"
@@ -147,7 +147,7 @@ msg::_push_token_stack() {
 
 msg::_tokenize_tag() {
   msg::_tokenizer_isinit || return 1
-  (( $# != 1 )) && { logger --error -v 'invalid option'; return 1; }
+  (( $# != 1 )) && { logger --error 'invalid option'; return 1; }
 
   local re_tag='^<(/?@?[a-zA-Z0-9_-]+)( +.*)? *>$'
   local restore_newline=0
@@ -157,14 +157,14 @@ msg::_tokenize_tag() {
     tag="${BASH_REMATCH[1]}"
     attrs="${BASH_REMATCH[2]## }"
   else
-    logger --error -v "invalid tag: $1"
+    logger --error "invalid tag: $1"
     return 1
   fi
 
   msg::_tokenizer_debug "tag=\"${tag}\""
 
   if [[ ! "$tag" =~ ^/?(@(noprompt|indent|b|hl)|(b|hl))$ ]]; then
-    logger --warn -v "unsupported tag: ${tag}"
+    logger --warning "unsupported tag: ${tag}"
     return 0
   fi
 
@@ -208,7 +208,7 @@ msg::_tokenize_tag() {
 
 msg::_tokenize_line() {
   msg::_tokenizer_isinit || return 1
-  (( $# != 1 )) && { logger --error -v 'invalid option'; return 1; }
+  (( $# != 1 )) && { logger --error 'invalid option'; return 1; }
 
   local -a types=()
   local -a values=()
@@ -287,7 +287,7 @@ msg::_tokenize_line() {
         TEXT) [[ "${values[i]}" =~ $re_space_only ]] || block_tag_only=0 ;;
         TAG)  [[ "${values[i]}" =~ $re_block_tag ]]  || block_tag_only=0 ;;
         *)
-          logger --error -v "invalid type: ${types[i]}"
+          logger --error "invalid type: ${types[i]}"
           return 1
           ;;
       esac
@@ -374,7 +374,7 @@ msg::_renderer_isinit() {
   if (( ${_MSG_RENDERER_INITIALIZED:-0} )); then
     return 0
   else
-    logger --error -v 'renderer is not initialized.'
+    logger --error 'renderer is not initialized.'
     return 1
   fi
 }
@@ -386,7 +386,7 @@ msg::_render_indent() {
   local item indent
 
   if [[ ! "$width" =~ ^[0-9]+$ ]]; then
-    logger --error -v "invalid width. expected numeric value: ${width}"
+    logger --error "invalid width. expected numeric value: ${width}"
     return 1
   fi
 
@@ -452,7 +452,7 @@ msg::_render_style() {
 
 msg::_push_prompt_stack() {
   msg::_renderer_isinit || return 1
-  (( $# != 1 )) && { logger --error -v 'invalid option'; return 1; }
+  (( $# != 1 )) && { logger --error 'invalid option'; return 1; }
 
   local symbol="$1"
   msg::_renderer_debug "symbol=\"${symbol}\""
@@ -471,7 +471,7 @@ msg::_drop_prompt_stack() {
 
 msg::_push_indent_stack() {
   msg::_renderer_isinit || return 1
-  (( $# != 1 )) && { logger --error -v 'invalid option'; return 1; }
+  (( $# != 1 )) && { logger --error 'invalid option'; return 1; }
 
   local width="$1"
   msg::_renderer_debug "width=\"${width}\""
@@ -490,7 +490,7 @@ msg::_drop_indent_stack() {
 
 msg::_push_inline_style() {
   msg::_renderer_isinit || return 1
-  (( $# != 2 )) && { logger --error -v 'invalid options'; return 1; }
+  (( $# != 2 )) && { logger --error 'invalid options'; return 1; }
 
   local tag="$1"
   local style="$2"
@@ -506,7 +506,7 @@ msg::_push_inline_style() {
 
 msg::_drop_inline_style() {
   msg::_renderer_isinit || return 1
-  (( $# != 1 )) && { logger --error -v 'invalid option'; return 1; }
+  (( $# != 1 )) && { logger --error 'invalid option'; return 1; }
 
   local tag="$1"
   local i
@@ -532,7 +532,7 @@ msg::_drop_inline_style() {
 
 msg::_push_block_style() {
   msg::_renderer_isinit || return 1
-  (( $# != 2 )) && { logger --error -v 'invalid options'; return 1; }
+  (( $# != 2 )) && { logger --error 'invalid options'; return 1; }
 
   local tag="$1"
   local style="$2"
@@ -548,7 +548,7 @@ msg::_push_block_style() {
 
 msg::_drop_block_style() {
   msg::_renderer_isinit || return 1
-  (( $# != 1 )) && { logger --error -v 'invalid option'; return 1; }
+  (( $# != 1 )) && { logger --error 'invalid option'; return 1; }
 
   local tag="$1"
   local i
@@ -574,7 +574,7 @@ msg::_drop_block_style() {
 
 msg::_render_block_tag_open() {
   msg::_renderer_isinit || return 1
-  (( $# != 1 )) && { logger --error -v 'invalid option'; return 1; }
+  (( $# != 1 )) && { logger --error 'invalid option'; return 1; }
 
   local idx="$1"
   local tag="${_MSG_TOKENIZER_OUTPUT_VALUE[idx]}"
@@ -602,14 +602,14 @@ msg::_render_block_tag_open() {
       msg::_push_block_style "$tag" "$style"
       ;;
     *)
-      logger --error -v "invalid tag: ${tag}"
+      logger --error "invalid tag: ${tag}"
       ;;
   esac
 }
 
 msg::_render_block_tag_close() {
   msg::_renderer_isinit || return 1
-  (( $# != 1 )) && { logger --error -v 'invalid options'; return 1; }
+  (( $# != 1 )) && { logger --error 'invalid options'; return 1; }
 
   local tag="$1"
 
@@ -624,7 +624,7 @@ msg::_render_block_tag_close() {
       msg::_drop_block_style "$tag"
       ;;
     *)
-      logger --error -v "invalid tag: ${tag}"
+      logger --error "invalid tag: ${tag}"
       return 1
       ;;
   esac
@@ -632,7 +632,7 @@ msg::_render_block_tag_close() {
 
 msg::_render_tag_open() {
   msg::_renderer_isinit || return 1
-  (( $# != 1 )) && { logger --error -v 'invalid option'; return 1; }
+  (( $# != 1 )) && { logger --error 'invalid option'; return 1; }
 
   local idx="$1"
   local tag="${_MSG_TOKENIZER_OUTPUT_VALUE[idx]}"
@@ -655,14 +655,14 @@ msg::_render_tag_open() {
       _MSG_RENDER_OUTPUT+="${STYLE_STDOUT[${style}]:-}"
       ;;
     *)
-      logger --error -v "invalid tag: ${tag}"
+      logger --error "invalid tag: ${tag}"
       ;;
   esac
 }
 
 msg::_render_tag_close() {
   msg::_renderer_isinit || return 1
-  (( $# != 1 )) && { logger --error -v 'invalid options'; return 1; }
+  (( $# != 1 )) && { logger --error 'invalid options'; return 1; }
 
   local tag="$1"
 
@@ -673,7 +673,7 @@ msg::_render_tag_close() {
       msg::_render_style
       ;;
     *)
-      logger --error -v "invalid tag: ${tag}"
+      logger --error "invalid tag: ${tag}"
       ;;
   esac
 }
@@ -922,7 +922,7 @@ msg() {
         fi
         ;;
       --no-prompt) _MSG_RENDERER_CONTEXT['prompt_symbol']= ;;
-      -*) logger --error -v "invalid option: $1"; return 1 ;;
+      -*) logger --error "invalid option: $1"; return 1 ;;
       *) break ;;
     esac
     shift
@@ -1031,7 +1031,7 @@ msg::box() {
         if [[ "$1" =~ ^--box-style= ]]; then
           box_style="${1#--box-style=}"
         elif [[ -z "${2:-}" ]]; then
-          logger --error -v "$1: missing box style"
+          logger --error "$1: missing box style"
           return 1
         else
           box_style="$2"
@@ -1042,7 +1042,7 @@ msg::box() {
         if [[ "$1" =~ ^--box-padding-top= ]]; then
           box_padding_top="${1#--box-padding-top=}"
         elif [[ -z "${2:-}" ]]; then
-          logger --error -v "$1: missing padding top"
+          logger --error "$1: missing padding top"
           return 1
         else
           box_padding_top="$2"
@@ -1053,7 +1053,7 @@ msg::box() {
         if [[ "$1" =~ ^--box-padding-bottom= ]]; then
           box_padding_bottom="${1#--box-padding-bottom=}"
         elif [[ -z "${2:-}" ]]; then
-          logger --error -v "$1: missing padding bottom"
+          logger --error "$1: missing padding bottom"
           return 1
         else
           box_padding_bottom="$2"
@@ -1064,7 +1064,7 @@ msg::box() {
         if [[ "$1" =~ ^--box-padding-left= ]]; then
           box_padding_left="${1#--box-padding-left=}"
         elif [[ -z "${2:-}" ]]; then
-          logger --error -v "$1: missing padding left"
+          logger --error "$1: missing padding left"
           return 1
         else
           box_padding_left="$2"
@@ -1075,7 +1075,7 @@ msg::box() {
         if [[ "$1" =~ ^--box-padding-right= ]]; then
           box_padding_right="${1#--box-padding-right=}"
         elif [[ -z "${2:-}" ]]; then
-          logger --error -v "$1: missing padding right"
+          logger --error "$1: missing padding right"
           return 1
         else
           box_padding_right="$2"
@@ -1095,7 +1095,7 @@ msg::box() {
       ! "$box_padding_right" =~ ^[0-9]+$
     ]]
   then
-    logger --error -v 'invalid padding width option. expected numeric value.'
+    logger --error 'invalid padding width option. expected numeric value.'
     return 1
   fi
 

@@ -57,15 +57,15 @@ log::_fmt_filename() {
 }
 
 log::_log_emit() {
-  local level="$1" style="$2" verbose="$3"; shift 3
+  local level="$1" style="$2" brief="$3"; shift 3
   local line file fmt_file
 
-  if (( verbose )); then
-    read -r line _ file < <(caller 1)
-    fmt_file="$(log::_fmt_filename "$file")"
-  else
+  read -r line _ file < <(caller 1)
+  fmt_file="$(log::_fmt_filename "$file")"
+
+  if (( brief )); then
+    fmg_file=
     line=
-    fmt_file=
   fi
 
   if (( LOG_TS )); then
@@ -99,7 +99,7 @@ log::_log_stacktrace() {
 
 logger() {
   local level level_ts_fmt level_num style stacktrace
-  local verbose=0
+  local brief=0
 
   while (( $# > 0 )); do
     case "$1" in
@@ -139,7 +139,7 @@ logger() {
         style="${STYLE_STDERR['debug']:-}"
         stacktrace="$LOG_TRACE_DEBUG"
         ;;
-      -v|--verbose) verbose=1 ;;
+      -b|--brief) brief=1 ;;
       *) break ;;
     esac
     shift
