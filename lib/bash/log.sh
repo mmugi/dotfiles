@@ -97,9 +97,93 @@ log::_log_stacktrace() {
   done
 }
 
+log::_caller_libname() {
+  # 0: log::_caller_libname
+  # 1: log::_should_output_log
+  # 2: logger
+  # 3: 呼び出し元
+
+  local libname="${BASH_SOURCE[3]:-}"
+  libname="${libname##*/}"      # path/to/foo-bar.sh -> foo-bar.sh
+  libname="${libname%.sh}"      # foo-bar.sh -> foo-bar
+  libname="${libname//-/_}"     # foo-bar -> foo_bar
+  libname="${libname^^}"        # foo_bar -> FOO_BAR
+
+  echo "$libname"
+}
+
+log::_is_truthy() {
+  local log_level="$1"
+  local log_level_var="$2"
+  local value
+
+  if [[ -n "${!log_level_var+defined}" ]]; then
+    value="${!log_level_var}"
+  else
+    # loggerの表示レベルが設定されていない(未定義or空)場合true
+    return 0
+  fi
+
+  # 表示しようとしているログレベル log_level が
+  # loggerの表示レベル value より大きければtrue、そうでなければfalse
+  if (( value >= 0 && log_level >= value )); then
+    return 0
+  else
+    return 1
+  fi
+}
+
+log::_should_output_log() {
+  local level_num="$1"
+  local ch="${2:-}"
+  local lib var
+
+  # 0: log::_should_output_log
+  # 1: logger
+  # 2: caller
+  lib="${BASH_SOURCE[2]:-}"
+  lib="${lib##*/}"      # path/to/foo-bar.sh -> foo-bar.sh
+  lib="${lib%.sh}"      # foo-bar.sh -> foo-bar
+  lib="${lib//-/_}"     # foo-bar -> foo_bar
+  lib="${lib^^}"        # foo_bar -> FOO_BAR
+
+  if [[ -n "$ch" ]]; then
+    ch="${ch//-/_}"
+    ch="${ch^^}"
+    var="LOG_LEVEL_${lib}_${ch}"
+
+    log::_is_truthy "$level_num" "$var" || return 1
+  fi
+
+  var="LOG_LEVEL_${lib}"
+  log::_is_truthy "$level_num" "$var" || return 1
+
+  # root logger
+  log::_is_truthy "$level_num" 'LOG_LEVEL' || return 1
+
+  return 0
+}
+
 logger() {
+  # Log Level Config
+  #   ルートレベル、ファイルレベル、チャンネルレベルで指定可能。
+  #   前述の順に優先されます。
+  #
+  #   ルートレベル:
+  #     `LOG_LEVEL` で指定。
+  #
+  #   ファイルレベル:
+  #     `LOG_LEVEL_<FILENAME>` で指定。
+  #     `test.sh` のログレベルを指定する場合は、`LOG_LEVEL_TEST=3` のように指定します。
+  #
+  #   チャンネルレベル:
+  #     logger実行時にチャンネルを指定できる。
+  #     チャンネル指定のログは `LOG_LEVEL_<FILENAME>_<CH>` で指定されたレベルに従います。
+  #     `test.sh` で実行した `logger --error --ch='testch' 'message'` を表示させる場合、
+  #     `LOG_LEVEL_TEST_TESTCH=3` のように指定します。
+
   local level level_ts_fmt level_num style stacktrace
-  local brief=0
+  local brief=0 ch=
 
   while (( $# > 0 )); do
     case "$1" in
@@ -140,6 +224,17 @@ logger() {
         stacktrace="$LOG_TRACE_DEBUG"
         ;;
       -b|--brief) brief=1 ;;
+      --ch | --ch=*)
+        if [[ "$1" =~ ^--ch= ]]; then
+          ch="${1#--ch=}"
+        elif [[ -z "${2:-}" ]]; then
+          core::error 'missing channel'
+          return 1
+        else
+          ch="$2"
+          shift
+        fi
+        ;;
       *) break ;;
     esac
     shift
@@ -150,14 +245,14 @@ logger() {
     return 1
   fi
 
-  if (( LOG_LEVEL > level_num || LOG_LEVEL < 0 )); then
+  if ! log::_should_output_log "$level_num" "$ch"; then
     return 0
   fi
 
   if (( LOG_TS )); then
-    log::_log_emit "$level_ts_fmt" "$style" "$verbose" "$@"
+    log::_log_emit "$level_ts_fmt" "$style" "$brief" "$@"
   else
-    log::_log_emit "$level" "$style" "$verbose" "$@"
+    log::_log_emit "$level" "$style" "$brief" "$@"
   fi
 
   if (( stacktrace )); then
