@@ -11,6 +11,15 @@ LIB_REQUIRES_BASH='>=4.1'
 : "${MSG_TOKENIZER_DEBUG:=0}"
 : "${MSG_BOX:=1}"
 
+: "${MSG_PROMPT:=[>]}"
+: "${MSG_PROMPT_HEADER:=[#]}"
+: "${MSG_PROMPT_NOTICE:=[!]}"
+: "${MSG_PROMPT_CHANGED:=[*]}"
+: "${MSG_PROMPT_SKIP:=[-]}"
+: "${MSG_PROMPT_OK:=[^]}"
+: "${MSG_PROMPT_WARNING:=[~]}"
+: "${MSG_PROMPT_FAILED:=[;]}"
+
 msg::init() {
   (( ${MSG_INITIALIZED:-0} )) && return 0
 
@@ -348,7 +357,7 @@ msg::_renderer_debug() {
 
 msg::_renderer_init() {
   declare -gA _MSG_RENDERER_CONTEXT=(
-    ['prompt_symbol']='[>]'
+    ['prompt_symbol']="$MSG_PROMPT"
     ['prompt_style']='prompt'
     ['indent_width']="$MSG_INDENT"
     ['plain']=0
@@ -933,6 +942,79 @@ msg() {
   [[ -t 1 ]] && sleep "$MSG_DELAY"
 
   return 0
+}
+
+msg::header() {
+  msg --prompt="$MSG_PROMPT_HEADER" --prompt-style='prompt_header' "$@"
+}
+
+msg::notice() {
+  msg --prompt="$MSG_PROMPT_NOTICE" --prompt-style='prompt_notice' "$@"
+}
+
+msg::changed() {
+  local -a msg_args=()
+  local prompt="$MSG_PROMPT_CHANGED"
+  local hl='highlight'
+  local type
+
+  case "$1" in
+    --configure) type='CONFIGURE'; shift ;;
+    --link)      type='LINK';      shift ;;
+    --mkdir)     type='MKDIR';     shift ;;
+    --delete)    type='DELETE';    hl='caution'; shift ;;
+    --remove)    type='REMOVE';    hl='caution'; shift ;;
+    --rmdir)     type='RMDIR';     hl='caution'; shift ;;
+    --unlink)    type='UNLINK';    hl='caution'; shift ;;
+    -*)
+      logger --error "invalid change type: $1"
+      return 1
+      ;;
+    *)
+      logger --error 'missing change type'
+      return 1
+      ;;
+  esac
+
+  # msg args
+  while (( $# > 0 )); do
+    case "$1" in
+      --) shift; break ;;
+      -*) msg_args+=( "$1" ) ;;
+      *)  break ;;
+    esac
+    shift
+  done
+
+  msg --prompt="$prompt" --prompt-style='prompt_changed' "${msg_args[@]}" \
+    -- "[  <hl style=\"${hl}\">${type}</hl>  ] $*"
+}
+
+msg::skip() {
+  local -a msg_args=()
+  while (( $# > 0 )); do
+    case "$1" in
+      --) shift; break ;;
+      -*) msg_args+=( "$1" ) ;;
+      *)  break ;;
+    esac
+    shift
+  done
+
+  msg --prompt="$MSG_PROMPT_SKIP" --prompt-style='prompt_skip' "${msg_args[@]}" \
+    -- "[  <hl style=\"prompt_skip\">SKIP</hl>  ] $*"
+}
+
+msg::ok() {
+  msg --prompt="$MSG_PROMPT_OK" --prompt-style='prompt_ok' --base-style='success' "$@"
+}
+
+msg::warning() {
+  msg --prompt="$MSG_PROMPT_WARNING" --prompt-style='prompt_warning' --base-style='warning' "$@"
+}
+
+msg::failed() {
+  msg --prompt="$MSG_PROMPT_FAILED" --prompt-style='prompt_failed' --base-style='failed' "$@"
 }
 
 msg::_repeat_char() {
@@ -1892,46 +1974,46 @@ msg::confirm() {
   abort "invalid mode: ${mode}"
 }
 
-msg::marker() {
-  local base_color prompt
-  local newline=true
-  local p
-  while (( $# > 0 )); do
-    case "$1" in
-      --) shift; break ;;
-      --complete)  base_color="$ESC_C_COMPLETE"; prompt='✨️' ;;
-      --warning)   base_color="$ESC_C_WARNING";  prompt='⚡' ;;
-      --terminate) base_color="$ESC_C_CRITICAL"; prompt='⛔' ;;
-      -n) newline=false ;;
-      -*) abort "invalid option: $1" ;;
-      *) break ;;
-    esac
-    shift
-  done
-  msg::box --base-color="$base_color" --prompt="$prompt" -- "<b>$*</b>"
-  [[ "$newline" == 'true' ]] && newline
-  return 0
-}
+#msg::marker() {
+#  local base_color prompt
+#  local newline=true
+#  local p
+#  while (( $# > 0 )); do
+#    case "$1" in
+#      --) shift; break ;;
+#      --complete)  base_color="$ESC_C_COMPLETE"; prompt='✨️' ;;
+#      --warning)   base_color="$ESC_C_WARNING";  prompt='⚡' ;;
+#      --terminate) base_color="$ESC_C_CRITICAL"; prompt='⛔' ;;
+#      -n) newline=false ;;
+#      -*) abort "invalid option: $1" ;;
+#      *) break ;;
+#    esac
+#    shift
+#  done
+#  msg::box --base-color="$base_color" --prompt="$prompt" -- "<b>$*</b>"
+#  [[ "$newline" == 'true' ]] && newline
+#  return 0
+#}
 
-msg::notice() {
-  local color event
-  case "$1" in
-    --configured) event='CONFIGURED'; color="$ESC_C_SUCCESS"; shift ;;
-    --delete)     event='DELETE';     color="$ESC_C_DANGER";  shift ;;
-    --ignore)     event='IGNORE';     color="$ESC_C_GRAYOUT"; shift ;;
-    --link)       event='LINK';       color="$ESC_C_SUCCESS"; shift ;;
-    --mkdir)      event='MKDIR';      color="$ESC_C_SUCCESS"; shift ;;
-    --remove)     event='REMOVE';     color="$ESC_C_DANGER";  shift ;;
-    --rmdir)      event='RMDIR';      color="$ESC_C_DANGER";  shift ;;
-    --skip)       event='SKIP';       color="$ESC_C_NOTICE";  shift ;;
-    --unlink)     event='UNLINK';     color="$ESC_C_DANGER";  shift ;;
-    -*) abort "invalid option: $1" ;;
-    *) abort 'option required' ;;
-  esac
-  msg --prompt "${ESC_DEFAULT}[ ${ESC_ATTR_BOLD}${color}${event}${ESC_RESET} ]" \
-      --base-color "$ESC_DEFAULT" \
-      -- "$*"
-}
+#msg::notice() {
+#  local color event
+#  case "$1" in
+#    --configured) event='CONFIGURED'; color="$ESC_C_SUCCESS"; shift ;;
+#    --delete)     event='DELETE';     color="$ESC_C_DANGER";  shift ;;
+#    --ignore)     event='IGNORE';     color="$ESC_C_GRAYOUT"; shift ;;
+#    --link)       event='LINK';       color="$ESC_C_SUCCESS"; shift ;;
+#    --mkdir)      event='MKDIR';      color="$ESC_C_SUCCESS"; shift ;;
+#    --remove)     event='REMOVE';     color="$ESC_C_DANGER";  shift ;;
+#    --rmdir)      event='RMDIR';      color="$ESC_C_DANGER";  shift ;;
+#    --skip)       event='SKIP';       color="$ESC_C_NOTICE";  shift ;;
+#    --unlink)     event='UNLINK';     color="$ESC_C_DANGER";  shift ;;
+#    -*) abort "invalid option: $1" ;;
+#    *) abort 'option required' ;;
+#  esac
+#  msg --prompt "${ESC_DEFAULT}[ ${ESC_ATTR_BOLD}${color}${event}${ESC_RESET} ]" \
+#      --base-color "$ESC_DEFAULT" \
+#      -- "$*"
+#}
 
 msg::exec() {
   local msg='wait'

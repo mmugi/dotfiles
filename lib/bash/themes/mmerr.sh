@@ -26,8 +26,19 @@ mmerr::setup() {
   declare -g -A THEME_STYLE=(
     ['normal']="$(escseq::sgr --fg-tc "${THEME_PALETTE['white']}")"
     ['highlight']="$(escseq::sgr --fg-tc "${THEME_PALETTE['pink']}")"
-    ['prompt']="$(escseq::sgr --fg-tc "${THEME_PALETTE['blue_purple']}")"
     ['box']="$(escseq::sgr --fg-tc "${THEME_PALETTE['blue_purple']}")"
+
+    ['success']="$(escseq::sgr --fg-tc "${THEME_PALETTE['tarquoise']}")"
+    ['failed']="$(escseq::sgr --fg-tc "${THEME_PALETTE['red']}")"
+
+    ['prompt']="$(escseq::sgr --fg-tc "${THEME_PALETTE['blue_purple']}")"
+    ['prompt_header']="$(escseq::sgr --fg-tc "${THEME_PALETTE['tarquoise']}")"
+    ['prompt_notice']="$(escseq::sgr --fg-tc "${THEME_PALETTE['yellow']}")"
+    ['prompt_changed']="$(escseq::sgr --fg-tc "${THEME_PALETTE['pink']}")"
+    ['prompt_skip']="$(escseq::sgr --fg-tc "${THEME_PALETTE['gray']}")"
+    ['prompt_ok']="$(escseq::sgr --fg-tc "${THEME_PALETTE['tarquoise']}")"
+    ['prompt_warning']="$(escseq::sgr --fg-tc "${THEME_PALETTE['yellow']}")"
+    ['prompt_failed']="$(escseq::sgr --fg-tc "${THEME_PALETTE['red']}")"
 
     ['fatal']="$(escseq::sgr --fg-tc "${THEME_PALETTE['scarlet']}")"
     ['error']="$(escseq::sgr --fg-tc "${THEME_PALETTE['red']}")"
