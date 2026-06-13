@@ -27,6 +27,7 @@ mmerr::setup() {
     ['normal']="$(escseq::sgr --fg-tc "${THEME_PALETTE['white']}")"
     ['highlight']="$(escseq::sgr --fg-tc "${THEME_PALETTE['pink']}")"
     ['box']="$(escseq::sgr --fg-tc "${THEME_PALETTE['blue_purple']}")"
+    ['line']="$(escseq::sgr --fg-tc "${THEME_PALETTE['blue_purple']}")"
 
     ['success']="$(escseq::sgr --fg-tc "${THEME_PALETTE['tarquoise']}")"
     ['failed']="$(escseq::sgr --fg-tc "${THEME_PALETTE['red']}")"

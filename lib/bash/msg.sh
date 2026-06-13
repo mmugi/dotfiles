@@ -1017,6 +1017,19 @@ msg::failed() {
   msg --prompt="$MSG_PROMPT_FAILED" --prompt-style='prompt_failed' --base-style='failed' "$@"
 }
 
+msg::line() {
+  local -r length="${1:-80}"
+  local -r symbol='.'
+  local line
+
+  for i in $(seq "$length"); do
+    line="$(printf "${symbol}%.0s" $(seq 1 "$i"))"
+    printf "\r%s" "${STYLE_STDOUT['line']:-}${line}${STYLE_STDOUT['rst']:-}"
+    [[ -t 1 ]] && sleep 0.002
+  done
+  printf '\n'
+}
+
 msg::_repeat_char() {
   local char="$1"
   local count="$2"
@@ -2144,24 +2157,4 @@ EOF
   fi
 
   return "$rc"
-}
-
-msg::line() {
-  local -r length="${1:-80}"
-  local -r symbol='.'
-  local line
-
-  msg::_check_tty_mode
-
-  if [[ "$MSG_TTY_MODE" == 'true' ]]; then
-    for i in $(seq "$length"); do
-      line="$(printf "${symbol}%.0s" $(seq 1 "$i"))"
-      printf "\r%s" "${MSG_C_HIGHLIGHT1}${line}${ESC_RESET}"
-      sleep 0.002
-    done
-  else
-    line="$(printf "${symbol}%.0s" $(seq 1 "$length"))"
-    printf "%s" "$line"
-  fi
-  echo
 }
