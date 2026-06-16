@@ -35,6 +35,9 @@ LIB_DEPS=( core theme )
 # fatal関数でexit 1する
 : "${LOG_FATAL_EXIT:=1}"
 
+# チャンネル指定のログを非表示
+: "${LOG_DISABLE_CH:=0}"
+
 log::_fmt_filename() {
   local f="$1" filename filepath
 
@@ -138,20 +141,13 @@ log::_caller_libname() {
   echo "$libname"
 }
 
-log::_is_truthy() {
+log::_ge_level() {
   local log_level="$1"
   local log_level_var="$2"
-  local value
+  local value="${!log_level_var}"
 
-  if [[ -n "${!log_level_var+defined}" ]]; then
-    value="${!log_level_var}"
-  else
-    # loggerの表示レベルが設定されていない(未定義or空)場合true
-    return 0
-  fi
-
-  # 表示しようとしているログレベル log_level が
-  # loggerの表示レベル value より大きければtrue、そうでなければfalse
+  # 表示しようとしているログレベル `log_level` が
+  # loggerの表示レベル `value` 以上であれば0、そうでなければ1
   if (( value >= 0 && log_level >= value )); then
     return 0
   else
@@ -173,21 +169,37 @@ log::_should_output_log() {
   lib="${lib//-/_}"     # foo-bar -> foo_bar
   lib="${lib^^}"        # foo_bar -> FOO_BAR
 
+  # channel level
   if [[ -n "$ch" ]]; then
+    (( LOG_DISABLE_CH )) && return 1
     ch="${ch//-/_}"
     ch="${ch^^}"
     var="LOG_LEVEL_${lib}_${ch}"
-
-    log::_is_truthy "$level_num" "$var" || return 1
+    if [[ -n "${!var+defined}" ]]; then
+      if log::_ge_level "$level_num" "$var"; then
+        return 0
+      else
+        return 1
+      fi
+    fi
   fi
 
+  # file level
   var="LOG_LEVEL_${lib}"
-  log::_is_truthy "$level_num" "$var" || return 1
+  if [[ -n "${!var+defined}" ]]; then
+    if log::_ge_level "$level_num" "$var"; then
+      return 0
+    else
+      return 1
+    fi
+  fi
 
-  # root logger
-  log::_is_truthy "$level_num" 'LOG_LEVEL' || return 1
-
-  return 0
+  # root
+  if log::_ge_level "$level_num" 'LOG_LEVEL'; then
+    return 0
+  else
+    return 1
+  fi
 }
 
 logger() {
