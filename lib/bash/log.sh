@@ -15,8 +15,11 @@ LIB_DEPS=( core theme )
 # 負の値を設定することで、ログ出力を完全に抑制します。
 : "${LOG_LEVEL:=1}"
 
-# タイムスタンプを付与
-: "${LOG_TS:=0}"
+# ログに表示する内容を変更
+: "${LOG_INFO_TS:=0}"
+: "${LOG_INFO_FILE:=1}"
+: "${LOG_INFO_CH:=1}"
+: "${LOG_INFO_FUNC:=1}"
 
 # スタックトレース設定
 : "${LOG_TRACE_FATAL:=1}"
@@ -57,31 +60,54 @@ log::_fmt_filename() {
 }
 
 log::_log_emit() {
-  local level="$1" style="$2" brief="$3"; shift 3
-  local line file fmt_file
+  local level="$1" style_level="$2" brief="$3" ch="$4"; shift 4
+  local line file subroutine fmt_file
 
-  read -r line _ file < <(caller 1)
+  read -r line subroutine file < <(caller 1)
   fmt_file="$(log::_fmt_filename "$file")"
 
-  if (( brief )); then
-    fmg_file=
-    line=
+  local style_ts="${STYLE_STDERR['log_timestamp']:-}"
+  local style_ch="${STYLE_STDERR['log_ch']:-}"
+  local style_file="${STYLE_STDERR['log_filename']:-}"
+  local style_func="${STYLE_STDERR['log_funcname']:-}"
+  local rst="${STYLE_STDERR['rst']:-}"
+  local date
+  local section_ts section_level section_func section_file section_ch
+
+  if (( LOG_INFO_TS )); then
+    date="$(TZ='JST-9' date -Iseconds)"
+    section_ts="${style_ts}${date}${rst}"
+    section_level=" [${style_level}${level}${rst}]"
+  else
+    section_level="${style_level}${level}${rst}:"
   fi
 
-  if (( LOG_TS )); then
-    printf '%s [%s]%s%s %s\n' \
-      "${STYLE_STDERR['log_timestamp']:-}$(TZ='JST-9' date -Iseconds)${STYLE_STDERR['rst']:-}" \
-      "${style}${level}${STYLE_STDERR['rst']:-}" \
-      "${fmt_file:+" ${fmt_file}:"}" \
-      "${line:+" line ${line}:"}" \
-      "$*" >&2
-  else
-    printf '%s%s%s %s\n' \
-      "${style}${level}${STYLE_STDERR['rst']:-}:" \
-      "${fmt_file:+" ${fmt_file}:"}" \
-      "${line:+" line ${line}:"}" \
-      "$*" >&2
+  if (( LOG_INFO_FILE && LOG_INFO_CH )); then
+    section_file=" ${style_file}${fmt_file}:${line}${rst}"
+    section_ch="${ch:+[${style_ch}${ch}${rst}]} -"
+  elif (( LOG_INFO_FILE )); then
+    section_file=" ${style_file}${fmt_file}:${line}${rst} -"
+  elif (( LOG_INFO_CH )); then
+    section_ch="${ch:+ ${style_ch}${ch}${rst} -}"
   fi
+
+  if (( LOG_INFO_FUNC )); then
+    section_func=" ${style_func}${subroutine}${rst}:"
+  fi
+
+  if (( brief )); then
+    section_file=
+    section_ch=
+    section_func=
+  fi
+
+  printf '%s%s%s%s%s %s\n' \
+    "${section_ts:-}" \
+    "$section_level" \
+    "${section_file:-}" \
+    "${section_ch:-}" \
+    "${section_func:-}" \
+    "$*" >&2
 }
 
 log::_log_stacktrace() {
@@ -219,7 +245,7 @@ logger() {
         stacktrace="$LOG_TRACE_DEBUG"
         ;;
       -b|--brief) brief=1 ;;
-      --ch | --ch=*)
+      -c|--ch|--ch=*)
         if [[ "$1" =~ ^--ch= ]]; then
           ch="${1#--ch=}"
         elif [[ -z "${2:-}" ]]; then
@@ -244,7 +270,7 @@ logger() {
     return 0
   fi
 
-  log::_log_emit "$level" "$style" "$brief" "$@"
+  log::_log_emit "$level" "$style" "$brief" "$ch" "$@"
 
   if (( stacktrace )); then
     log::_log_stacktrace

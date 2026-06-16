@@ -45,9 +45,12 @@ mmerr::setup() {
     ['error']="$(escseq::sgr --fg-tc "${THEME_PALETTE['red']}")"
     ['warning']="$(escseq::sgr --fg-tc "${THEME_PALETTE['yellow']}")"
     ['info']="$(escseq::sgr --fg-tc "${THEME_PALETTE['skyblue']}")"
-    ['debug']="$(escseq::sgr --fg-tc "${THEME_PALETTE['lavender']}")"
+    ['debug']="$(escseq::sgr --fg-tc "${THEME_PALETTE['gray']}")"
 
-    ['log_timestamp']="$(escseq::sgr --fg-tc "${THEME_PALETTE['purple']}")"
+    ['log_timestamp']="$(escseq::sgr --default-fg)"
+    ['log_filename']="$(escseq::sgr --fg-tc "${THEME_PALETTE['lavender']}")"
+    ['log_ch']="$(escseq::sgr --fg-tc "${THEME_PALETTE['purple']}")"
+    ['log_funcname']="$(escseq::sgr --fg-tc "${THEME_PALETTE['blue_purple']}")"
     ['log_stacktrace_function']="$(escseq::sgr --fg-tc "${THEME_PALETTE['blue_purple']}" --bold)"
     ['log_stacktrace_location']="$(escseq::sgr --fg-tc "${THEME_PALETTE['lavender']}")"
   )
