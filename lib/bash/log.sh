@@ -182,7 +182,7 @@ logger() {
   #     `test.sh` で実行した `logger --error --ch='testch' 'message'` を表示させる場合、
   #     `LOG_LEVEL_TEST_TESTCH=3` のように指定します。
 
-  local level level_ts_fmt level_num style stacktrace
+  local level level_num style stacktrace
   local brief=0 ch=
 
   while (( $# > 0 )); do
@@ -190,35 +190,30 @@ logger() {
       --) shift; break ;;
       --fatal)
         level='FATAL'
-        level_ts_fmt='FATAL'
         level_num=4
         style="${STYLE_STDERR['fatal']:-}"
         stacktrace="$LOG_TRACE_FATAL"
         ;;
       --error)
         level='ERROR'
-        level_ts_fmt='ERR'
         level_num=3
         style="${STYLE_STDERR['error']:-}"
         stacktrace="$LOG_TRACE_ERROR"
         ;;
       --warning)
         level='WARNING'
-        level_ts_fmt='WRN'
         level_num=2
         style="${STYLE_STDERR['warning']:-}"
         stacktrace="$LOG_TRACE_WARN"
         ;;
       --info)
         level='INFO'
-        level_ts_fmt='INF'
         level_num=1
         style="${STYLE_STDERR['info']:-}"
         stacktrace="$LOG_TRACE_INFO"
         ;;
       --debug)
         level='DEBUG'
-        level_ts_fmt='DBG'
         level_num=0
         style="${STYLE_STDERR['debug']:-}"
         stacktrace="$LOG_TRACE_DEBUG"
@@ -249,11 +244,7 @@ logger() {
     return 0
   fi
 
-  if (( LOG_TS )); then
-    log::_log_emit "$level_ts_fmt" "$style" "$brief" "$@"
-  else
-    log::_log_emit "$level" "$style" "$brief" "$@"
-  fi
+  log::_log_emit "$level" "$style" "$brief" "$@"
 
   if (( stacktrace )); then
     log::_log_stacktrace
