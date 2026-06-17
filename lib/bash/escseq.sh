@@ -1,7 +1,7 @@
 # shellcheck shell=bash
 
 LIB_VERSION='1.0.0'
-LIB_DEPS=( core )
+LIB_DEPS=()
 [[ "${1:-}" = '__IMPORT__' ]] && return 0
 
 # Escape Sequence <escseq.sh>

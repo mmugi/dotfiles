@@ -1,7 +1,7 @@
 # shellcheck shell=bash
 
 LIB_VERSION='1.0.0'
-LIB_DEPS=( core escseq termcap )
+LIB_DEPS=( escseq termcap )
 [[ "${1:-}" = '__IMPORT__' ]] && return 0
 
 # Bash Theme Loader <theme.sh>

@@ -1,7 +1,7 @@
 # shellcheck shell=bash
 
 LIB_VERSION='1.0.0'
-LIB_DEPS=( core theme )
+LIB_DEPS=( theme )
 [[ "${1:-}" = '__IMPORT__' ]] && return 0
 
 # ログレベル
