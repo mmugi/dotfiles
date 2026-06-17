@@ -7,8 +7,6 @@ LIB_REQUIRES_BASH='>=4.1'
 
 : "${MSG_DELAY:=0.1}"
 : "${MSG_INDENT:=0}"
-: "${MSG_RENDERER_DEBUG:=0}"
-: "${MSG_TOKENIZER_DEBUG:=0}"
 : "${MSG_BOX:=1}"
 
 : "${MSG_PROMPT:=[>]}"
@@ -23,9 +21,12 @@ LIB_REQUIRES_BASH='>=4.1'
 msg::init() {
   (( ${MSG_INITIALIZED:-0} )) && return 0
 
+  declare -g _MSG_LOG_CH_TOKENIZER='tokenizer'
+  declare -g _MSG_LOG_CH_RENDERER='renderer'
+
   declare -gi _MSG_PYTHON3_UNAVAILABLE=0
   if ! python3 --version >/dev/null 2>&1; then
-    core::warn 'python3 is not available. falling back to simplified mode.'
+    logger --warning 'python3 is not available. falling back to simplified mode.'
   fi
 
   declare -g _MSG_EXEC_TMPFILE_STDOUT
@@ -51,33 +52,26 @@ msg::_isinit() {
   if (( ${MSG_INITIALIZED:-0} )); then
     return 0
   else
-    core::error 'not initialized.'
+    core::error 'not initialized'
     return 1
   fi
 }
 
 newline() { printf '\n'; }
 
-msg::_tokenizer_debug() {
-  local func
-  read -r _ func _ < <(caller 0)
-  (( MSG_TOKENIZER_DEBUG )) && logger --debug "[MSG TOKENIZER] ${func}: $*"
-  return 0
-}
-
 msg::_tokenizer_init() {
   declare -ga _MSG_TOKENIZER_OUTPUT_TYPE=()
   declare -ga _MSG_TOKENIZER_OUTPUT_VALUE=()
   declare -gA _MSG_TOKENIZER_OUTPUT_ATTR=()
   declare -gi _MSG_TOKENIZER_INITIALIZED=1
-  msg::_tokenizer_debug 'MSG TOKENIZER INITIALIZED!'
+  logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" 'MSG TOKENIZER INITIALIZED!'
 }
 
 msg::_tokenizer_isinit() {
   if (( ${_MSG_TOKENIZER_INITIALIZED:-0} )); then
     return 0
   else
-    logger --error 'tokenizer is not initialized.'
+    logger --error 'tokenizer is not initialized'
     return 1
   fi
 }
@@ -105,20 +99,20 @@ msg::_drop_token_stack() {
     type="${_MSG_TOKENIZER_OUTPUT_TYPE[last_idx]}"
     value="${_MSG_TOKENIZER_OUTPUT_VALUE[last_idx]}"
 
-    msg::_tokenizer_debug "type=\"${type}\" value=\"${value}\""
+    logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "type=\"${type}\" value=\"${value}\""
 
     unset '_MSG_TOKENIZER_OUTPUT_TYPE[last_idx]'
     unset '_MSG_TOKENIZER_OUTPUT_VALUE[last_idx]'
     for key in "${!_MSG_TOKENIZER_OUTPUT_ATTR[@]}"; do
       [[ $key == "${last_idx}:"* ]] || continue
-      msg::_tokenizer_debug "index=\"${last_idx}\" key=\"${key}\""
+      logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "index=\"${last_idx}\" key=\"${key}\""
       unset '_MSG_TOKENIZER_OUTPUT_ATTR[$key]'
     done
   fi
 
-  #msg::_tokenizer_debug "$(declare -p _MSG_TOKENIZER_OUTPUT_TYPE)"
-  #msg::_tokenizer_debug "$(declare -p _MSG_TOKENIZER_OUTPUT_VALUE)"
-  #msg::_tokenizer_debug "$(declare -p _MSG_TOKENIZER_OUTPUT_ATTR)"
+  #logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "$(declare -p _MSG_TOKENIZER_OUTPUT_TYPE)"
+  #logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "$(declare -p _MSG_TOKENIZER_OUTPUT_VALUE)"
+  #logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "$(declare -p _MSG_TOKENIZER_OUTPUT_ATTR)"
 }
 
 msg::_push_token_stack() {
@@ -130,7 +124,7 @@ msg::_push_token_stack() {
   local attrs="${3:-}"
   local re_attr='([a-zA-Z0-9_-]+)="([^"]+)"'
 
-  msg::_tokenizer_debug "type=\"${type}\" value=\"${value}\""
+  logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "type=\"${type}\" value=\"${value}\""
 
   _MSG_TOKENIZER_OUTPUT_TYPE+=( "$type" )
   _MSG_TOKENIZER_OUTPUT_VALUE+=( "$value" )
@@ -143,16 +137,16 @@ msg::_push_token_stack() {
       attr="${BASH_REMATCH[1]}"
       attr_value="${BASH_REMATCH[2]}"
 
-      msg::_tokenizer_debug "index=\"${idx}\" attr=\"${attr}\" attr_value=\"${attr_value}\""
+      logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "index=\"${idx}\" attr=\"${attr}\" attr_value=\"${attr_value}\""
 
       _MSG_TOKENIZER_OUTPUT_ATTR["${idx}:${attr}"]="$attr_value"
       attrs="${attrs#*${matched}}"
     done
   fi
 
-  #msg::_tokenizer_debug "$(declare -p _MSG_TOKENIZER_OUTPUT_TYPE)"
-  #msg::_tokenizer_debug "$(declare -p _MSG_TOKENIZER_OUTPUT_VALUE)"
-  #msg::_tokenizer_debug "$(declare -p _MSG_TOKENIZER_OUTPUT_ATTR)"
+  #logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "$(declare -p _MSG_TOKENIZER_OUTPUT_TYPE)"
+  #logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "$(declare -p _MSG_TOKENIZER_OUTPUT_VALUE)"
+  #logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "$(declare -p _MSG_TOKENIZER_OUTPUT_ATTR)"
 }
 
 msg::_tokenize_tag() {
@@ -171,7 +165,7 @@ msg::_tokenize_tag() {
     return 1
   fi
 
-  msg::_tokenizer_debug "tag=\"${tag}\""
+  logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "tag=\"${tag}\""
 
   if [[ ! "$tag" =~ ^/?(@(noprompt|indent|b|hl)|(b|hl))$ ]]; then
     logger --warning "unsupported tag: ${tag}"
@@ -229,7 +223,7 @@ msg::_tokenize_line() {
   local quote=
   local i c
 
-  msg::_tokenizer_debug "input[${line}]"
+  logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "input[${line}]"
 
   for (( i = 0; i < ${#line}; i++ )); do
     c="${line:i:1}"
@@ -238,7 +232,7 @@ msg::_tokenize_line() {
       TEXT)
         if [[ "$c" == '<' ]]; then
           if [[ -n "$text" ]]; then
-            msg::_tokenizer_debug "│ TEXT=\"${text}\""
+            logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "│ TEXT=\"${text}\""
             types+=( 'TEXT' )
             values+=( "$text" )
           fi
@@ -258,7 +252,7 @@ msg::_tokenize_line() {
             quote=
           fi
         elif [[ "$c" == '>' && -z "$quote" ]]; then
-          msg::_tokenizer_debug "│ TAG=\"${tag}\""
+          logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "│ TAG=\"${tag}\""
           types+=( 'TAG' )
           values+=( "$tag" )
           tag=
@@ -274,12 +268,12 @@ msg::_tokenize_line() {
   fi
 
   if [[ -n "$text" ]]; then
-    msg::_tokenizer_debug "│ TEXT=\"${text}\""
+    logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "│ TEXT=\"${text}\""
     types+=( 'TEXT' )
     values+=( "$text" )
   fi
 
-  msg::_tokenizer_debug '└'
+  logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" '└'
 
   # 入力が空行かどうか
   local empty_line=0
@@ -304,7 +298,8 @@ msg::_tokenize_line() {
     done
   fi
 
-  msg::_tokenizer_debug "empty_line=\"${empty_line}\" block_tag_only=\"${block_tag_only}\""
+  logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" \
+    "empty_line=\"${empty_line}\" block_tag_only=\"${block_tag_only}\""
 
   (( block_tag_only )) || msg::_push_token_stack 'BEGIN_LINE'
 
@@ -349,13 +344,6 @@ msg::_tokenize() {
   return 0
 }
 
-msg::_renderer_debug() {
-  local func
-  read -r _ func _ < <(caller 0)
-  (( MSG_RENDERER_DEBUG )) && logger --debug "[MSG RENDERER] ${func}: $*"
-  return 0
-}
-
 msg::_renderer_init() {
   declare -gA _MSG_RENDERER_CONTEXT=(
     ['prompt_symbol']="$MSG_PROMPT"
@@ -377,14 +365,14 @@ msg::_renderer_init() {
   declare -g _MSG_RENDERER_PROMPT_STACK=()
   declare -g _MSG_RENDER_OUTPUT=
   declare -gi _MSG_RENDERER_INITIALIZED=1
-  msg::_renderer_debug 'MSG RENDERER INITIALIZED!'
+  logger --debug --ch="$_MSG_LOG_CH_RENDERER" 'MSG RENDERER INITIALIZED!'
 }
 
 msg::_renderer_isinit() {
   if (( ${_MSG_RENDERER_INITIALIZED:-0} )); then
     return 0
   else
-    logger --error 'renderer is not initialized.'
+    logger --error 'renderer is not initialized'
     return 1
   fi
 }
@@ -408,7 +396,7 @@ msg::_render_indent() {
     (( width += item ))
   done
 
-  msg::_renderer_debug "rendering indent: width=\"${width}\""
+  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "rendering indent: width=\"${width}\""
 
   indent="$(printf '%*s' "$width" '')"
   _MSG_RENDER_OUTPUT+="$indent"
@@ -423,10 +411,10 @@ msg::_render_prompt() {
 
   if (( last_idx < 0 )); then
     prompt="${_MSG_RENDERER_CONTEXT['prompt_symbol']}"
-    msg::_renderer_debug "use default prompt: symbol=\"${prompt}\""
+    logger --debug --ch="$_MSG_LOG_CH_RENDERER" "use default prompt: symbol=\"${prompt}\""
   else
     prompt="${_MSG_RENDERER_PROMPT_STACK[last_idx]}"
-    msg::_renderer_debug "use prompt stack: index=\"${last_idx}\" symbol=\"${prompt}\""
+    logger --debug --ch="$_MSG_LOG_CH_RENDERER" "use prompt stack: index=\"${last_idx}\" symbol=\"${prompt}\""
   fi
 
   [[ -z "$prompt" ]] && return 0
@@ -465,9 +453,9 @@ msg::_push_prompt_stack() {
   (( $# != 1 )) && { logger --error 'invalid option'; return 1; }
 
   local symbol="$1"
-  msg::_renderer_debug "symbol=\"${symbol}\""
+  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "symbol=\"${symbol}\""
   _MSG_RENDERER_PROMPT_STACK+=( "$symbol" )
-  msg::_renderer_debug "$(declare -p _MSG_RENDERER_PROMPT_STACK)"
+  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p _MSG_RENDERER_PROMPT_STACK)"
 }
 
 msg::_drop_prompt_stack() {
@@ -476,7 +464,7 @@ msg::_drop_prompt_stack() {
 
   local last_idx=$(( ${#_MSG_RENDERER_PROMPT_STACK[@]} - 1 ))
   unset "_MSG_RENDERER_PROMPT_STACK[${last_idx}]"
-  msg::_renderer_debug "$(declare -p _MSG_RENDERER_PROMPT_STACK)"
+  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p _MSG_RENDERER_PROMPT_STACK)"
 }
 
 msg::_push_indent_stack() {
@@ -484,9 +472,9 @@ msg::_push_indent_stack() {
   (( $# != 1 )) && { logger --error 'invalid option'; return 1; }
 
   local width="$1"
-  msg::_renderer_debug "width=\"${width}\""
+  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "width=\"${width}\""
   _MSG_RENDERER_INDENT_STACK+=( "$width" )
-  msg::_renderer_debug "$(declare -p _MSG_RENDERER_INDENT_STACK)"
+  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p _MSG_RENDERER_INDENT_STACK)"
 }
 
 msg::_drop_indent_stack() {
@@ -495,7 +483,7 @@ msg::_drop_indent_stack() {
 
   local last_idx=$(( ${#_MSG_RENDERER_INDENT_STACK[@]} - 1 ))
   unset "_MSG_RENDERER_INDENT_STACK[${last_idx}]"
-  msg::_renderer_debug "$(declare -p _MSG_RENDERER_INDENT_STACK)"
+  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p _MSG_RENDERER_INDENT_STACK)"
 }
 
 msg::_push_inline_style() {
@@ -505,13 +493,13 @@ msg::_push_inline_style() {
   local tag="$1"
   local style="$2"
 
-  msg::_renderer_debug "tag=\"${tag}\" style=\"${style}\""
+  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "tag=\"${tag}\" style=\"${style}\""
 
   _MSG_RENDERER_INLINE_STYLE_TAG_STACK+=( "$tag" )
   _MSG_RENDERER_INLINE_STYLE_STACK+=( "$style" )
 
-  msg::_renderer_debug "$(declare -p _MSG_RENDERER_INLINE_STYLE_TAG_STACK)"
-  msg::_renderer_debug "$(declare -p _MSG_RENDERER_INLINE_STYLE_STACK)"
+  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p _MSG_RENDERER_INLINE_STYLE_TAG_STACK)"
+  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p _MSG_RENDERER_INLINE_STYLE_STACK)"
 }
 
 msg::_drop_inline_style() {
@@ -521,7 +509,7 @@ msg::_drop_inline_style() {
   local tag="$1"
   local i
 
-  msg::_renderer_debug "tag=\"${tag}\""
+  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "tag=\"${tag}\""
 
   for (( i = ${#_MSG_RENDERER_INLINE_STYLE_TAG_STACK[@]} - 1; i >= 0; i-- )); do
     if [[ "${_MSG_RENDERER_INLINE_STYLE_TAG_STACK[i]}" == "$tag" ]]; then
@@ -530,8 +518,8 @@ msg::_drop_inline_style() {
       _MSG_RENDERER_INLINE_STYLE_TAG_STACK=( "${_MSG_RENDERER_INLINE_STYLE_TAG_STACK[@]}" )
       _MSG_RENDERER_INLINE_STYLE_STACK=( "${_MSG_RENDERER_INLINE_STYLE_STACK[@]}" )
 
-      msg::_renderer_debug "$(declare -p _MSG_RENDERER_INLINE_STYLE_TAG_STACK)"
-      msg::_renderer_debug "$(declare -p _MSG_RENDERER_INLINE_STYLE_STACK)"
+      logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p _MSG_RENDERER_INLINE_STYLE_TAG_STACK)"
+      logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p _MSG_RENDERER_INLINE_STYLE_STACK)"
 
       return 0
     fi
@@ -547,13 +535,13 @@ msg::_push_block_style() {
   local tag="$1"
   local style="$2"
 
-  msg::_renderer_debug "tag=\"${tag}\" style=\"${style}\""
+  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "tag=\"${tag}\" style=\"${style}\""
 
   _MSG_RENDERER_BLOCK_STYLE_TAG_STACK+=( "$tag" )
   _MSG_RENDERER_BLOCK_STYLE_STACK+=( "$style" )
 
-  msg::_renderer_debug "$(declare -p _MSG_RENDERER_BLOCK_STYLE_TAG_STACK)"
-  msg::_renderer_debug "$(declare -p _MSG_RENDERER_BLOCK_STYLE_STACK)"
+  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p _MSG_RENDERER_BLOCK_STYLE_TAG_STACK)"
+  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p _MSG_RENDERER_BLOCK_STYLE_STACK)"
 }
 
 msg::_drop_block_style() {
@@ -563,7 +551,7 @@ msg::_drop_block_style() {
   local tag="$1"
   local i
 
-  msg::_renderer_debug "tag=\"${tag}\""
+  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "tag=\"${tag}\""
 
   for (( i = ${#_MSG_RENDERER_BLOCK_STYLE_TAG_STACK[@]} - 1; i >= 0; i-- )); do
     if [[ "${_MSG_RENDERER_BLOCK_STYLE_TAG_STACK[i]}" == "$tag" ]]; then
@@ -572,8 +560,8 @@ msg::_drop_block_style() {
       _MSG_RENDERER_BLOCK_STYLE_TAG_STACK=( "${_MSG_RENDERER_BLOCK_STYLE_TAG_STACK[@]}" )
       _MSG_RENDERER_BLOCK_STYLE_STACK=( "${_MSG_RENDERER_BLOCK_STYLE_STACK[@]}" )
 
-      msg::_renderer_debug "$(declare -p _MSG_RENDERER_BLOCK_STYLE_TAG_STACK)"
-      msg::_renderer_debug "$(declare -p _MSG_RENDERER_BLOCK_STYLE_STACK)"
+      logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p _MSG_RENDERER_BLOCK_STYLE_TAG_STACK)"
+      logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p _MSG_RENDERER_BLOCK_STYLE_STACK)"
 
       return 0
     fi
@@ -589,7 +577,7 @@ msg::_render_block_tag_open() {
   local idx="$1"
   local tag="${_MSG_TOKENIZER_OUTPUT_VALUE[idx]}"
 
-  msg::_renderer_debug "token_index=\"${idx}\" tag=\"${tag}\""
+  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "token_index=\"${idx}\" tag=\"${tag}\""
 
   case "$tag" in
     noprompt)
@@ -647,7 +635,7 @@ msg::_render_tag_open() {
   local idx="$1"
   local tag="${_MSG_TOKENIZER_OUTPUT_VALUE[idx]}"
 
-  msg::_renderer_debug "token_index=\"${idx}\" tag=\"${tag}\""
+  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "token_index=\"${idx}\" tag=\"${tag}\""
 
   case "$tag" in
     b|hl) # style tags
@@ -698,7 +686,7 @@ msg::_render_token() {
     type="${_MSG_TOKENIZER_OUTPUT_TYPE[i]}"
     value="${_MSG_TOKENIZER_OUTPUT_VALUE[i]}"
 
-    msg::_renderer_debug "rendering token[${i}]: type=\"${type}\" value=\"${value}\""
+    logger --debug --ch="$_MSG_LOG_CH_RENDERER" "rendering token[${i}]: type=\"${type}\" value=\"${value}\""
 
     case "$type" in
       BEGIN)
@@ -750,10 +738,10 @@ msg::_render() {
   local raw="$*"
   local i type value
 
-  msg::_renderer_debug "↓↓ input raw ↓↓
+  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "↓↓ input raw ↓↓
 ${raw}"
-  msg::_renderer_debug "↑↑ input raw ↑↑"
-  msg::_renderer_debug "$(declare -p '_MSG_RENDERER_CONTEXT')"
+  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "↑↑ input raw ↑↑"
+  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p '_MSG_RENDERER_CONTEXT')"
 
   msg::_tokenizer_init
   msg::_tokenize "$raw"
@@ -765,9 +753,9 @@ ${raw}"
   fi
 
   # output
-  msg::_renderer_debug "↓↓ rendering result ↓↓
+  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "↓↓ rendering result ↓↓
 $(printf '%q' "$_MSG_RENDER_OUTPUT")"
-  msg::_renderer_debug "↑↑ rendering result ↑↑"
+  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "↑↑ rendering result ↑↑"
   printf '%b' "$_MSG_RENDER_OUTPUT"
 
   return 0
@@ -859,6 +847,7 @@ msg() {
   #
   #        プロンプトなしで出力します。
 
+  msg::_isinit || return 1
   msg::_renderer_init
 
   while (( $# > 0 )); do
