@@ -1,26 +1,21 @@
 # shellcheck shell=bash
 
 LIB_VERSION='1.0.0'
-LIB_DEPS=( esc msg )
+LIB_DEPS=()
 [[ "${1:-}" = '__IMPORT__' ]] && return 0
 
 # shellcheck disable=SC2034
 {
-  DOTFILES_GREET_COLOR="$ESC_C_BASE"
-  DOTFILES_LOGO="$(cat <<LOGO
+  # shellcheck disable=SC2155
+  declare -gr DOTFILES_LOGO="$(cat <<LOGO
  _____  _______ _______ _______ _______ _____   _______ _______
 |     \|       |_     _|    ___|_     _|     |_|    ___|     __|
 |  --  |   -   | |   | |    ___|_|   |_|       |    ___|__     |
 |_____/|_______| |___| |___|   |_______|_______|_______|_______|
 LOGO
-)"
-  DOTFILES_LOGO_WIDTH="$(\
-    printf '%s\n' "$DOTFILES_LOGO" \
-    | awk '{ if (length > max) max = length } END { print max }'
   )"
 
-  readonly DOTFILES_CONFIG_DIR="${DOTFILES_PATH:?}/configs"
-  readonly DOTFILES_GITHOOKS_DIR="${DOTFILES_PATH:?}/misc/git/hooks/dotfiles"
-  readonly DOTFILES_BREWFILE_DIR="${DOTFILES_PATH:?}/misc/brew"
-  readonly DOTFILES_LOGO_WIDTH
+  declare -g DOTFILES_CONFIG_DIR="${DOTFILES_PATH:?}/configs"
+  declare -g DOTFILES_GITHOOKS_DIR="${DOTFILES_PATH:?}/misc/git/hooks/dotfiles"
+  declare -g DOTFILES_BREWFILE_DIR="${DOTFILES_PATH:?}/misc/brew"
 }
