@@ -136,16 +136,17 @@ msg::_push_token_stack() {
   _MSG_TOKENIZER_OUTPUT_VALUE+=( "$value" )
 
   if [[ -n "$attrs" ]]; then
-    local idx attr attr_value
+    local idx matched attr attr_value
     idx=$(( ${#_MSG_TOKENIZER_OUTPUT_TYPE[@]} - 1 ))
     while [[ "$attrs" =~ $re_attr ]]; do
+      matched="${BASH_REMATCH[0]}"
       attr="${BASH_REMATCH[1]}"
       attr_value="${BASH_REMATCH[2]}"
 
       msg::_tokenizer_debug "index=\"${idx}\" attr=\"${attr}\" attr_value=\"${attr_value}\""
 
       _MSG_TOKENIZER_OUTPUT_ATTR["${idx}:${attr}"]="$attr_value"
-      attrs=${attrs#*"${BASH_REMATCH[0]}"}
+      attrs="${attrs#*${matched}}"
     done
   fi
 
