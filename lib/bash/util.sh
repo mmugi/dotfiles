@@ -1,7 +1,7 @@
 # shellcheck shell=bash
 
 LIB_VERSION='1.0.0'
-LIB_DEPS=( esc msg log )
+LIB_DEPS=( log msg )
 [[ "${1:-}" = '__IMPORT__' ]] && return 0
 
 # msg::chk 結果キャッシュ
@@ -271,32 +271,29 @@ util::chk() {
 util::install() {
   # usage: util::install [--dry-run] src dst
   #
-  # srcに指定されたファイルもしくはディレクトリを
-  # dstに指定されたパスに配置します。
+  # srcに指定されたファイルをdstに指定されたパスに配置します。
   #
   # srcが通常のファイルの場合、dstに指定された先にシンボリックリンクします。
-  # srcがディレクトリかつdstに指定された先に存在しない場合は作成し、
-  # 存在する場合は正常終了します。
+  # srcがディレクトリの場合、dstに指定されたパスのディレクトリを作成します。
   #
-  # dst先にファイルやリンクがすでに存在する場合は、1を返します。
+  # dst先にファイルやシンボリックリンクがすでに存在する場合は、1を返します。
   #
   # --dry-runオプションが指定された場合は、シンボリックリンクやディレクトリの
   # 作成は行われず、srcがdstに配置できるかどうかの0、1だけを返します。
 
-  local cmd_result symlink
-  local dry_run=false
+  local dry_run=0
   local usage='usage: util::install [--dry-run] src dst'
 
-  if [[ $# -eq 3 ]]; then
+  if (( $# == 3 )); then
     if [[ "$1" == '--dry-run' ]]; then
       shift
-      dry_run=true
+      dry_run=1
     else
-      log::error "$usage"
+      logger --error "$usage"
       return 1
     fi
-  elif [[ $# -ne 2 ]]; then
-    log::error "$usage"
+  elif (( $# != 2 )); then
+    logger --error "$usage"
     return 1
   fi
 
@@ -304,49 +301,41 @@ util::install() {
   local dst="$2"
 
   if [[ ! -e "$src" ]]; then
-    log::error "source not found: ${src}"
+    logger --error "source not found: ${src}"
     return 1
   fi
 
+  # dst配置可能(ファイル、リンクが存在しない)
   if [[ ! -e "$dst" && ! -L "$dst" ]]; then
-    if "$dry_run"; then
-      : dry-run
+    (( dry_run )) && return 0
+
+    if [[ -d "$src" ]]; then
+      mkdir -m 700 "$dst" || return 1
+      msg::changed --mkdir "$dst"
     else
-      if [[ -d "$src" ]]; then
-        if cmd_result="$(mkdir -m 700 "$dst" 2>&1)"; then
-          msg::notice --mkdir "$dst"
-          return
-        else
-          log::error "$cmd_result"
-          return 1
-        fi
-      else
-        if cmd_result="$(ln -s "$src" "$dst" 2>&1)"; then
-          msg::notice --link "${src} ==> ${dst}"
-        else
-          log::error "$cmd_result"
-          return 1
-        fi
-      fi
+      ln -s "$src" "$dst" || return 1
+      msg::changed --link "${src} ==> ${dst}"
+    fi
+
+    return 0
+  fi
+
+  # dstがすでに存在する
+  local link link_path src_path
+  if link="$(readlink "$dst")"; then
+    link_path="$(realpath "$link")"
+    src_path="$(realpath "$src")"
+    if [[ "$src_path" != "$link_path" ]]; then
+      msg::warning "existing distination target is not owned by dotfiles: ${dst}"
+      return 1
     fi
   else
-    if ! symlink="$(readlink "$dst")"; then
-      # not symlink
-      if [[ -d "$dst" ]]; then
-        : directory exists
-      else
-        log::warn "target already exists: ${dst}"
-        return 1
-      fi
-    elif [[ "$src" != "$symlink" ]]; then
-      log::warn "existing target is not owned by dotfiles: ${dst}"
+    if [[ ! -d "$dst" ]]; then
+      msg::warning "already file exists: ${dst}"
       return 1
-    elif [[ "$src" == "$symlink" ]]; then
-      : symlink are managed by dotfiles
-    else
-      log::error "readlink error: ${cmd_result}"
-      abort 'deploy failed;('
     fi
   fi
+
+  # dstディレクトリもしくはsrcにリンクされたdstファイルがすでに存在する
   return 0
 }
