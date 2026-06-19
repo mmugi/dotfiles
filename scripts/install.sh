@@ -1,125 +1,167 @@
 #!/usr/bin/env bash
 
-set -Eueo pipefail
+set -ueo pipefail
 
-if [ -z "${BASH_VERSION:-}" ]; then
-  printf "\033[1;31m%s\033[0m\n" 'please run this script with bash;('
+if [ ! -t 0 ]; then
+  printf 'error: stdin is not connected to a tty\n' >&2
   exit 1
 fi
 
-# shellcheck source=/dev/null
-source "${DOTFILES_PATH:?}/lib/bash/import.sh"
-
-import dotfiles esc log msg util
-
-readonly GITHUB_USERNAME='mmugi'
-readonly GITHUB_EMAIL='173437276+mmugi@users.noreply.github.com'
-
-MSG_LOGO="$DOTFILES_LOGO"
+if [ -z "${BASH_VERSION:-}" ]; then
+  printf 'error: please run this script with bash\n' >&2
+  exit 1
+fi
 
 exec_user="$(whoami)"
-[[ "$exec_user" == 'root' ]] && abort "don't run this script as root"
-[[ ! -t 0 ]] && abort 'stdin is not connected to a tty'
+if [[ "$exec_user" == 'root' ]]; then
+  printf "error: don't run this script as root\n" >&2
+  exit 1
+fi
+
+declare -r GITHUB_USERNAME='mmugi'
+declare -r GITHUB_EMAIL='173437276+mmugi@users.noreply.github.com'
+
+# shellcheck source=/dev/null
+source "${DOTFILES_PATH:?}/lib/bash/import.sh"
+import theme msg dotfiles util
 
 _nextstep() {
-  [[ -z "${1:-}" ]] && abort 'scenario argument is required'
-  msg::line "$DOTFILES_LOGO_WIDTH"
-  newline
-  printf ' %s%s%s\n\n' \
-    "${ESC_ATTR_BOLD}${ESC_C_COMPLETE}*${ESC_C_BASE}" \
-    " next steps! " \
-    "${ESC_ATTR_BOLD}${ESC_C_COMPLETE}*${ESC_RESET}"
+  [[ -z "${1:-}" ]] && { logger --error 'missing scenario'; return 1; }
+
+  local header msg
+  header="$(cat <<EOF
+<@noprompt>
+<hl style="warning">⚡️ next steps!</hl>
+
+</@noprompt>
+EOF
+  )"
+
   case "$1" in
     --undefined-dotfiles-path)
-      cat <<'EOF'
-Please define it in your shell config file:
-
-  export DOTFILES_PATH="$HOME/.dotfiles"
+      msg="$(cat <<EOF
+${header}
+please define <hl>DOTFILES_PATH</hl> in your shell config file.
+export DOTFILES_PATH="\${HOME}/.dotfiles"
 EOF
-      newline
-      exit 0
+      )"
+      msg::box -- "$msg"
       ;;
-    --symlink-conflict)
-      cat <<EOF
-Configuration files are already present.
-Please do one of the following:
-
-  - Move the configuration files out of the target directory.
-  - Configure '${DOTFILES_PATH}/.dotignore' to ignore them.
+    --config-conflict)
+      msg="$(cat <<EOF
+${header}
+configuration files already exist.
+please do one of the following:
+ -> move the configuration files out of the target directory.
+ -> add them to <hl>${DOTFILES_PATH}/.dotignore</hl> to ignore them.
 EOF
-      newline
-      exit 1
+      )"
+      msg::box -- "$msg"
       ;;
     *)
-      abort "invalid scenario: $1"
+      logger --error "invalid scenario: $1"
+      return 1
       ;;
   esac
+
+  exit 0
 }
 
 greet() {
-  MSG_INDENT=2 \
-  msg::box --logo --top-padding --bot-padding \
-    'hello:)' \
-    'this is the dotfiles installation script.' \
-    "date: <b><hl>$(date '+%Y/%m/%d %H:%M:%S %Z')</hl></b>" \
-    "dotfiles path: <b><hl>${DOTFILES_PATH}</hl></b>"
+  local date
+  local greet_msg
+
+  date="$(date '+%Y/%m/%d %H:%M:%S %Z')"
+  greet_msg="$(cat <<EOF
+<@noprompt><@hl><@b>
+${DOTFILES_LOGO}
+
+</@noprompt></@hl></@b>
+hello:)
+this is the dotfiles installation script.
+date: ${date}
+dotfiles path: <hl>${DOTFILES_PATH}</hl>
+EOF
+  )"
+  msg::box -- "$greet_msg"
   newline
 }
 
 configure_git_for_dotfiles() {
-  if [[ -d "${DOTFILES_PATH}/.git" ]]; then
-    msg 'starting git configuration for dotfiles.'
-  else
-    return 0
-  fi
+  [[ -d "${DOTFILES_PATH}/.git" ]] || return 0
 
-  msg -p 'installing git-hooks'
+  local warnings_occurred=0
 
-  local src dst src_hooks hookfile
-  local install_hooks_failed=false
+  msg::header 'starting git configuration for dotfiles.'
+
+  msg::proc 'installing git-hooks...'
+
+  local src_hooks src dst filename
 
   src_hooks="$(find "$DOTFILES_GITHOOKS_DIR" -mindepth 1 -type f)"
   while read -r src; do
-    hookfile="$(basename "$src")"
-    dst="${DOTFILES_PATH}/.git/hooks/${hookfile}"
-    util::install "$src" "$dst" || install_hooks_failed=true
-  done < <(echo "$src_hooks")
+    filename="$(basename "$src")"
+    dst="${DOTFILES_PATH}/.git/hooks/${filename}"
+    util::install "$src" "$dst" || warnings_occurred=1
+  done <<<"$src_hooks"
 
-  if [[ "$install_hooks_failed" == 'true' ]]; then
-    abort 'hooks installation failed.'
-  fi
+  msg::proc 'configuring git username...'
 
-  msg -p 'configuring git username'
-
-  local username user_email
-  local configure_git_failed=false
   local -r gitconfig_local="${DOTFILES_PATH}/.git/config"
+  local username user_email
 
-  if username=$(git config --file "$gitconfig_local" user.name); then
-    if ! [[ "$username" == "$GITHUB_USERNAME" ]]; then
-      log::warn "user.name already configured: ${username}"
+  if username="$(git config --file "$gitconfig_local" user.name)"; then
+    if [[ "$username" != "$GITHUB_USERNAME" ]]; then
+      msg::warning "user.name already configured: ${username}"
+      warnings_occurred=1
     fi
   else
     git config --file "$gitconfig_local" user.name "$GITHUB_USERNAME"
-    msg::notice --configured "user.name: ${GITHUB_USERNAME}"
+    msg::changed --configure "user.name: ${GITHUB_USERNAME}"
   fi
 
-  msg -p 'configuring git user email'
-
+  msg::proc 'configuring git user email...'
   if user_email=$(git config --file "$gitconfig_local" user.email); then
-    if ! [[ "$user_email" == "$GITHUB_EMAIL" ]]; then
-      log::warn "user.email already configured: ${user_email}"
+    if [[ "$user_email" != "$GITHUB_EMAIL" ]]; then
+      msg::warning "user.email already configured: ${user_email}"
+      warnings_occurred=1
     fi
   else
     git config --file "$gitconfig_local" user.email "$GITHUB_EMAIL"
-    msg::notice --configured "user.email: ${GITHUB_EMAIL}"
+    msg::changed --configure "user.email: ${GITHUB_EMAIL}"
   fi
 
-  if [[ "$configure_git_failed" == 'true' ]]; then
-    abort 'git configuration failed.'
+  if (( warnings_occurred )); then
+    msg::warning 'some non-critical issues occurred:/'
+  else
+    msg::ok 'git configured for dotfiles:)'
   fi
 
-  msg::marker --complete 'git configured for dotfiles:)'
+  newline
+}
+
+_is_ignored() {
+  # usage: _is_ignored config_relpath_from_home
+  #
+  # 引数として入力されたコンフィグのパスが、DOTFILES_PATH ディレクトリに配置
+  # される .dotignore ファイルに含まれるかどうか判定します。
+  # 引数のコンフィグは、ホームディレクトリからの相対パスで指定します。
+  # .dotignore に記載のパスと前方一致する場合、trueを返します。
+
+  local -r ignorefile="${DOTFILES_PATH}/.dotignore"
+  local config_relpath_from_home
+
+  [[ $# -ne 1 ]] && abort "_is_ignored: invalid args"
+
+  config_relpath_from_home="$1"
+
+  [[ -s "$ignorefile" ]] || return
+
+  while read -r pattern; do
+    [[ -z "$pattern" || "$pattern" =~ ^# ]] && continue
+    [[ "$config_relpath_from_home" =~ ^$pattern ]] && return 0
+  done < "$ignorefile"
+  return 1
 }
 
 install_configs() {
@@ -142,124 +184,101 @@ install_configs() {
   #   ...
   #
   # 途中のディレクトリが存在しない場合、ディレクトリをパーミッション 700 で
-  # それらのディレクトリを作成されます。
+  # それらのディレクトリを作成します。
   #
   # 配置先のパスに、ファイルもしくは DOTFILES_CONFIG_DIR で管理されない
   # シンボリックリンクが既に存在する場合、全コンフィグのデプロイは中断されます。
-  # 続行するには、既存のファイルを退避/削除後するもしくは
+  # 続行するには、既存のファイルを退避/削除する、もしくは
   # ${DOTFILES_PATH}/.dotignore に無視したいコンフィグを指定して再実行します。
   #
   # .dotignore ファイルは、記載されたコンフィグのパスがコンフィグ配置先の相対
   # パスと前方一致する場合に、該当パスのコンフィグ配置処理をスキップします。
   # また、空行および # から始まる行は無視されます。
 
-  local config_relpath_fromhome
-  local conflict=false
-  local pkg pkg_dir pkg_dirs
-  local src src_configs
-  local dst
+  local pkg_dirs pkg_dir pkg_name
+  local src_configs src config_relpath_fromhome dst
+  local conflict=0
 
-  install_configs_failed() { abort 'config installation failed;('; }
+  msg::header 'starting installation of the configuration files.'
 
-  _check_ignore() {
-    # usage: _check_ignore config_relpath_from_home
-    #
-    # 引数として入力されたコンフィグのパスが、DOTFILES_PATH ディレクトリに配置
-    # される .dotignore ファイルに含まれるかどうか判定します。
-    # 引数のコンフィグは、ホームディレクトリからの相対パスで指定します。
-    # .dotignore に記載のパスと前方一致する場合、trueを返します。
+  [[ -z "${DOTFILES_CONFIG_DIR:-}" ]] && logger --fatal 'DOTFILES_CONFIG_DIR is not set'
 
-    local -r ignorefile="${DOTFILES_PATH}/.dotignore"
-    local config_relpath_from_home
+  msg 'checking configuration files to be installed...'
 
-    [[ $# -ne 1 ]] && abort "_check_ignore: invalid args"
-
-    config_relpath_from_home="$1"
-
-    [[ -s "$ignorefile" ]] || return
-
-    while read -r pattern; do
-      [[ -z "$pattern" || "$pattern" =~ ^# ]] && continue
-      [[ "$config_relpath_from_home" =~ ^$pattern ]] && return 0
-    done < "$ignorefile"
-    return 1
-  }
-
-  msg 'starting installation of the configuration files.'
-
-  [[ -z "${DOTFILES_CONFIG_DIR:-}" ]] && abort 'DOTFILES_CONFIG_DIR is not set'
-
-  msg -p 'checking configuration files to be installed'
   pkg_dirs="$(find "$DOTFILES_CONFIG_DIR" -mindepth 1 -maxdepth 1 -type d)"
+
   if [[ -z "$pkg_dirs" ]]; then
-    msg::marker --warning 'package directories not found:/'
+    msg::warning 'package directories not found:/'
     return 0
   fi
 
   while read -r pkg_dir; do
-    [[ -d "$pkg_dir" ]] || abort "package directry not found: ${pkg_dir}"
+    [[ ! -d "$pkg_dir" ]] && logger --fatal "directry not found: ${pkg_dir}"
 
     src_configs="$(find "$pkg_dir" -mindepth 1)"
+
     if [[ -z "$src_configs" ]]; then
-      log::warn "package directory is empty: ${pkg_dir}"
       continue
     fi
 
     while read -r src; do
       config_relpath_fromhome="${src#"${pkg_dir}/"}"
       dst="${HOME}/${config_relpath_fromhome}"
-      if _check_ignore "$config_relpath_fromhome"; then
+
+      if _is_ignored "$config_relpath_fromhome"; then
         continue
       else
-        util::install --dry-run "$src" "$dst" || conflict=true
+        util::install --dry-run "$src" "$dst" || conflict=1
       fi
-    done < <(echo "$src_configs")
-  done < <(echo "$pkg_dirs")
+    done <<<"$src_configs"
+  done <<<"$pkg_dirs"
 
-  if [[ "$conflict" == 'true' ]]; then
-    msg::marker --warning 'conflicting files detected:/'
-    _nextstep --symlink-conflict
+  if (( conflict )); then
+    msg::warning 'conflicting files detected:/'
+    newline
+    _nextstep --config-conflict
   fi
 
-  msg -p 'starting configuration files installation'
-
+  # installation
   while read -r pkg_dir; do
-    if [[ -d "$pkg_dir" ]]; then
-      pkg=$(basename "$pkg_dir")
-      msg -2 "configs: ${ESC_ATTR_BOLD}<hl>${pkg}</hl>"
-    else
-      abort "package directry not found: ${pkg_dir}"
-    fi
+    pkg_name=$(basename "$pkg_dir")
+    msg::proc "installing <hl>${pkg_name}</hl> configs..."
 
     src_configs="$(find "$pkg_dir" -mindepth 1)"
-    [[ -z "$src_configs" ]] && continue
+
+    if [[ -z "$src_configs" ]]; then
+      msg::skip "package directory is empty: ${pkg_dir}"
+      continue
+    fi
 
     while read -r src; do
       config_relpath_fromhome="${src#"${pkg_dir}/"}"
       dst="${HOME}/${config_relpath_fromhome}"
+
       if [[ "$src" =~ \.swp$ ]]; then
         continue
-      elif _check_ignore "$config_relpath_fromhome"; then
+      elif _is_ignored "$config_relpath_fromhome"; then
         msg::notice --ignore "${HOME}/${config_relpath_fromhome}"
         continue
       else
         util::install "$src" "$dst"
       fi
-    done < <(echo "$src_configs")
-  done < <(echo "$pkg_dirs")
-  msg::marker --complete 'configuration files installed:)'
+    done <<<"$src_configs"
+  done <<<"$pkg_dirs"
+
+  msg::ok 'configuration files installed:)'
+  newline
 }
 
-# --- main ---
+theme::load
+msg::init
 
 greet
 configure_git_for_dotfiles
 install_configs
-msg -b -c "$ESC_C_COMPLETE" 'DOTFILES SETUP COMPLETED!'
 
-if [[ -n "${DOTFILES_PATH_UNDEFINED:-}" \
-      && "$DOTFILES_PATH_UNDEFINED" == 'true' ]]
-then
-  newline
+if (( ${DOTFILES_PATH_UNDEFINED:-0} )); then
   _nextstep --undefined-dotfiles-path
+else
+  msg::box --prompt='🛸' --base-style='success' -- 'DOTFILES INSTALLATION COMPLETED'
 fi
