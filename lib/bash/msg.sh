@@ -1108,11 +1108,14 @@ msg::box() {
   msg::_isinit || return 1
 
   local box_style='box'
-  local box_padding_top=0
-  local box_padding_bottom=0
-  local box_padding_left=1
-  local box_padding_right=1
+  local box_padding_top_default=1
+  local box_padding_bottom_default=1
+  local box_padding_left_default=2
+  local box_padding_right_default=2
+  local box_padding_fit=0
+  local box_padding_nofit=0
   local -a msg_args=()
+  local box_padding_top box_padding_bottom box_padding_left box_padding_right
 
   while (( $# > 0 )); do
     case "$1" in
@@ -1172,17 +1175,24 @@ msg::box() {
           shift
         fi
         ;;
+      --box-padding-fit) box_padding_fit=1 ;;
+      --box-padding-nofit) box_padding_nofit=1 ;;
       *) msg_args+=( "$1" ) ;;
     esac
     shift
   done
 
+  if (( box_padding_fit && box_padding_nofit )); then
+    logger --error "--box-padding-fit and --box-padding-nofit options are mutually exclusive"
+    return 1
+  fi
+
   if \
     [[
-      ! "$box_padding_top" =~ ^[0-9]+$ ||
-      ! "$box_padding_bottom" =~ ^[0-9]+$ ||
-      ! "$box_padding_left" =~ ^[0-9]+$ ||
-      ! "$box_padding_right" =~ ^[0-9]+$
+      ! "${box_padding_top:-0}" =~ ^[0-9]+$ ||
+      ! "${box_padding_bottom:-0}" =~ ^[0-9]+$ ||
+      ! "${box_padding_left:-0}" =~ ^[0-9]+$ ||
+      ! "${box_padding_right:-0}" =~ ^[0-9]+$
     ]]
   then
     logger --error 'invalid padding width option. expected numeric value.'
@@ -1201,6 +1211,7 @@ msg::box() {
   local -a inner_rendered_lines=()
   local -a inner_line_widths=()
   local max_width=0
+  local count_line=0
   local str i line
   local rendered rendered_plain width tmp rule pad
 
@@ -1213,6 +1224,7 @@ msg::box() {
 
     while IFS= read -r line; do
       inner_rendered_lines+=( "$line" )
+      count_line=$(( count_line + 1 ))
     done <<<"$rendered"
 
     while IFS= read -r line; do
@@ -1224,7 +1236,26 @@ msg::box() {
     done <<<"$rendered_plain"
   done
 
+  logger --debug "line count: ${count_line}"
   logger --debug "max width: ${max_width}"
+
+  if (( count_line == 1 && ! box_padding_nofit )); then
+    box_padding_fit=1
+  fi
+
+  logger --debug "box_padding_fit: ${box_padding_fit}"
+
+  if (( box_padding_fit )); then
+    : "${box_padding_top:=0}"
+    : "${box_padding_bottom:=0}"
+    : "${box_padding_left:=1}"
+    : "${box_padding_right:=1}"
+  fi
+
+  : "${box_padding_top:=${box_padding_top_default}}"
+  : "${box_padding_bottom:=${box_padding_bottom_default}}"
+  : "${box_padding_left:=${box_padding_left_default}}"
+  : "${box_padding_right:=${box_padding_right_default}}"
 
   rule="$(msg::_repeat_char '─' "$(( max_width + box_padding_left + box_padding_right ))")"
 
