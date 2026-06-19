@@ -11,6 +11,7 @@ LIB_REQUIRES_BASH='>=4.1'
 
 : "${MSG_PROMPT:=[>]}"
 : "${MSG_PROMPT_HEADER:=[#]}"
+: "${MSG_PROMPT_PROC:=[<]}"
 : "${MSG_PROMPT_NOTICE:=[!]}"
 : "${MSG_PROMPT_CHANGED:=[*]}"
 : "${MSG_PROMPT_SKIP:=[-]}"
@@ -936,6 +937,10 @@ msg() {
 
 msg::header() {
   msg --prompt="$MSG_PROMPT_HEADER" --prompt-style='prompt_header' "$@"
+}
+
+msg::proc() {
+  msg --prompt="$MSG_PROMPT_PROC" --prompt-style='prompt_proc' "$@"
 }
 
 msg::notice() {
