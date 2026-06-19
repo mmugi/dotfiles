@@ -2,30 +2,27 @@
 
 set -ueo pipefail
 
-script=$(basename "$0")
-usage() {
-    echo "usage: $script makefile"
-}
+usage() { echo "usage: help.sh <makefile>"; }
 
-if [[ $# -ne 1  ]]; then
-    usage
-    exit 1
-fi
-if [[ ! -f $1 ]]; then
-    echo "'$1' not found." >&2
-    exit 1
+if (( $# != 1  )); then
+  usage
+  exit 1
 fi
 
-if [[ -t 1 ]]; then
-    tty_escape() { printf "\033[%sm" "$1"; }
-else
-    tty_escape() { :; }
+if [[ ! -f "$1" ]]; then
+  printf 'error: makefile not found: %s' "$1" >&2
+  exit 1
 fi
-tty_256fg() { tty_escape "38;5;$1"; }
-tty_accent() { tty_256fg 69;}
+
+GREEN=$(printf '\033[38;2;11;236;202m')
+PURPLE=$(printf '\033[38;2;148;140;243m')
+RESET=$(printf '\033[0;39m')
 
 makefile="$1"
-cat "$makefile" |\
-grep -E '(^.+): ## (.+)' |\
-perl -pe "s/(^.+): ## (.+)/$(tty_accent)\1\033[m:\2/" |\
-column -t -s:
+
+printf 'Usage: %s\n' "make ${GREEN}<command>${RESET}"
+cat "$makefile" \
+  | grep -E -e '^##' -e '(^.+): ##( *)(.+)' \
+  | column -t -s: \
+  | sed -E "s/^(## *)(.+)/\n\2:\n/" \
+  | sed -E "s/(^.+) ## (.+)/  ${PURPLE}\1${RESET}\2/"
