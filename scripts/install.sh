@@ -2,19 +2,14 @@
 
 set -ueo pipefail
 
-if [ ! -t 0 ]; then
-  printf 'error: stdin is not connected to a tty\n' >&2
-  exit 1
-fi
-
 if [ -z "${BASH_VERSION:-}" ]; then
-  printf 'error: please run this script with bash\n' >&2
+  printf "\033[1;31m%s\033[0m\n" 'please run this script with bash;('
   exit 1
 fi
 
 exec_user="$(whoami)"
 if [[ "$exec_user" == 'root' ]]; then
-  printf "error: don't run this script as root\n" >&2
+  printf "\033[1;31m%s\033[0m\n" "don't run this script as root:<"
   exit 1
 fi
 

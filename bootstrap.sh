@@ -10,6 +10,12 @@ if [ -z "${BASH_VERSION:-}" ]; then
   exit 1
 fi
 
+exec_user=$(whoami)
+if [[ "$exec_user" == 'root' ]]; then
+  printf "\033[1;31m%s\033[0m\n" "don't run this script as root:<"
+  exit 1
+fi
+
 : "${DOTFILES_BRANCH:=trunk}"
 
 declare -r DOTFILES_URL='git@github.com:mmugi/dotfiles.git'
@@ -36,9 +42,6 @@ abort () { printf '%s%s\n' "${RED}[;] " "$*${RESET}"; exit 1; }
 newline() { printf '\n'; }
 
 msg 'bootstraping...'
-
-exec_user=$(whoami)
-[[ "$exec_user" == 'root' ]] && abort "don't run this script as root"
 
 if [[ ! -e "$DOTFILES_PATH" ]]; then
   if [[ -z "${DOTFILES_DOWNLOADER:-}" ]]; then
