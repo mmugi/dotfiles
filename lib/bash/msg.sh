@@ -155,6 +155,8 @@ msg::_tokenize_tag() {
   (( $# != 1 )) && { logger --error 'invalid option'; return 1; }
 
   local re_tag='^<(/?@?[a-zA-Z0-9_-]+)( +.*)? *>$'
+  local re_inline_tag='(b|it|hl)'
+  local re_block_tag='@(noprompt|indent|b|it|hl|br)'
   local restore_newline=0
   local tag attrs top
 
@@ -168,7 +170,7 @@ msg::_tokenize_tag() {
 
   logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "tag=\"${tag}\""
 
-  if [[ ! "$tag" =~ ^/?(@(noprompt|indent|b|hl)|(b|hl))$ ]]; then
+  if [[ ! "$tag" =~ ^/?(${re_inline_tag}|${re_block_tag})$ ]]; then
     logger --warning "unsupported tag: ${tag}"
     return 0
   fi
@@ -179,7 +181,9 @@ msg::_tokenize_tag() {
         @noprompt) msg::_push_token_stack 'BLOCK_OPEN' 'noprompt' ;;
         @indent) msg::_push_token_stack 'BLOCK_OPEN' 'indent' "$attrs" ;;
         @b) msg::_push_token_stack 'BLOCK_OPEN' 'b' ;;
+        @it) msg::_push_token_stack 'BLOCK_OPEN' 'it' ;;
         @hl) msg::_push_token_stack 'BLOCK_OPEN' 'hl' "$attrs" ;;
+        @br) msg::_push_token_stack 'NEWLINE' ;;
       esac
       ;;
     /@*)
@@ -193,6 +197,7 @@ msg::_tokenize_tag() {
         /@noprompt) msg::_push_token_stack 'BLOCK_CLOSE' 'noprompt' ;;
         /@indent) msg::_push_token_stack 'BLOCK_CLOSE' 'indent' ;;
         /@b) msg::_push_token_stack 'BLOCK_CLOSE' 'b' ;;
+        /@it) msg::_push_token_stack 'BLOCK_CLOSE' 'it' ;;
         /@hl) msg::_push_token_stack 'BLOCK_CLOSE' 'hl' ;;
       esac
 
@@ -200,12 +205,12 @@ msg::_tokenize_tag() {
       ;;
     /*)
       case "$tag" in
-        /hl|/b) msg::_push_token_stack 'TAG_CLOSE' "${tag#/}" ;;
+        /hl|/b|/it) msg::_push_token_stack 'TAG_CLOSE' "${tag#/}" ;;
       esac
       ;;
     *)
       case "$tag" in
-        hl|b) msg::_push_token_stack 'TAG_OPEN' "$tag" "$attrs" ;;
+        hl|b|it) msg::_push_token_stack 'TAG_OPEN' "$tag" "$attrs" ;;
       esac
       ;;
   esac
@@ -587,7 +592,7 @@ msg::_render_block_tag_open() {
     indent)
       msg::_push_indent_stack "${_MSG_TOKENIZER_OUTPUT_ATTR[${i}:width]}"
       ;;
-    b|hl) # style tags
+    b|it|hl) # style tags
       (( _MSG_RENDERER_CONTEXT['plain'] )) && return 0
 
       local ctx_style="${_MSG_RENDERER_CONTEXT['highlight_style']}"
@@ -595,6 +600,7 @@ msg::_render_block_tag_open() {
 
       case "$tag" in
         b) style='bold' ;;
+        it) style='italic' ;;
         hl) style="${_MSG_TOKENIZER_OUTPUT_ATTR[${idx}:style]:-${ctx_style}}" ;;
       esac
 
@@ -619,7 +625,7 @@ msg::_render_block_tag_close() {
     indent)
       msg::_drop_indent_stack
       ;;
-    b|hl) #style tags
+    b|it|hl) # style tags
       msg::_drop_block_style "$tag"
       ;;
     *)
@@ -639,15 +645,16 @@ msg::_render_tag_open() {
   logger --debug --ch="$_MSG_LOG_CH_RENDERER" "token_index=\"${idx}\" tag=\"${tag}\""
 
   case "$tag" in
-    b|hl) # style tags
+    b|hl|it) # style tags
       (( _MSG_RENDERER_CONTEXT['plain'] )) && return 0
 
       local ctx_style="${_MSG_RENDERER_CONTEXT['highlight_style']}"
       local style
 
       case "$tag" in
-        b) style='bold' ;;
+        b)  style='bold' ;;
         hl) style="${_MSG_TOKENIZER_OUTPUT_ATTR[${idx}:style]:-${ctx_style}}" ;;
+        it) style='italic' ;;
       esac
 
       msg::_push_inline_style "$tag" "$style"
@@ -666,7 +673,7 @@ msg::_render_tag_close() {
   local tag="$1"
 
   case "$tag" in
-    b|hl) # style tags
+    b|hl|it) # style tags
       (( _MSG_RENDERER_CONTEXT['plain'] )) && return 0
       msg::_drop_inline_style "$tag"
       msg::_render_style
@@ -788,9 +795,16 @@ msg() {
   #
   #     <@hl>...</@hl>
   #       区間の文字をハイライトする。
+  #       style属性でstyle指定可能。
   #
   #     <@b>...</@b>
   #       区間の文字を太字にする。
+  #
+  #     <@b>...</@b>
+  #       区間の文字をイタリック体にする。
+  #
+  #     <@br>
+  #       改行を挿入する。
   #
   # Inline Tags:
   #
@@ -799,6 +813,7 @@ msg() {
   #
   #     <hl>...</hl>: 囲まれた範囲の文字をハイライトする。
   #     <b>...</b>: 囲まれた範囲の文字を太字にする。
+  #     <it>...</it>: 囲まれた範囲をイタリック体にする。
   #
   # Options:
   #   -b, --bold
