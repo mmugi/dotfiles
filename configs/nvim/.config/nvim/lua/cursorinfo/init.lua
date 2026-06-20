@@ -89,7 +89,7 @@ local function update()
     {
       virt_text = {
         { mode_text, mode_text_hl },
-        { text, "CursorInfo" },
+        --{ text, "CursorInfo" },
       },
       virt_text_pos = "eol",
     }
