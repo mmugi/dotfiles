@@ -53,8 +53,19 @@ local function update()
     mode_text_hl = "CursorInfoInsert"
   elseif mode:match("[vV\22]") then
     local wc = vim.fn.wordcount()
+    local visual_text = nil
+
+    if mode:match("v") then
+      visual_text = "VISUAL"
+    elseif mode:match("V") then
+      visual_text = "VISUAL-LINE"
+    elseif mode:match("\22") then
+      visual_text = "VISUAL-BLOCK"
+    end
+
     mode_text = string.format(
-      " <<VISUAL %d lines, %d chars",
+      " <<%s %d lines, %d chars",
+      visual_text,
       math.abs(vim.fn.line("v") - vim.fn.line(".")) + 1,
       wc.visual_chars or 0
     )
