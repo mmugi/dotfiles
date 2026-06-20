@@ -78,7 +78,7 @@ local function update()
     " %d/%d:%d ",
     row,
     total_lines,
-    col
+    col + 1
   )
 
   vim.api.nvim_buf_set_extmark(
