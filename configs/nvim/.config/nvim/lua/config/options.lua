@@ -34,6 +34,7 @@ vim.opt.splitright = true
 vim.opt.clipboard:append({ "unnamedplus" })
 
 -- 13 editing text
+vim.opt.completeopt = { 'menu', 'menuone', 'noinsert', 'fuzzy', 'popup' }
 vim.opt.pumborder = "rounded"
 
 -- 14 tabs and indenting

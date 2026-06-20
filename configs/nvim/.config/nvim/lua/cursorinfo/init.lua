@@ -53,8 +53,19 @@ local function update()
     mode_text_hl = "CursorInfoInsert"
   elseif mode:match("[vV\22]") then
     local wc = vim.fn.wordcount()
+    local visual_text = nil
+
+    if mode:match("v") then
+      visual_text = "VISUAL"
+    elseif mode:match("V") then
+      visual_text = "VISUAL-LINE"
+    elseif mode:match("\22") then
+      visual_text = "VISUAL-BLOCK"
+    end
+
     mode_text = string.format(
-      " <<VISUAL %d lines, %d chars",
+      " <<%s %d lines, %d chars",
+      visual_text,
       math.abs(vim.fn.line("v") - vim.fn.line(".")) + 1,
       wc.visual_chars or 0
     )
@@ -67,7 +78,7 @@ local function update()
     " %d/%d:%d ",
     row,
     total_lines,
-    col
+    col + 1
   )
 
   vim.api.nvim_buf_set_extmark(
@@ -78,7 +89,7 @@ local function update()
     {
       virt_text = {
         { mode_text, mode_text_hl },
-        { text, "CursorInfo" },
+        --{ text, "CursorInfo" },
       },
       virt_text_pos = "eol",
     }

@@ -79,7 +79,7 @@ style = 'purple'
 [git_commit]
 commit_hash_length = 7
 format = '[#$hash(:$tag)]($style) '
-style = 'green'
+style = 'purple'
 tag_disabled = false
 tag_symbol = ''
 
@@ -128,6 +128,7 @@ purple = '#8e80e8'
 red = '#eb5b4e'
 slate-blue = '#5f5fff'
 yellow = '#f9eb4f'
+gray = '#5e6164'
 
 [shlvl]
 disabled = false
@@ -147,7 +148,7 @@ map_symbol = true
 [time]
 disabled = false
 format = '[$time]($style) '
-style = 'bright-black'
+style = 'gray'
 time_format = '%Y-%m-%dT%H:%M:%S'
 utc_time_offset = '+9'
 
