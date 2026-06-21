@@ -18,6 +18,7 @@ LIB_REQUIRES_BASH='>=4.1'
 : "${MSG_PROMPT_OK:=[^]}"
 : "${MSG_PROMPT_WARNING:=[~]}"
 : "${MSG_PROMPT_FAILED:=[;]}"
+: "${MSG_PROMPT_CONFIRM:=[?]}"
 
 msg::init() {
   (( ${MSG_INITIALIZED:-0} )) && return 0
@@ -1027,6 +1028,78 @@ msg::failed() {
   msg --prompt="$MSG_PROMPT_FAILED" --prompt-style='prompt_failed' --base-style='failed' "$@"
 }
 
+msg::confirm() {
+  local input mode confirm_msg tty_state
+
+  case "${1:-notset}" in
+    --return|notset) mode='return'; shift ;;
+    --yes-no)
+      if [[ -z "${2:-}" ]]; then
+        logger --error 'missing question message'
+        return 1
+      fi
+      mode='yes-or-no'
+      shift
+      ;;
+    *)
+      logger --error "invalid option: $1"
+      return 1
+      ;;
+  esac
+
+  case "$mode" in
+    return)
+      confirm_msg='press <b><it>RETURN/ENTER</it></b> to continue or press any other key to abort.'
+      msg -n \
+        --prompt="$MSG_PROMPT_CONFIRM" \
+        --prompt-style='prompt_confirm' \
+        -- "${confirm_msg} " </dev/tty >/dev/tty
+
+      # stdin flush
+      read -sr -t 0.1 -N 255 _
+
+      tty_state="$(/bin/stty -g)"
+      /bin/stty raw -echo
+      IFS='' read -r -n 1 -d '' -p 'ready? ' input
+      /bin/stty "$tty_state"
+      newline
+
+      if [[ "$input" == $'\n' ]]; then
+        return 0
+      else
+        return 1
+      fi
+      ;;
+    yes-or-no)
+      while true; do
+        msg -n \
+          --prompt="$MSG_PROMPT_CONFIRM" \
+          --prompt-style='prompt_confirm' \
+          -- "$* (y/n) " </dev/tty >/dev/tty
+
+        # stdin flush
+        read -sr -t 0.1 -N 255 _
+
+        IFS='' read -r input
+        if [[ "$input" =~ ^([Yy]|[Yy][Ee][Ss])$ ]]; then
+          return 0
+        elif [[ "$input" =~ ^([Nn]|[Nn][Oo])$ ]]; then
+          return 1
+        else
+          msg::warning 'invalid input:('
+          continue
+        fi
+      done
+      ;;
+    *)
+      logger --error "invalid mode: ${mode}"
+      return 1
+      ;;
+  esac
+
+  return 1
+}
+
 msg::line() {
   local -r length="${1:-80}"
   local -r symbol='.'
@@ -1975,57 +2048,6 @@ msg::read() {
   msg -n -B --prompt-color "$ESC_C_WARNING" --prompt='!' -- "$* " >/dev/tty
   IFS='' read -r input </dev/tty
   printf '%s' "$input"
-}
-
-msg::confirm() {
-  local input mode tty_state
-
-  case "${1:-notset}" in
-    -r) mode='return'; shift ;;
-    -y)
-      mode='yes-or-no'
-      [[ -z "${2:-}" ]] && abort "${1}: message required"
-      shift
-      ;;
-    notset) abort 'option required' ;;
-    *) abort "invalid option: $1" ;;
-  esac
-
-  case "$mode" in
-    return)
-      msg -B --prompt-color "$ESC_C_WARNING" --prompt='!' -- \
-        'press <b><hl>RETURN/ENTER</hl></b> to continue or press any other key to abort.' \
-        </dev/tty >/dev/tty
-
-      # stdin flush
-      read -sr -t 0.1 -N 255 _
-
-      tty_state="$(/bin/stty -g)"
-      /bin/stty raw -echo
-      IFS='' read -r -n 1 -d '' -p 'ready?' input
-      /bin/stty "$tty_state"
-      newline
-
-      if [[ "${input:-}" == $'\n' ]]; then
-        return 0
-      else
-        return 1
-      fi
-      ;;
-    yes-or-no)
-      msg -n -B --prompt-color "$ESC_C_WARNING" --prompt='!' -- "$* [y/N] "
-      # stdin flush
-      read -sr -t 0.1 -N 255 _
-      IFS='' read -r input
-      if [[ "$input" =~ ^([Yy]|[Yy][Ee][Ss])$ ]]; then
-        return 0
-      else
-        return 1
-      fi
-      ;;
-  esac
-
-  abort "invalid mode: ${mode}"
 }
 
 #msg::marker() {

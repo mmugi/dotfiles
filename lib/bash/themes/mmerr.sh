@@ -41,6 +41,7 @@ mmerr::setup() {
     ['prompt_ok']="$(escseq::sgr --fg-tc "${THEME_PALETTE['tarquoise']}")"
     ['prompt_warning']="$(escseq::sgr --fg-tc "${THEME_PALETTE['yellow']}")"
     ['prompt_failed']="$(escseq::sgr --fg-tc "${THEME_PALETTE['red']}")"
+    ['prompt_confirm']="$(escseq::sgr --fg-tc "${THEME_PALETTE['neon_green']}")"
 
     ['fatal']="$(escseq::sgr --fg-tc "${THEME_PALETTE['scarlet']}")"
     ['error']="$(escseq::sgr --fg-tc "${THEME_PALETTE['red']}")"
