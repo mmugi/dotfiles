@@ -14,6 +14,7 @@ LIB_REQUIRES_BASH='>=4.1'
 : "${MSG_PROMPT_PROC:=[<]}"
 : "${MSG_PROMPT_NOTICE:=[!]}"
 : "${MSG_PROMPT_CHANGED:=[*]}"
+: "${MSG_PROMPT_CHANGED_RM:=[/]}"
 : "${MSG_PROMPT_SKIP:=[-]}"
 : "${MSG_PROMPT_OK:=[^]}"
 : "${MSG_PROMPT_WARNING:=[~]}"
@@ -956,7 +957,11 @@ msg::header() {
 }
 
 msg::proc() {
-  msg --prompt="$MSG_PROMPT_PROC" --prompt-style='prompt_proc' "$@"
+  msg \
+    --prompt="$MSG_PROMPT_PROC" \
+    --prompt-style='prompt_proc' \
+    --highlight-style='prompt_proc' \
+    "$@"
 }
 
 msg::notice() {
@@ -965,18 +970,16 @@ msg::notice() {
 
 msg::changed() {
   local -a msg_args=()
-  local prompt="$MSG_PROMPT_CHANGED"
-  local hl='highlight'
-  local type
+  local type style prompt
 
-  case "$1" in
-    --configure) type='CONFIGURE'; shift ;;
-    --link)      type='LINK';      shift ;;
-    --mkdir)     type='MKDIR';     shift ;;
-    --delete)    type='DELETE';    hl='caution'; shift ;;
-    --remove)    type='REMOVE';    hl='caution'; shift ;;
-    --rmdir)     type='RMDIR';     hl='caution'; shift ;;
-    --unlink)    type='UNLINK';    hl='caution'; shift ;;
+  case "${1:-}" in
+    --configure) type='CONFIG'; style='highlight'; prompt="$MSG_PROMPT_CHANGED"; shift ;;
+    --link)      type='LINK';   style='highlight'; prompt="$MSG_PROMPT_CHANGED"; shift ;;
+    --mkdir)     type='MKDIR';  style='highlight'; prompt="$MSG_PROMPT_CHANGED"; shift ;;
+    --delete)    type='DELETE'; style='danger';    prompt="$MSG_PROMPT_CHANGED_RM";  shift ;;
+    --remove)    type='REMOVE'; style='danger';    prompt="$MSG_PROMPT_CHANGED_RM";  shift ;;
+    --rmdir)     type='RMDIR';  style='danger';    prompt="$MSG_PROMPT_CHANGED_RM";  shift ;;
+    --unlink)    type='UNLINK'; style='danger';    prompt="$MSG_PROMPT_CHANGED_RM";  shift ;;
     -*)
       logger --error "invalid change type: $1"
       return 1
@@ -997,8 +1000,11 @@ msg::changed() {
     shift
   done
 
-  msg --prompt="$prompt" --prompt-style='prompt_changed' "${msg_args[@]}" \
-    -- "[  <hl style=\"${hl}\">${type}</hl>  ] $*"
+  msg \
+    --prompt="$prompt" \
+    --prompt-style="$style" \
+    "${msg_args[@]}" \
+    -- "<hl style=\"${style}\">${type}</hl> $*"
 }
 
 msg::skip() {
@@ -1012,8 +1018,11 @@ msg::skip() {
     shift
   done
 
-  msg --prompt="$MSG_PROMPT_SKIP" --prompt-style='prompt_skip' "${msg_args[@]}" \
-    -- "[  <hl style=\"prompt_skip\">SKIP</hl>  ] $*"
+  msg \
+    --prompt="$MSG_PROMPT_SKIP" \
+    --prompt-style='prompt_skip' \
+    "${msg_args[@]}" \
+    -- "<hl style=\"prompt_skip\">SKIP</hl> $*"
 }
 
 msg::ok() {
