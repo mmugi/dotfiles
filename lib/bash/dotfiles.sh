@@ -15,6 +15,16 @@ LIB_DEPS=()
 LOGO
   )"
 
+  # shellcheck disable=SC2155
+  declare -gr DOTFILES_LOGO_UNINSTALL="$(cat <<LOGO
+ _______ _______ _______ _______ _______ _______ _______ _____   _____
+|   |   |    |  |_     _|    |  |     __|_     _|   _   |     |_|     |_
+|   |   |       |_|   |_|       |__     | |   | |       |       |       |
+|_______|__|____|_______|__|____|_______| |___| |___|___|_______|_______|
+
+LOGO
+  )"
+
   declare -g DOTFILES_CONFIG_DIR="${DOTFILES_PATH:?}/configs"
   declare -g DOTFILES_GITHOOKS_DIR="${DOTFILES_PATH:?}/misc/git/hooks/dotfiles"
   declare -g DOTFILES_BREWFILE_DIR="${DOTFILES_PATH:?}/misc/brew"
