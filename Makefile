@@ -1,27 +1,25 @@
 MAKEFILE      := $(firstword $(MAKEFILE_LIST))
 DOTFILES_ROOT := $(realpath $(dir $(MAKEFILE)))
 SCRIPT_DIR    := $(DOTFILES_ROOT)/scripts
-
-SHELL         = /usr/bin/env bash
-
+SHELL         := /usr/bin/env bash
 
 .DEFAULT_GOAL := help
-.PHONY: help
 
 ## Makefile
+.PHONY: help
 help: ## Show this help message.
 	@$(SCRIPT_DIR)/make/help.sh "$(MAKEFILE)"
 
-
 ## Dotfiles
-.PHONY: install uninstall
+.PHONY: install
 install: ## Install dotfiles.
 	@$(SCRIPT_DIR)/install.sh
+
+.PHONY: uninstall dryrun-uninstall
 uninstall: ## Uninstall dotfiles.
 	@$(SCRIPT_DIR)/uninstall.sh
-uninstall-dryrun: ## Show what would be uninstalled without making any changes.
+dryru-uninstall: ## Show what would be uninstalled without making any changes.
 	@$(SCRIPT_DIR)/uninstall.sh --dryrun
-
 
 .PHONY: init init-os init-git-sign
 init: ## Run all initial setup tasks.
@@ -30,8 +28,6 @@ init-os: ## Perform the initial setup specific to your operating system.
 	@$(SCRIPT_DIR)/init/os.sh
 init-git-sign: ## Initialize all git commit signing settings.
 	@$(SCRIPT_DIR)/init/git-sign.sh
-
-
 
 ## Homebrew
 .PHONY: brew-diff brew-dump
