@@ -71,15 +71,20 @@ util::sysinfo() {
 
 util::chk() {
   # options
-  #   -2: msgの-2オプションを有効化
   #   -c: command
   #   -o: キャッシュを上書きする
   #   -q: 結果を出力しない
 
-  local selector target msg
-  local quiet=false override=false
-  local -a msg_opts=()
-  local -r usage='usage: [-c] [-q] target'
+  local override=0
+  local quiet=0
+  local selector target
+
+  usage() { logger --error 'usage: <-c> [-oq] target'; }
+
+  if (( $# == 0 )); then
+    usage
+    return 1
+  fi
 
   while (( $# > 0 )); do
     case "$1" in
@@ -87,15 +92,12 @@ util::chk() {
       -*)
         for (( i=1; i<${#1}; i++ )); do
           case "${1:$i:1}" in
-            2) msg_opts+=(-2) ;;
-            c)
-              [[ -n "${selector:-}" ]] && abort "$usage"
-              selector=command
-              ;;
-            o) override=true ;;
-            q) quiet=true ;;
+            c) selector='command' ;;
+            o) override=1 ;;
+            q) quiet=1 ;;
             *)
-              abort "invalid option: $1"
+              logger --error "invalid option: $1"
+              return 1
               ;;
           esac
         done
@@ -105,29 +107,35 @@ util::chk() {
     esac
   done
 
-  [[ $# -eq 0 ]] && abort "$usage"
-  [[ -z "${selector:-}" ]] && abort "$usage"
+  if [[ -z "${selector:-}" ]]; then
+    usage
+    return 1
+  fi
 
   target="$*"
 
   case "$selector" in
     command)
-      if [[ "$override" != 'true' && -n "${_UTIL_CHK_CMD_CACHE["$target"]:-}" ]]; then
+      if (( ! override )) && [[ -n "${_UTIL_CHK_CMD_CACHE["$target"]:-}" ]]; then
         return "${_UTIL_CHK_CMD_CACHE["$target"]}"
       fi
-      msg="checking for the <b><hl>${target}</b></hl> command"
-      [[ "$quiet" != 'true' ]] && msg "${msg_opts[@]}" -n -p "$msg"
+
+      if (( ! quiet )); then
+        msg "checking <hl>${target}</hl> command..."
+      fi
+
       if type "$target" >/dev/null 2>&1; then
-        [[ "$quiet" != 'true' ]] && msg "${msg_opts[@]}" -r --ok='EXIST' "$msg"
         _UTIL_CHK_CMD_CACHE["$target"]=0
         return 0
       else
-        [[ "$quiet" != 'true' ]] && msg "${msg_opts[@]}" -r --ng='NOTFOUND' "$msg"
         _UTIL_CHK_CMD_CACHE["$target"]=1
         return 1
       fi
       ;;
-    *) abort "invalid selector: ${selector}"
+    *)
+      logger --error "invalid selector: ${selector}"
+      return 1
+      ;;
   esac
 }
 
