@@ -1109,6 +1109,43 @@ msg::confirm() {
   return 1
 }
 
+msg::select() {
+  local -a msg_args=()
+  local ps
+
+  while (( $# > 0 )); do
+    case "$1" in
+      --) shift; break ;;
+      --ps | --ps=*)
+        if [[ "${1:-}" =~ ^--ps= ]]; then
+          ps="${1#--ps=}"
+        elif [[ -z "${2:-}" ]]; then
+          logger --error 'missing prompt'
+          return 1
+        else
+          ps="$2"
+          shift
+        fi
+        ;;
+      -*) msg_args+=( "$1" ) ;;
+      *)  break ;;
+    esac
+    shift
+  done
+
+  if [[ -n "${ps:-}" ]]; then
+    PS3="$(msg --prompt="$MSG_PROMPT_CONFIRM" --prompt-style='prompt_confirm' -- "$ps")"
+  fi
+  COLUMNS=1
+
+  select s in "$@"; do
+    [[ "$REPLY" =~ ^[Qq](uit)?$ ]] && return 1
+    [[ -z "$s" ]] && continue
+    printf '%s' "$s"
+    break
+  done
+}
+
 msg::line() {
   local -r length="${1:-80}"
   local -r symbol='.'
