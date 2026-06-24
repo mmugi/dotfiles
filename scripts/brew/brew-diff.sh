@@ -22,7 +22,7 @@ while IFS='' read -r -d '' file; do
   files+=("$file")
 done < <(find "$DOTFILES_BREWFILE_DIR" -type f -print0 | sort -z)
 
-msg 'listing brewfiles...'
+msg 'searching for brewfiles...'
 if (( ${#files[@]} == 0 )); then
   msg::warning "no files found in ${DOTFILES_BREWFILE_DIR}" >/dev/tty
   exit 1
