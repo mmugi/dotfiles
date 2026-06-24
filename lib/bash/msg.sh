@@ -1038,12 +1038,12 @@ msg::failed() {
 }
 
 msg::read() {
-  local input
-
   if [[ ! -t 0 ]]; then
     logger --error 'standard input is not a terminal'
     return 1
   fi
+
+  local input
 
   msg -n --prompt="$MSG_PROMPT_CONFIRM" --prompt-style='prompt_confirm' -- "$*" >/dev/tty
   IFS='' read -r input </dev/tty
@@ -1051,6 +1051,11 @@ msg::read() {
 }
 
 msg::confirm() {
+  if [[ ! -t 0 ]]; then
+    logger --error 'standard input is not a terminal'
+    return 1
+  fi
+
   local input mode confirm_msg tty_state
 
   case "${1:-notset}" in
@@ -1123,6 +1128,11 @@ msg::confirm() {
 }
 
 msg::select() {
+  if [[ ! -t 0 ]]; then
+    logger --error 'standard input is not a terminal'
+    return 1
+  fi
+
   local -a msg_args=()
   local ps
 
