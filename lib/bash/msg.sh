@@ -1037,6 +1037,19 @@ msg::failed() {
   msg --prompt="$MSG_PROMPT_FAILED" --prompt-style='prompt_failed' --base-style='failed' "$@"
 }
 
+msg::read() {
+  local input
+
+  if [[ ! -t 0 ]]; then
+    logger --error 'standard input is not a terminal'
+    return 1
+  fi
+
+  msg -n --prompt="$MSG_PROMPT_CONFIRM" --prompt-style='prompt_confirm' -- "$*" >/dev/tty
+  IFS='' read -r input </dev/tty
+  printf '%s' "$input"
+}
+
 msg::confirm() {
   local input mode confirm_msg tty_state
 
@@ -2088,13 +2101,6 @@ msg::box() {
 #  # 底面出力
 #  printf '%b%s%b\n' "$box_color" "$bot" "$ESC_RESET"
 #}
-
-msg::read() {
-  local input
-  msg -n -B --prompt-color "$ESC_C_WARNING" --prompt='!' -- "$* " >/dev/tty
-  IFS='' read -r input </dev/tty
-  printf '%s' "$input"
-}
 
 #msg::marker() {
 #  local base_color prompt
