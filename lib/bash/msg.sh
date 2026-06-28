@@ -1043,10 +1043,25 @@ msg::read() {
     return 1
   fi
 
-  local input
+  local -a read_args=()
+  local prompt_msg input
 
-  msg -n --prompt="$MSG_PROMPT_CONFIRM" --prompt-style='prompt_confirm' -- "$*" >/dev/tty
-  IFS='' read -r input </dev/tty
+  while (( $# > 0 )); do
+    case "$1" in
+      --) shift; break ;;
+      *) read_args+=( "$1" ) ;;
+    esac
+    shift
+  done
+
+  prompt_msg="$(
+    msg -n \
+    --prompt="$MSG_PROMPT_CONFIRM" \
+    --prompt-style='prompt_confirm' \
+    -- "$*"
+  )"
+
+  IFS='' read -r "${read_args[@]}" -p "$prompt_msg" input
   printf '%s' "$input"
 }
 
