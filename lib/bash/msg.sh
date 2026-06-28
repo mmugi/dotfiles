@@ -1059,7 +1059,7 @@ msg::read() {
     msg -n \
     --prompt="$MSG_PROMPT_CONFIRM" \
     --prompt-style='prompt_confirm' \
-    -- "$*"
+    -- "$* "
   )"
 
   IFS='' read -r "${read_args[@]}" -p "$prompt_msg" input
