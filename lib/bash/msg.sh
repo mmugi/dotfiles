@@ -976,6 +976,7 @@ msg::changed() {
     --configure) type='CONFIG'; style='highlight'; prompt="$MSG_PROMPT_CHANGED"; shift ;;
     --link)      type='LINK';   style='highlight'; prompt="$MSG_PROMPT_CHANGED"; shift ;;
     --mkdir)     type='MKDIR';  style='highlight'; prompt="$MSG_PROMPT_CHANGED"; shift ;;
+    --write)     type='WRITE';  style='highlight'; prompt="$MSG_PROMPT_CHANGED"; shift ;;
     --delete)    type='DELETE'; style='danger';    prompt="$MSG_PROMPT_CHANGED_RM";  shift ;;
     --remove)    type='REMOVE'; style='danger';    prompt="$MSG_PROMPT_CHANGED_RM";  shift ;;
     --rmdir)     type='RMDIR';  style='danger';    prompt="$MSG_PROMPT_CHANGED_RM";  shift ;;
