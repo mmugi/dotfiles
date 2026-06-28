@@ -48,4 +48,4 @@ if util::chk -cq 'git'; then
   git diff "$brewfile" <(echo "$dump") && msg::ok 'no differences.'
 else
   diff -u "$brewfile" <(echo "$dump") && msg::ok 'no differences.'
-fi
+fi || true
