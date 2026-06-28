@@ -38,7 +38,11 @@ if ! brewfile="$(
 fi
 
 msg 'dumping all packages...'
-dump="$(brew bundle dump --file=- --no-describe)"
+
+dump="$(
+  HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_ENV_HINTS=1 \
+    brew bundle dump --file=- --no-describe
+)"
 
 if util::chk -cq 'git'; then
   git diff "$brewfile" <(echo "$dump") && msg::ok 'no differences.'

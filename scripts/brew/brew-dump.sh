@@ -47,5 +47,6 @@ if [[ "$brewfile" == 'newfile' ]]; then
 fi
 
 msg::proc "dumping all installed packages into <hl>${brewfile}</hl>..."
-brew bundle dump --file "$brewfile" --no-describe --force
+HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_ENV_HINTS=1 \
+  brew bundle dump --file "$brewfile" --no-describe --force
 msg::ok 'successfully dumped all packages:)'
