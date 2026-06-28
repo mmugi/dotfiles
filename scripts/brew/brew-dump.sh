@@ -38,7 +38,11 @@ else
 fi
 
 if [[ "$brewfile" == 'newfile' ]]; then
-  filename="$(msg::read 'enter the file name of the new brewfile: ')"
+  filename="$(
+    msg::read -e \
+      -i "${DOTFILES_BREWFILE_DIR}/" \
+      -- 'enter the file name of the new brewfile:'
+  )"
   brewfile="${DOTFILES_BREWFILE_DIR}/${filename}"
 
   if [[ -f "$brewfile" ]]; then
