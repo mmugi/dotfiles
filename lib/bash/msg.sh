@@ -364,6 +364,7 @@ msg::_renderer_init() {
     ['base_style']='normal'
     ['highlight_style']='highlight'
     ['newline']=1
+    ['readline']=0
   )
   declare -ga _MSG_RENDERER_INLINE_STYLE_TAG_STACK=()
   declare -ga _MSG_RENDERER_INLINE_STYLE_STACK=()
@@ -410,6 +411,21 @@ msg::_render_indent() {
   _MSG_RENDER_OUTPUT+="$indent"
 }
 
+msg::_render_append_escseq() {
+  msg::_renderer_isinit || return 1
+
+  if (( $# != 1 )); then
+    logger --error "invalid option: ${1:-null}"
+    return 1
+  fi
+
+  if (( _MSG_RENDERER_CONTEXT['readline'] )); then
+    _MSG_RENDER_OUTPUT+="\x01${1}\x02"
+  else
+    _MSG_RENDER_OUTPUT+="$1"
+  fi
+}
+
 msg::_render_prompt() {
   msg::_renderer_isinit || return 1
 
@@ -427,9 +443,15 @@ msg::_render_prompt() {
 
   [[ -z "$prompt" ]] && return 0
 
-  (( _MSG_RENDERER_CONTEXT['plain_prompt'] )) || _MSG_RENDER_OUTPUT+="${STYLE_STDOUT[${prompt_style}]:-}"
+  if (( ! _MSG_RENDERER_CONTEXT['plain_prompt'] )); then
+    msg::_render_append_escseq "${STYLE_STDOUT[${prompt_style}]:-}"
+  fi
+
   _MSG_RENDER_OUTPUT+="${prompt} "
-  (( _MSG_RENDERER_CONTEXT['plain_prompt'] )) || _MSG_RENDER_OUTPUT+="${STYLE_STDOUT['rst']:-}"
+
+  if (( ! _MSG_RENDERER_CONTEXT['plain_prompt'] )); then
+    msg::_render_append_escseq "${STYLE_STDOUT['rst']:-}"
+  fi
 }
 
 msg::_render_style() {
@@ -437,23 +459,27 @@ msg::_render_style() {
   (( _MSG_RENDERER_CONTEXT['plain'] )) && return 0
 
   local base_style="${_MSG_RENDERER_CONTEXT['base_style']}"
-  local style
+  local style output
 
-  _MSG_RENDER_OUTPUT+="${STYLE_STDOUT['rst']:-}"
-  _MSG_RENDER_OUTPUT+="${STYLE_STDOUT[${base_style}]:-}"
-  (( _MSG_RENDERER_CONTEXT['bold'] )) && _MSG_RENDER_OUTPUT+="${STYLE_STDOUT['bold']:-}"
+  output+="${STYLE_STDOUT['rst']:-}${STYLE_STDOUT[${base_style}]:-}"
+
+  if (( _MSG_RENDERER_CONTEXT['bold'] )); then
+    output+="${STYLE_STDOUT['bold']:-}"
+  fi
 
   # block tag stackを遡ってstyleを再描写
   for (( i = ${#_MSG_RENDERER_BLOCK_STYLE_TAG_STACK[@]} - 1; i >= 0; i-- )); do
     style="${_MSG_RENDERER_BLOCK_STYLE_STACK[i]}"
-    _MSG_RENDER_OUTPUT+="${STYLE_STDOUT[${style}]:-}"
+    output+="${STYLE_STDOUT[${style}]:-}"
   done
 
   # inline tag stackを遡ってstyleを再描写
   for (( i = ${#_MSG_RENDERER_INLINE_STYLE_TAG_STACK[@]} - 1; i >= 0; i-- )); do
     style="${_MSG_RENDERER_INLINE_STYLE_STACK[i]}"
-    _MSG_RENDER_OUTPUT+="${STYLE_STDOUT[${style}]:-}"
+    output+="${STYLE_STDOUT[${style}]:-}"
   done
+
+  msg::_render_append_escseq "$output"
 }
 
 msg::_push_prompt_stack() {
@@ -660,7 +686,7 @@ msg::_render_tag_open() {
       esac
 
       msg::_push_inline_style "$tag" "$style"
-      _MSG_RENDER_OUTPUT+="${STYLE_STDOUT[${style}]:-}"
+      msg::_render_append_escseq "${STYLE_STDOUT[${style}]:-}"
       ;;
     *)
       logger --error "invalid tag: ${tag}"
@@ -724,7 +750,7 @@ msg::_render_token() {
       END_LINE)
         unset '_MSG_RENDERER_INLINE_STYLE_TAG_STACK[@]'
         if (( ! _MSG_RENDERER_CONTEXT['plain'] )); then
-          _MSG_RENDER_OUTPUT+="${STYLE_STDOUT['rst']:-}"
+          msg::_render_append_escseq "${STYLE_STDOUT['rst']:-}"
         fi
         ;;
       NEWLINE)
@@ -846,6 +872,10 @@ msg() {
   #
   #        引数にとった文字列をそのまま出力します。
   #
+  #   -R, --readline
+  #
+  #        readline用に制御コードSOH, STXをエスケープシーケンスに付与する。
+  #
   #   -s, --base-style <style>
   #
   #        <style> 名を出力スタイルのデフォルトに設定します。
@@ -894,6 +924,7 @@ msg() {
         _MSG_RENDERER_CONTEXT['plain_prompt']=1
         ;;
       -r | --raw) _MSG_RENDERER_CONTEXT['raw']=1 ;;
+      -R | --readline) _MSG_RENDERER_CONTEXT['readline']=1 ;;
       -s | --base-style | --base-style=*)
         if [[ "$1" =~ ^--base-style= ]]; then
           _MSG_RENDERER_CONTEXT['base_style']="${1#--base-style=}"
