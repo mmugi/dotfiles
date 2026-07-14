@@ -32,21 +32,21 @@ msg::init() {
     logger --warning 'python3 is not available. falling back to simplified mode.'
   fi
 
-  declare -g _MSG_EXEC_TMPFILE_STDOUT
-  declare -g _MSG_EXEC_TMPFILE_STDERR
-  _MSG_EXEC_TMPFILE_STDOUT="$(mktemp 'tmp.msg.stdout.XXXXXX')"
-  _MSG_EXEC_TMPFILE_STDERR="$(mktemp 'tmp.msg.stdout.XXXXXX')"
+  #declare -g _MSG_EXEC_TMPFILE_STDOUT
+  #declare -g _MSG_EXEC_TMPFILE_STDERR
+  #_MSG_EXEC_TMPFILE_STDOUT="$(mktemp 'tmp.msg.stdout.XXXXXX')"
+  #_MSG_EXEC_TMPFILE_STDERR="$(mktemp 'tmp.msg.stdout.XXXXXX')"
 
-  # shellcheck disable=SC2329
-  msg::_cleanup() {
-    rm -f -- "$_MSG_EXEC_TMPFILE_STDOUT"
-    rm -f -- "$_MSG_EXEC_TMPFILE_STDERR"
-  }
+  ## shellcheck disable=SC2329
+  #msg::_cleanup() {
+  #  rm -f -- "$_MSG_EXEC_TMPFILE_STDOUT"
+  #  rm -f -- "$_MSG_EXEC_TMPFILE_STDERR"
+  #}
 
-  trap::concat 'EXIT' 'msg::_cleanup'
-  trap::concat 'TERM' 'msg::_cleanup'
-  trap::concat 'INT'  'msg::_cleanup'
-  trap::concat 'HUP'  'msg::_cleanup'
+  #trap::concat 'EXIT' 'msg::_cleanup'
+  #trap::concat 'TERM' 'msg::_cleanup'
+  #trap::concat 'INT'  'msg::_cleanup'
+  #trap::concat 'HUP'  'msg::_cleanup'
 
   declare -gi MSG_INITIALIZED=1
 }
@@ -2200,133 +2200,133 @@ msg::box() {
 #      -- "$*"
 #}
 
-msg::exec() {
-  local msg='wait'
-  local result_ok='OK' result_ng='FAILED'
-  local cmd kind spinner_pid
-
-  msg::_check_tty_mode
-
-  local _saved_abort_mode="$LOG_ABORT_RETURN_ONLY"
-  LOG_ABORT_RETURN_ONLY=true
-
-  local usage_oneline='usage: msg::exec [OPTION]... -- CMD'
-  msg::_exec_usage() {
-    cat <<EOF
-$usage_oneline
-
-コマンドの実行結果は、変数 MSG_EXEC_STDOUT, MSG_EXEC_STDERR に格納されます。
-
-options:
-  -h, --help                 show help
-  -m, --msg, --msg="wait"    text to display while spinning
-  --ok, --ok="OK"            message when command successfully
-  --ng, --ng="FAILED"        message when command terminates abnormally
-EOF
-  }
-
-  msg::_exec_spinner_stop() {
-    if [[ -n "${spinner_pid:-}" ]]; then
-      kill "$spinner_pid" 2>/dev/null ||:
-      wait "$spinner_pid" 2>/dev/null ||:
-      spinner_pid=
-    fi
-  }
-
-  while (( $# > 0 )); do
-    case "$1" in
-      --) shift; break ;;
-      -h | --help) msg::_exec_usage; return 0 ;;
-      -m | --msg | --msg=*)
-        if [[ "$1" =~ ^--msg= ]]; then
-          msg="${1#--msg=}"
-        elif [[ -z "$2" ]]; then
-          log::error "$1: expected a string argument"
-          return 1
-        elif [[ "$2" =~ ^-+ ]]; then
-          log::error "$1: expected a string argument. perhaps try --msg=\"$2\"?"
-          return 1
-        else
-          msg="$2"
-          shift
-        fi
-        ;;
-      --ok | --ok=*)
-        if [[ "$1" =~ ^--ok= ]]; then
-          result_ok="${1#--ok=}"
-        elif [[ -z "$2" ]]; then
-          log::error "$1: expected a string argument"
-          return 1
-        elif [[ "$2" =~ ^-+ ]]; then
-          log::error "$1: expected a string argument. perhaps try --ok=\"$2\"?"
-          return 1
-        else
-          result_ok="$2"
-          shift
-        fi
-        ;;
-      --ng | --ng=*)
-        if [[ "$1" =~ ^--ng= ]]; then
-          result_ng="${1#--ng=}"
-        elif [[ -z "$2" ]]; then
-          log::error "$1: expected a string argument"
-          return 1
-        elif [[ "$2" =~ ^-+ ]]; then
-          log::error "$1: expected a string argument. perhaps try --ng=\"$2\"?"
-          return 1
-        else
-          result_ng="$2"
-          shift
-        fi
-        ;;
-      -*)
-        log::error "invalid option: $1"
-        return 1
-        ;;
-    esac
-    shift
-  done
-
-  if (( $# <= 0 )); then
-    echo "$usage_oneline" >&2
-    return 1
-  fi
-
-  cmd="$1"
-  kind="$(type -t -- "$cmd" ||:)"
-  case "$kind" in
-    file|builtin) ;;
-    "") log::error "command not found: ${cmd}"; return 1 ;;
-    *)  log::error "disallowd command type \"${kind}\": ${cmd}"; return 1 ;;
-  esac
-
-  trap::save_handler
-  trap::concat 'EXIT' 'msg::_exec_spinner_stop'
-  trap::concat 'TERM' 'msg::_exec_spinner_stop'
-  trap::concat 'INT'  'msg::_exec_spinner_stop'
-  trap::concat 'HUP'  'msg::_exec_spinner_stop'
-
-  # start spinner
-  msg --spinner "$msg" &
-  spinner_pid=$!
-
-  local rc=0
-  "$@" >"$_MSG_EXEC_TMPFILE_STDOUT" 2>"$_MSG_EXEC_TMPFILE_STDERR" || rc=$?
-
-  trap::restore_handler
-  msg::_exec_spinner_stop
-
-  LOG_ABORT_RETURN_ONLY="$_saved_abort_mode"
-
-  if (( rc == 0 )); then
-    msg -r --ok="$result_ok" "$msg"
-    # [TODO] STDOUTの出力
-  else
-    msg -r --ng="$result_ng" "$msg"
-    if [[ -s "$_MSG_EXEC_TMPFILE_STDERR" ]]; then
-      printf '%s\n' "$(cat "$_MSG_EXEC_TMPFILE_STDERR")" >&2
-    fi
-  fi
-
-  return "$rc"
-}
+#msg::exec() {
+#  local msg='wait'
+#  local result_ok='OK' result_ng='FAILED'
+#  local cmd kind spinner_pid
+#
+#  msg::_check_tty_mode
+#
+#  local _saved_abort_mode="$LOG_ABORT_RETURN_ONLY"
+#  LOG_ABORT_RETURN_ONLY=true
+#
+#  local usage_oneline='usage: msg::exec [OPTION]... -- CMD'
+#  msg::_exec_usage() {
+#    cat <<EOF
+#$usage_oneline
+#
+#コマンドの実行結果は、変数 MSG_EXEC_STDOUT, MSG_EXEC_STDERR に格納されます。
+#
+#options:
+#  -h, --help                 show help
+#  -m, --msg, --msg="wait"    text to display while spinning
+#  --ok, --ok="OK"            message when command successfully
+#  --ng, --ng="FAILED"        message when command terminates abnormally
+#EOF
+#  }
+#
+#  msg::_exec_spinner_stop() {
+#    if [[ -n "${spinner_pid:-}" ]]; then
+#      kill "$spinner_pid" 2>/dev/null ||:
+#      wait "$spinner_pid" 2>/dev/null ||:
+#      spinner_pid=
+#    fi
+#  }
+#
+#  while (( $# > 0 )); do
+#    case "$1" in
+#      --) shift; break ;;
+#      -h | --help) msg::_exec_usage; return 0 ;;
+#      -m | --msg | --msg=*)
+#        if [[ "$1" =~ ^--msg= ]]; then
+#          msg="${1#--msg=}"
+#        elif [[ -z "$2" ]]; then
+#          log::error "$1: expected a string argument"
+#          return 1
+#        elif [[ "$2" =~ ^-+ ]]; then
+#          log::error "$1: expected a string argument. perhaps try --msg=\"$2\"?"
+#          return 1
+#        else
+#          msg="$2"
+#          shift
+#        fi
+#        ;;
+#      --ok | --ok=*)
+#        if [[ "$1" =~ ^--ok= ]]; then
+#          result_ok="${1#--ok=}"
+#        elif [[ -z "$2" ]]; then
+#          log::error "$1: expected a string argument"
+#          return 1
+#        elif [[ "$2" =~ ^-+ ]]; then
+#          log::error "$1: expected a string argument. perhaps try --ok=\"$2\"?"
+#          return 1
+#        else
+#          result_ok="$2"
+#          shift
+#        fi
+#        ;;
+#      --ng | --ng=*)
+#        if [[ "$1" =~ ^--ng= ]]; then
+#          result_ng="${1#--ng=}"
+#        elif [[ -z "$2" ]]; then
+#          log::error "$1: expected a string argument"
+#          return 1
+#        elif [[ "$2" =~ ^-+ ]]; then
+#          log::error "$1: expected a string argument. perhaps try --ng=\"$2\"?"
+#          return 1
+#        else
+#          result_ng="$2"
+#          shift
+#        fi
+#        ;;
+#      -*)
+#        log::error "invalid option: $1"
+#        return 1
+#        ;;
+#    esac
+#    shift
+#  done
+#
+#  if (( $# <= 0 )); then
+#    echo "$usage_oneline" >&2
+#    return 1
+#  fi
+#
+#  cmd="$1"
+#  kind="$(type -t -- "$cmd" ||:)"
+#  case "$kind" in
+#    file|builtin) ;;
+#    "") log::error "command not found: ${cmd}"; return 1 ;;
+#    *)  log::error "disallowd command type \"${kind}\": ${cmd}"; return 1 ;;
+#  esac
+#
+#  trap::save_handler
+#  trap::concat 'EXIT' 'msg::_exec_spinner_stop'
+#  trap::concat 'TERM' 'msg::_exec_spinner_stop'
+#  trap::concat 'INT'  'msg::_exec_spinner_stop'
+#  trap::concat 'HUP'  'msg::_exec_spinner_stop'
+#
+#  # start spinner
+#  msg --spinner "$msg" &
+#  spinner_pid=$!
+#
+#  local rc=0
+#  "$@" >"$_MSG_EXEC_TMPFILE_STDOUT" 2>"$_MSG_EXEC_TMPFILE_STDERR" || rc=$?
+#
+#  trap::restore_handler
+#  msg::_exec_spinner_stop
+#
+#  LOG_ABORT_RETURN_ONLY="$_saved_abort_mode"
+#
+#  if (( rc == 0 )); then
+#    msg -r --ok="$result_ok" "$msg"
+#    # [TODO] STDOUTの出力
+#  else
+#    msg -r --ng="$result_ng" "$msg"
+#    if [[ -s "$_MSG_EXEC_TMPFILE_STDERR" ]]; then
+#      printf '%s\n' "$(cat "$_MSG_EXEC_TMPFILE_STDERR")" >&2
+#    fi
+#  fi
+#
+#  return "$rc"
+#}
