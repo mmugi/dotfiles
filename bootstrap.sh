@@ -41,7 +41,8 @@ msg_proc() { printf '%s%s\n' "${PURPLE}[<] ${RESET}" "${WHITE}$*${RESET}"; }
 abort () { printf '%s%s\n' "${RED}[;] " "$*${RESET}"; exit 1; }
 newline() { printf '\n'; }
 
-msg 'bootstraping...'
+
+msg 'bootstrapping dotfiles...'
 
 if [[ ! -e "$DOTFILES_PATH" ]]; then
   if [[ -z "${DOTFILES_DOWNLOADER:-}" ]]; then
