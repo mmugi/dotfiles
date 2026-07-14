@@ -6,11 +6,15 @@ trap 'echo; echo "Interrupted."; exit 130' INT
 
 # shellcheck source=/dev/null
 source "${DOTFILES_PATH}/lib/bash/import.sh"
-import util msg log
+import util msg theme log
+
+msg::init
+theme::load
 
 _git_config_chk() {
   local key="$1"
   local config
+
   if config="$(git config --global --get "$key")"; then
     printf '%s' "$config"
     return 0
@@ -22,175 +26,254 @@ _git_config_chk() {
 _git_config_set() {
   local key="$1" value="$2"
   git config --global "$key" "$value"
-  msg::notice --configured "${key}: ${value}"
+  msg::changed --configure "${key}: ${value}"
 }
 
 configure_signing_format() {
+  msg::proc 'configuring <hl>signing format</hl>...'
+
   local config signing_format
 
-  msg 'configuring signing format.'
-
   if config="$(_git_config_chk gpg.format)"; then
-    msg --highlight=return "gpg.format is already configured: <b><hl>${config}</b></hl>"
-    if ! msg::confirm -y 'do you want to reconfigure gpg.format?'; then
-      signing_format="$config"
-      msg --highlight=complete 'signing format is configured!'
-      return 0
-    fi
-  fi
-
-  PS3='Select signing format: '
-  select format in gpg ssh; do
-    if [[ -z "$format" ]]; then
-      log::error 'invalid selection'
-      continue
-    fi
-    signing_format="$format"
-    break
-  done
-
-  case "$signing_format" in
-    gpg) abort "unsupported format: ${signing_format}" ;;
-    ssh) _git_config_set gpg.format "$signing_format" ;;
-  esac
-
-  msg --highlight=complete 'signing format is configured!'
-}
-
-configure_signing_key() {
-  local config keys set_method
-
-  msg 'configuring signing key.'
-
-  if config="$(_git_config_chk user.signingkey)"; then
-    msg --highlight=return "user.signingkey is already configured: <b><hl>${config}</b></hl>"
-    if ! msg::confirm -y 'do you want to reconfigure user.signingkey?'; then
-      SIGNING_KEY="$config"
-      msg --highlight=complete 'signing key is configured!'
-      return 0
-    fi
-  fi
-
-  PS3='Select a method to configure the SSH signing key: '
-  local method
-  select method in \
-    'From ssh-agent' \
-    'Enter path to a public key file' \
-    'Enter value manually'
-  do
-    if [[ -z "$method" ]]; then
-      log::error 'invalid selection'
-      continue
-    fi
-    # from ssh-agent
-    if [[ "${REPLY}" -eq 1 ]]; then
-      if ! util::chk -c 'ssh-add'; then
-        log::error 'ssh-agent is not available'
-        continue
-      else
-        if ! keys="$(ssh-add -L 2>&1)"; then
-          log::error "$keys"
-          continue
-        fi
-      fi
-    fi
-    set_method="$REPLY"
-    break
-  done
-
-  case "$set_method" in
-    1) # from ssh-agent
-      local key lines
-      mapfile -t lines <<<"$keys"
-      PS3='Which SSH signing key do you want to configure? '
-      select key in "${lines[@]}"; do
-        if [[ -z "$key" ]]; then
-          echo 'invalid selection'
-          continue
-        fi
-        SIGNING_KEY="$key"
-        break
-      done
-      ;;
-    2) # public key file path
-      SIGNING_KEY="$(msg::read 'public key path:')"
-      SIGNING_KEY="${SIGNING_KEY/#\~/$HOME}"
-      [[ ! -f "$SIGNING_KEY" ]] && abort 'public key not found'
-      ;;
-    3) # manual
-      SIGNING_KEY="$(msg::read 'enter signing key:')"
-      [[ -z "$SIGNING_KEY" ]] && abort 'no signing key selected'
-      ;;
-  esac
-
-  _git_config_set user.signingkey "$SIGNING_KEY"
-  msg --highlight=complete 'signing key is configured!'
-}
-
-configure_allowed_signers_file() {
-  local config asf
-  local skip=false
-  local skip_set_allowed_signers_file_path=false
-
-  if msg::confirm -y 'setup an allowed_signer file for verification?'; then
-    if config="$(_git_config_chk gpg.ssh.allowedSignersFile)"; then
-      msg --highlight=return "gpg.ssh.allowedSignersFile is already configured: <b><hl>${config}</b></hl>"
-      if ! msg::confirm -y 'do you want to reconfigure gpg.ssh.allowedSignersFile?'; then
-        skip_set_allowed_signers_file_path=true
-        asf="$config"
-      fi
-    fi
-  else
-    skip=true
-  fi
-
-  if [[ "$skip" == 'true' ]]; then
-    msg --highlight=warn 'allowed signers configuration skipped.'
+    msg::notice "gpg.format is already configured: <hl>${config}</hl>"
+    msg::skip
+    newline
     return 0
   fi
 
-  if [[ "$skip_set_allowed_signers_file_path" != 'true' ]]; then
-    asf="$(msg::read "enter allowedSignersFile path (default: ~/.ssh/allowed_signers):")"
-    asf="${asf/#\~/$HOME}"
-    [[ -z "${asf:-}" ]] && asf="${HOME}/.ssh/allowed_signers"
-    _git_config_set 'gpg.ssh.allowedSignersFile' "$asf"
-    msg --highlight=tip 'allowed_signers lines look like: you@example.com <publickey>'
-  fi
+  signing_format="$(msg::select --ps='select signing format: ' gpg ssh)"
 
-  if msg::confirm -y 'add yourself to allowed_signers?'; then
-    if ! config="$(_git_config_chk 'user.email')"; then
-      log::error 'user.email is not configured'
-      msg --highlight=warn 'allowed signers configuration skipped.'
-      return 0
-    else
-      if grep "$config" "$asf" >/dev/null 2>&1; then
-        msg --highlight=return "your email is already configured: <b><hl>${config}</b></hl>"
-      else
-        echo "${config} ${SIGNING_KEY}" >>"$asf"
-        msg::notice --configured "${config} ${SIGNING_KEY}"
-      fi
-    fi
-  fi
-  msg --highlight=complete 'allowed_signers is configured!'
+  case "$signing_format" in
+    gpg)
+      msg::failed "unsupported format: ${signing_format}"
+      exit 1
+      ;;
+    ssh)
+      _git_config_set gpg.format "$signing_format"
+      ;;
+  esac
+
+  msg::ok 'signing format is configured!'
+  newline
 }
 
-configure_automatic_commit_signing() {
+_validation_signingkey() {
+  local pubkey="$1"
+  local content type result
+
+  if [[ -f "$pubkey" ]]; then
+    content="$(<"$pubkey")"
+    type='file'
+  else
+    content="$pubkey"
+    type='notfile'
+  fi
+
+  if result="$(ssh-keygen -vlf /dev/stdin <<<"$content" 2>/dev/null)"; then
+    msg::box --no-prompt -- "$result"
+    SIGNING_KEY_TYPE="$type"
+    return 0
+  else
+    msg::warning 'invalid signing key:('
+    return 1
+  fi
+}
+
+configure_signing_key() {
+  msg::proc 'configuring <hl>signing key</hl>...'
+
+  util::chk -c ssh-keygen
+
+  local config content pubkey
+
+  if config="$(_git_config_chk user.signingkey)"; then
+    msg::notice "user.signingkey is already configured: <hl>${config}</hl>"
+
+    if _validation_signingkey "$config"; then
+      SIGNING_KEY="$config"
+      msg::skip
+      newline
+      return 0
+    fi
+  fi
+
+  local method
+  local -a methods=(
+    'enter path to a public key file'
+    'enter value manually'
+  )
+
+  if util::chk -c 'ssh-add'; then
+    methods+=( 'from ssh-agent' )
+  fi
+
+  while true; do
+    method="$(
+      msg::select \
+        --ps='select a method to configure the SSH signing key: ' \
+        "${methods[@]}"
+    )"
+
+    case "$method" in
+      'from ssh-agent')
+        local keys lines
+
+        if ! keys="$(ssh-add -L 2>&1)"; then
+          msg::warning "$keys"
+          continue
+        fi
+
+        mapfile -t lines <<<"$keys"
+        SIGNING_KEY="$(msg::select \
+          --ps='which SSH public key do you want to configure? ' \
+          "${lines[@]}"
+        )"
+
+        if ! _validation_signingkey "$SIGNING_KEY"; then
+          continue
+        fi
+        ;;
+
+      'enter path to a public key file')
+        while true; do
+          SIGNING_KEY="$(msg::read -e -i "${HOME}/" -- 'enter the path to the public key: ')"
+          SIGNING_KEY="${SIGNING_KEY## }"
+          SIGNING_KEY="${SIGNING_KEY%% }"
+          SIGNING_KEY="${SIGNING_KEY/#\~/${HOME}}"
+
+          if [[ -z "$SIGNING_KEY" ]]; then
+            continue
+          elif [[ ! -f "$SIGNING_KEY" ]]; then
+            msg::warning "public key file not found: ${SIGNING_KEY}"
+            continue
+          elif ! _validation_signingkey "$SIGNING_KEY"; then
+            continue
+          else
+            break
+          fi
+        done
+        ;;
+
+      'enter value manually')
+        while true; do
+          SIGNING_KEY="$(msg::read -- 'enter the public key: ')"
+          SIGNING_KEY="${SIGNING_KEY## }"
+          SIGNING_KEY="${SIGNING_KEY%% }"
+          SIGNING_KEY="${SIGNING_KEY/#\~/${HOME}}"
+
+          if [[ -z "$SIGNING_KEY" ]]; then
+            continue
+          elif ! _validation_signingkey "$SIGNING_KEY"; then
+            continue
+          else
+            break
+          fi
+        done
+        ;;
+    esac
+    break
+  done
+
+  _git_config_set user.signingkey "$SIGNING_KEY"
+
+  msg::ok 'signing key is configured!'
+  newline
+}
+
+configure_allowed_signers() {
+  msg::proc 'configuring <hl>allowed signers</hl>...'
+
+  local config allowed_signers_file
+
+  if config="$(_git_config_chk gpg.ssh.allowedSignersFile)"; then
+    msg::notice "gpg.ssh.allowedSignersFile is already configured: <hl>${config}</hl>"
+
+    if [[ -f "$config" ]]; then
+      allowed_signers_file="$config"
+    else
+      msg::warning "allowed signers file not found: ${config:-}"
+    fi
+  fi
+
+  [[ -z "${allowed_signers_file:-}" ]] && while true; do
+    allowed_signers_file="$(
+      msg::read -e \
+        -- "enter the allowed_signers file (default: ~/.ssh/allowed_signers): "
+    )"
+    allowed_signers_file="${allowed_signers_file## }"
+    allowed_signers_file="${allowed_signers_file%% }"
+    allowed_signers_file="${allowed_signers_file/#\~/${HOME}}"
+
+    if [[ -z "${allowed_signers_file:-}" ]]; then
+      allowed_signers_file="${HOME}/.ssh/allowed_signers"
+    fi
+
+    if [[ -f "$allowed_signers_file" ]]; then
+      _git_config_set 'gpg.ssh.allowedSignersFile' "$allowed_signers_file"
+      break
+    else
+      msg::warning "allowed signers file not found: ${allowed_signers_file}"
+      allowed_signers_file=
+      continue
+    fi
+  done
+
+  local principal key_type base64_key line
+
+  if ! principal="$(_git_config_chk 'user.email')"; then
+    msg::failed 'user.email is not configured'
+    exit 1
+  fi
+
+  case "$SIGNING_KEY_TYPE" in
+    file)    read -r key_type base64_key _ <"$SIGNING_KEY" ;;
+    notfile) read -r key_type base64_key _ <<<"$SIGNING_KEY" ;;
+    *) logger --fatal "invalid SIGNING_KEY_TYPE: ${SIGNING_KEY_TYPE:-notset}" ;;
+  esac
+
+  line="$(printf '%s %s %s' "$principal" "$key_type" "$base64_key")"
+
+  if grep "$line" "$allowed_signers_file" >/dev/null 2>&1; then
+    msg::notice "already registered in the allowed signers file: <hl>${line}</hl>"
+  else
+    if msg::confirm --yes-no 'add yourself to allowed signers?'; then
+      printf '%s\n' "$line" >>"$allowed_signers_file"
+      msg::changed --write "${line} >> ${allowed_signers_file}"
+    else
+      msg::skip
+    fi
+  fi
+
+  msg::ok 'allowed signers is configured!'
+  newline
+}
+
+configure_commit_signing() {
+  msg::proc 'configuring <hl>commit signing</hl>...'
+
   local config
 
-  msg 'configuring automatic commit signing.'
-
   if ! config="$(_git_config_chk commit.gpgsign)" || [[ "$config" != 'true' ]]; then
-    msg::confirm -y 'automatically sign commits?' && _git_config_set commit.gpgsign true
+    if msg::confirm --yes-no 'sign commits by default?'; then
+      _git_config_set commit.gpgsign true
+    else
+      msg::skip
+      newline
+      return 0
+    fi
   else
-    msg --highlight=return 'automatic commit signing is already enabled.'
+    msg::notice 'commit signing is already enabled.'
   fi
-  msg --highlight=complete 'automatic commit signing is configured!'
+
+  msg::ok 'commit signing is configured!'
+  newline
 }
 
 util::chk -c git
-msg 'starting git commit signing configuration.'
+newline
+
 configure_signing_format
 configure_signing_key
-configure_allowed_signers_file
-configure_automatic_commit_signing
-msg::marker --complete 'git commit signing configured:)'
+configure_allowed_signers
+configure_commit_signing
+msg::box --prompt='🐈️' --base-style='success' -- 'GIT SIGNING CONFIGURED'
