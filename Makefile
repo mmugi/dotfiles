@@ -11,15 +11,13 @@ help: ## Show this help message.
 	@$(SCRIPT_DIR)/make/help.sh "$(MAKEFILE)"
 
 ## Dotfiles
-.PHONY: install
+.PHONY: install uninstall dryrun-uninstall
 install: ## Install dotfiles.
-	@$(SCRIPT_DIR)/install.sh
-
-.PHONY: uninstall dryrun-uninstall
+	@$(SCRIPT_DIR)/dotfiles/install.sh
 uninstall: ## Uninstall dotfiles.
-	@$(SCRIPT_DIR)/uninstall.sh
-dryru-uninstall: ## Show what would be uninstalled without making any changes.
-	@$(SCRIPT_DIR)/uninstall.sh --dryrun
+	@$(SCRIPT_DIR)/dotfiles/uninstall.sh
+uninstall-dryrun: ## Show what would be uninstalled without making any changes.
+	@$(SCRIPT_DIR)/dotfiles/uninstall.sh --dryrun
 
 .PHONY: init init-os
 init: ## Run all initial setup tasks.
