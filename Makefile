@@ -21,13 +21,16 @@ uninstall: ## Uninstall dotfiles.
 dryru-uninstall: ## Show what would be uninstalled without making any changes.
 	@$(SCRIPT_DIR)/uninstall.sh --dryrun
 
-.PHONY: init init-os init-git-sign
+.PHONY: init init-os
 init: ## Run all initial setup tasks.
 	@$(SCRIPT_DIR)/init/init.sh --all
 init-os: ## Perform the initial setup specific to your operating system.
 	@$(SCRIPT_DIR)/init/os.sh
-init-git-sign: ## Initialize all git commit signing settings.
-	@$(SCRIPT_DIR)/init/git-sign.sh
+
+## Git
+.PHONY: git-sign
+git-sign: ## Configure git commit signing settings.
+	@$(SCRIPT_DIR)/git/git-sign.sh
 
 ## Homebrew
 .PHONY: brew-diff brew-dump
