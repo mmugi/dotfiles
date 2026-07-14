@@ -129,6 +129,9 @@ util::chk() {
         return 0
       else
         _UTIL_CHK_CMD_CACHE["$target"]=1
+        if (( ! quiet )); then
+          msg::failed "command not found: ${target}"
+        fi
         return 1
       fi
       ;;
