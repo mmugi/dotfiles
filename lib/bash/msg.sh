@@ -1004,14 +1004,14 @@ msg::changed() {
   local type style prompt
 
   case "${1:-}" in
-    --configure) type='CONFIG'; style='highlight'; prompt="$MSG_PROMPT_CHANGED"; shift ;;
-    --link)      type='LINK';   style='highlight'; prompt="$MSG_PROMPT_CHANGED"; shift ;;
-    --mkdir)     type='MKDIR';  style='highlight'; prompt="$MSG_PROMPT_CHANGED"; shift ;;
-    --write)     type='WRITE';  style='highlight'; prompt="$MSG_PROMPT_CHANGED"; shift ;;
-    --delete)    type='DELETE'; style='danger';    prompt="$MSG_PROMPT_CHANGED_RM";  shift ;;
-    --remove)    type='REMOVE'; style='danger';    prompt="$MSG_PROMPT_CHANGED_RM";  shift ;;
-    --rmdir)     type='RMDIR';  style='danger';    prompt="$MSG_PROMPT_CHANGED_RM";  shift ;;
-    --unlink)    type='UNLINK'; style='danger';    prompt="$MSG_PROMPT_CHANGED_RM";  shift ;;
+    --configure) type='CONFIG'; style='prompt_changed'; prompt="$MSG_PROMPT_CHANGED"; shift ;;
+    --link)      type='LINK';   style='prompt_changed'; prompt="$MSG_PROMPT_CHANGED"; shift ;;
+    --mkdir)     type='MKDIR';  style='prompt_changed'; prompt="$MSG_PROMPT_CHANGED"; shift ;;
+    --write)     type='WRITE';  style='prompt_changed'; prompt="$MSG_PROMPT_CHANGED"; shift ;;
+    --delete) type='DELETE'; style='prompt_changed_rm'; prompt="$MSG_PROMPT_CHANGED_RM"; shift ;;
+    --remove) type='REMOVE'; style='prompt_changed_rm'; prompt="$MSG_PROMPT_CHANGED_RM"; shift ;;
+    --rmdir)  type='RMDIR';  style='prompt_changed_rm'; prompt="$MSG_PROMPT_CHANGED_RM"; shift ;;
+    --unlink) type='UNLINK'; style='prompt_changed_rm'; prompt="$MSG_PROMPT_CHANGED_RM"; shift ;;
     -*)
       logger --error "invalid change type: $1"
       return 1
