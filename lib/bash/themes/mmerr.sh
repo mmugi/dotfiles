@@ -10,6 +10,7 @@ mmerr::setup() {
     ['pink']='#ec94ad'
     ['neon_pink']='#e26b8c'
     ['navy']='#222641'
+    ['blue']='#417cff'
     ['muted_blue']='#4f6e8d'
     ['skyblue']='#7dbbfa'
     ['blue_purple']='#5f5fff'
