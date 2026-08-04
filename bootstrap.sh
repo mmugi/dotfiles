@@ -28,7 +28,7 @@ else
   export DOTFILES_PATH_UNDEFINED=0
 fi
 
-declare -r DOTFILES_INSTALL_SCRIPT="${DOTFILES_PATH}/scripts/install.sh"
+declare -r DOTFILES_INSTALL_SCRIPT="${DOTFILES_PATH}/scripts/dotfiles/install.sh"
 
 WHITE=$(printf '\033[38;2;239;247;254m')
 RED=$(printf '\033[38;2;234;89;80m')
