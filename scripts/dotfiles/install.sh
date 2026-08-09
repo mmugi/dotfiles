@@ -68,7 +68,7 @@ greet() {
 
   date="$(date '+%Y/%m/%d %H:%M:%S %Z')"
   greet_msg="$(cat <<EOF
-<@noprompt><@hl><@b>
+<@noprompt><@hl style="logo"><@b>
 ${DOTFILES_LOGO}
 
 </@noprompt></@hl></@b>
@@ -87,9 +87,9 @@ configure_git_for_dotfiles() {
 
   local warnings_occurred=0
 
-  msg::header 'starting git configuration for dotfiles.'
+  msg::header 'git configuration for dotfiles'
 
-  msg::proc 'installing git-hooks...'
+  msg 'installing git-hooks...'
 
   local src_hooks src dst filename
 
@@ -100,7 +100,7 @@ configure_git_for_dotfiles() {
     util::install "$src" "$dst" || warnings_occurred=1
   done <<<"$src_hooks"
 
-  msg::proc 'configuring git username...'
+  msg 'configuring git username...'
 
   local -r gitconfig_local="${DOTFILES_PATH}/.git/config"
   local username user_email
@@ -112,10 +112,10 @@ configure_git_for_dotfiles() {
     fi
   else
     git config --file "$gitconfig_local" user.name "$GITHUB_USERNAME"
-    msg::changed --configure "user.name: ${GITHUB_USERNAME}"
+    msg::changed "configured: user.name: ${GITHUB_USERNAME}"
   fi
 
-  msg::proc 'configuring git user email...'
+  msg 'configuring git user email...'
   if user_email=$(git config --file "$gitconfig_local" user.email); then
     if [[ "$user_email" != "$GITHUB_EMAIL" ]]; then
       msg::warning "user.email already configured: ${user_email}"
@@ -123,7 +123,7 @@ configure_git_for_dotfiles() {
     fi
   else
     git config --file "$gitconfig_local" user.email "$GITHUB_EMAIL"
-    msg::changed --configure "user.email: ${GITHUB_EMAIL}"
+    msg::changed "configured: user.email: ${GITHUB_EMAIL}"
   fi
 
   if (( warnings_occurred )); then
@@ -194,7 +194,7 @@ install_configs() {
   local src_configs src config_relpath_fromhome dst
   local conflict=0
 
-  msg::header 'starting installation of the configuration files.'
+  msg::header 'configuration file installation'
 
   [[ -z "${DOTFILES_CONFIG_DIR:-}" ]] && logger --fatal 'DOTFILES_CONFIG_DIR is not set'
 
@@ -237,12 +237,12 @@ install_configs() {
   # installation
   while read -r pkg_dir; do
     pkg_name=$(basename "$pkg_dir")
-    msg::proc "installing <hl>${pkg_name}</hl> configs..."
+    msg "installing <hl>${pkg_name}</hl> configs..."
 
     src_configs="$(find "$pkg_dir" -mindepth 1)"
 
     if [[ -z "$src_configs" ]]; then
-      msg::skip "package directory is empty: ${pkg_dir}"
+      msg::skipped "package directory is empty: ${pkg_dir}"
       continue
     fi
 
@@ -253,7 +253,7 @@ install_configs() {
       if [[ "$src" =~ \.swp$ ]]; then
         continue
       elif _is_ignored "$config_relpath_fromhome"; then
-        msg::notice --ignore "${HOME}/${config_relpath_fromhome}"
+        msg::skipped "skipped: ${HOME}/${config_relpath_fromhome}"
         continue
       else
         util::install "$src" "$dst"

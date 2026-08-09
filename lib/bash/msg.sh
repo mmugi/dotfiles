@@ -10,15 +10,14 @@ LIB_REQUIRES_BASH='>=4.1'
 : "${MSG_BOX:=1}"
 
 : "${MSG_PROMPT:=[>]}"
-: "${MSG_PROMPT_HEADER:=[#]}"
-: "${MSG_PROMPT_PROC:=[<]}"
-: "${MSG_PROMPT_NOTICE:=[!]}"
+: "${MSG_PROMPT_HEADER:=###}"
+: "${MSG_PROMPT_NOTICE:=[~]}"
 : "${MSG_PROMPT_CHANGED:=[*]}"
-: "${MSG_PROMPT_CHANGED_RM:=[/]}"
-: "${MSG_PROMPT_SKIP:=[-]}"
+: "${MSG_PROMPT_RM:=[/]}"
+: "${MSG_PROMPT_SKIPPED:=[-]}"
 : "${MSG_PROMPT_OK:=[^]}"
-: "${MSG_PROMPT_WARNING:=[~]}"
-: "${MSG_PROMPT_FAILED:=[;]}"
+: "${MSG_PROMPT_WARNING:=[!]}"
+: "${MSG_PROMPT_ERROR:=[;]}"
 : "${MSG_PROMPT_CONFIRM:=[?]}"
 
 msg::init() {
@@ -355,14 +354,14 @@ msg::_tokenize() {
 msg::_renderer_init() {
   declare -gA _MSG_RENDERER_CONTEXT=(
     ['prompt_symbol']="$MSG_PROMPT"
-    ['prompt_style']='prompt'
+    ['prompt_style']='msg_prefix'
     ['indent_width']="$MSG_INDENT"
     ['plain']=0
     ['plain_prompt']=0
     ['raw']=0
     ['bold']=0
     ['base_style']='normal'
-    ['highlight_style']='highlight'
+    ['highlight_style']='msg_highlight'
     ['newline']=1
     ['readline']=0
   )
@@ -984,89 +983,67 @@ msg() {
 }
 
 msg::header() {
-  msg --prompt="$MSG_PROMPT_HEADER" --prompt-style='prompt_header' "$@"
-}
-
-msg::proc() {
   msg \
-    --prompt="$MSG_PROMPT_PROC" \
-    --prompt-style='prompt_proc' \
-    --highlight-style='prompt_proc' \
+    --prompt="$MSG_PROMPT_HEADER" \
+    --prompt-style='msg_header' \
+    --base-style='msg_header' \
     "$@"
 }
 
 msg::notice() {
-  msg --prompt="$MSG_PROMPT_NOTICE" --prompt-style='prompt_notice' "$@"
+  msg \
+    --prompt="$MSG_PROMPT_NOTICE" \
+    --prompt-style='msg_notice' \
+    --base-style='msg_notice' \
+    "$@"
 }
 
 msg::changed() {
-  local -a msg_args=()
-  local type style prompt
-
-  case "${1:-}" in
-    --configure) type='CONFIG'; style='prompt_changed'; prompt="$MSG_PROMPT_CHANGED"; shift ;;
-    --link)      type='LINK';   style='prompt_changed'; prompt="$MSG_PROMPT_CHANGED"; shift ;;
-    --mkdir)     type='MKDIR';  style='prompt_changed'; prompt="$MSG_PROMPT_CHANGED"; shift ;;
-    --write)     type='WRITE';  style='prompt_changed'; prompt="$MSG_PROMPT_CHANGED"; shift ;;
-    --delete) type='DELETE'; style='prompt_changed_rm'; prompt="$MSG_PROMPT_CHANGED_RM"; shift ;;
-    --remove) type='REMOVE'; style='prompt_changed_rm'; prompt="$MSG_PROMPT_CHANGED_RM"; shift ;;
-    --rmdir)  type='RMDIR';  style='prompt_changed_rm'; prompt="$MSG_PROMPT_CHANGED_RM"; shift ;;
-    --unlink) type='UNLINK'; style='prompt_changed_rm'; prompt="$MSG_PROMPT_CHANGED_RM"; shift ;;
-    -*)
-      logger --error "invalid change type: $1"
-      return 1
-      ;;
-    *)
-      logger --error 'missing change type'
-      return 1
-      ;;
-  esac
-
-  # msg args
-  while (( $# > 0 )); do
-    case "$1" in
-      --) shift; break ;;
-      -*) msg_args+=( "$1" ) ;;
-      *)  break ;;
-    esac
-    shift
-  done
-
   msg \
-    --prompt="$prompt" \
-    --prompt-style="$style" \
-    "${msg_args[@]}" \
-    -- "<hl style=\"${style}\">${type}</hl> $*"
+    --prompt="$MSG_PROMPT_CHANGED" \
+    --prompt-style='msg_changed' \
+    --base-style='msg_changed' \
+    "$@"
 }
 
-msg::skip() {
-  local -a msg_args=()
-  while (( $# > 0 )); do
-    case "$1" in
-      --) shift; break ;;
-      -*) msg_args+=( "$1" ) ;;
-      *)  break ;;
-    esac
-    shift
-  done
-
+msg::rm() {
   msg \
-    --prompt="$MSG_PROMPT_SKIP" \
-    --prompt-style='prompt_skip' \
-    "${msg_args[@]}" \
-    -- "<hl style=\"prompt_skip\">SKIP</hl> $*"
+    --prompt="$MSG_PROMPT_RM" \
+    --prompt-style='msg_rm' \
+    --base-style='msg_rm' \
+    "$@"
 }
 
 msg::ok() {
-  msg --prompt="$MSG_PROMPT_OK" --prompt-style='prompt_ok' --base-style='success' "$@"
+  msg \
+    --prompt="$MSG_PROMPT_OK" \
+    --prompt-style='msg_ok' \
+    --base-style='msg_ok' \
+    "$@"
 }
 
 msg::warning() {
-  msg --prompt="$MSG_PROMPT_WARNING" --prompt-style='prompt_warning' --base-style='warning' "$@"
+  msg \
+    --prompt="$MSG_PROMPT_WARNING" \
+    --prompt-style='msg_warning' \
+    --base-style='msg_warning' \
+    "$@"
 }
 
-msg::failed() {
-  msg --prompt="$MSG_PROMPT_FAILED" --prompt-style='prompt_failed' --base-style='failed' "$@"
+msg::error() {
+  msg \
+    --prompt="$MSG_PROMPT_ERROR" \
+    --prompt-style='msg_error' \
+    --base-style='msg_error' \
+    "$@"
+}
+
+msg::skipped() {
+  msg \
+    --prompt="$MSG_PROMPT_SKIPPED" \
+    --prompt-style='msg_skipped' \
+    --base-style='msg_skipped' \
+    "$@"
 }
 
 msg::read() {
@@ -1089,7 +1066,7 @@ msg::read() {
   prompt_msg="$(
     msg -n -R \
     --prompt="$MSG_PROMPT_CONFIRM" \
-    --prompt-style='prompt_confirm' \
+    --prompt-style='msg_prompt' \
     -- "$*"
   )"
 
@@ -1126,7 +1103,7 @@ msg::confirm() {
       confirm_msg='press <b><it>RETURN/ENTER</it></b> to continue or press any other key to abort.'
       msg -n \
         --prompt="$MSG_PROMPT_CONFIRM" \
-        --prompt-style='prompt_confirm' \
+        --prompt-style='msg_prompt' \
         -- "${confirm_msg} " </dev/tty >/dev/tty
 
       # stdin flush
@@ -1148,7 +1125,7 @@ msg::confirm() {
       while true; do
         msg -n \
           --prompt="$MSG_PROMPT_CONFIRM" \
-          --prompt-style='prompt_confirm' \
+          --prompt-style='msg_prompt' \
           -- "$* (y/n) " </dev/tty >/dev/tty
 
         # stdin flush
@@ -1204,7 +1181,7 @@ msg::select() {
   done
 
   if [[ -n "${ps:-}" ]]; then
-    PS3="$(msg --prompt="$MSG_PROMPT_CONFIRM" --prompt-style='prompt_confirm' -- "$ps")"
+    PS3="$(msg --prompt="$MSG_PROMPT_CONFIRM" --prompt-style='msg_prompt' -- "$ps")"
   fi
   COLUMNS=1
 
@@ -1223,7 +1200,7 @@ msg::line() {
 
   for i in $(seq "$length"); do
     line="$(printf "${symbol}%.0s" $(seq 1 "$i"))"
-    printf "\r%s" "${STYLE_STDOUT['line']:-}${line}${STYLE_STDOUT['rst']:-}"
+    printf "\r%s" "${STYLE_STDOUT['msg_line']:-}${line}${STYLE_STDOUT['rst']:-}"
     [[ -t 1 ]] && sleep 0.002
   done
   printf '\n'
@@ -1311,7 +1288,7 @@ msg::box() {
 
   msg::_isinit || return 1
 
-  local box_style='box'
+  local box_style='msg_box'
   local box_padding_top_default=1
   local box_padding_bottom_default=1
   local box_padding_left_default=2

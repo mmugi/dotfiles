@@ -9,9 +9,7 @@ import msg theme util log dotfiles
 msg::init
 theme::load
 
-if ! util::chk -c brew; then
-  logger --fatal 'command not found: brew'
-fi
+util::chk -c brew
 
 if [[ ! -d "$DOTFILES_BREWFILE_DIR" ]]; then
   logger --fatal "directory not found: ${DOTFILES_BREWFILE_DIR}"
@@ -33,7 +31,7 @@ if ! brewfile="$(
     --ps='choose the brewfile you want to compare: ' \
     "${files[@]}"
 )"; then
-  msg::failed 'aborted.'
+  msg::error 'aborted.'
   exit 1
 fi
 

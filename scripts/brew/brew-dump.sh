@@ -9,9 +9,7 @@ import msg theme util log dotfiles
 msg::init
 theme::load
 
-if ! util::chk -c brew; then
-  logger --fatal 'command not found: brew'
-fi
+util::chk -c brew
 
 if [[ ! -d "$DOTFILES_BREWFILE_DIR" ]]; then
   logger --fatal "directory not found: ${DOTFILES_BREWFILE_DIR}"
@@ -32,7 +30,7 @@ else
       --ps='select a brewfile to dump: ' \
       newfile "${files[@]}"
   )"; then
-    msg::failed 'aborted.'
+    msg::error 'aborted.'
     exit 1
   fi
 fi
@@ -50,7 +48,7 @@ if [[ "$brewfile" == 'newfile' ]]; then
   fi
 fi
 
-msg::proc "dumping all installed packages into <hl>${brewfile}</hl>..."
+msg "dumping all installed packages into <hl>${brewfile}</hl>..."
 HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_ENV_HINTS=1 \
   brew bundle dump --file "$brewfile" --no-describe --force
 msg::ok 'successfully dumped all packages:)'

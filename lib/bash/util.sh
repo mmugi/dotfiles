@@ -130,7 +130,7 @@ util::chk() {
       else
         _UTIL_CHK_CMD_CACHE["$target"]=1
         if (( ! quiet )); then
-          msg::failed "command not found: ${target}"
+          msg::error "command not found: ${target}"
         fi
         return 1
       fi
@@ -322,10 +322,10 @@ util::install() {
 
     if [[ -d "$src" ]]; then
       mkdir -m 700 "$dst" || return 1
-      msg::changed --mkdir "$dst"
+      msg::changed "directory created: $dst"
     else
       ln -s "$src" "$dst" || return 1
-      msg::changed --link "${src} ==> ${dst}"
+      msg::changed "symbolic link created: ${src} -> ${dst}"
     fi
 
     return 0

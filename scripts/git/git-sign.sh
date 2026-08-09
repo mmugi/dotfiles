@@ -26,17 +26,17 @@ _git_config_chk() {
 _git_config_set() {
   local key="$1" value="$2"
   git config --global "$key" "$value"
-  msg::changed --configure "${key}: ${value}"
+  msg::changed "configured: ${key}: ${value}"
 }
 
 configure_signing_format() {
-  msg::proc 'configuring <hl>signing format</hl>...'
+  msg::header 'signing format configuration'
 
   local config signing_format
 
   if config="$(_git_config_chk gpg.format)"; then
-    msg::notice "gpg.format is already configured: <hl>${config}</hl>"
-    msg::skip
+    msg "gpg.format is already configured: <hl>${config}</hl>"
+    msg::skipped 'signing format configuration skipped.'
     newline
     return 0
   fi
@@ -45,7 +45,7 @@ configure_signing_format() {
 
   case "$signing_format" in
     gpg)
-      msg::failed "unsupported format: ${signing_format}"
+      msg::error "unsupported format: ${signing_format}"
       exit 1
       ;;
     ssh)
@@ -53,7 +53,7 @@ configure_signing_format() {
       ;;
   esac
 
-  msg::ok 'signing format is configured!'
+  msg::ok 'signing format configured!'
   newline
 }
 
@@ -80,18 +80,18 @@ _validation_signingkey() {
 }
 
 configure_signing_key() {
-  msg::proc 'configuring <hl>signing key</hl>...'
+  msg::header 'signing key configuration'
 
   util::chk -c ssh-keygen
 
   local config content pubkey
 
   if config="$(_git_config_chk user.signingkey)"; then
-    msg::notice "user.signingkey is already configured: <hl>${config}</hl>"
+    msg "user.signingkey is already configured: <hl>${config}</hl>"
 
     if _validation_signingkey "$config"; then
       SIGNING_KEY="$config"
-      msg::skip
+      msg::skipped 'signing key configuration skipped.'
       newline
       return 0
     fi
@@ -176,17 +176,17 @@ configure_signing_key() {
 
   _git_config_set user.signingkey "$SIGNING_KEY"
 
-  msg::ok 'signing key is configured!'
+  msg::ok 'signing key configured!'
   newline
 }
 
 configure_allowed_signers() {
-  msg::proc 'configuring <hl>allowed signers</hl>...'
+  msg::header 'allowed signers configuration'
 
   local config allowed_signers_file
 
   if config="$(_git_config_chk gpg.ssh.allowedSignersFile)"; then
-    msg::notice "gpg.ssh.allowedSignersFile is already configured: <hl>${config}</hl>"
+    msg "gpg.ssh.allowedSignersFile is already configured: <hl>${config}</hl>"
 
     if [[ -f "$config" ]]; then
       allowed_signers_file="$config"
@@ -221,7 +221,7 @@ configure_allowed_signers() {
   local principal key_type base64_key line
 
   if ! principal="$(_git_config_chk 'user.email')"; then
-    msg::failed 'user.email is not configured'
+    msg::error 'user.email is not configured'
     exit 1
   fi
 
@@ -234,38 +234,40 @@ configure_allowed_signers() {
   line="$(printf '%s %s %s' "$principal" "$key_type" "$base64_key")"
 
   if grep "$line" "$allowed_signers_file" >/dev/null 2>&1; then
-    msg::notice "already registered in the allowed signers file: <hl>${line}</hl>"
-  else
-    if msg::confirm --yes-no 'add yourself to allowed signers?'; then
-      printf '%s\n' "$line" >>"$allowed_signers_file"
-      msg::changed --write "${line} >> ${allowed_signers_file}"
-    else
-      msg::skip
-    fi
+    msg "already registered in the allowed signers file: <hl>${line}</hl>"
+    msg::skipped 'allowed signers configuration skipped.'
+    newline
+    return 0
   fi
 
-  msg::ok 'allowed signers is configured!'
+  if msg::confirm --yes-no 'add yourself to allowed signers?'; then
+    printf '%s\n' "$line" >>"$allowed_signers_file"
+    msg::changed "added to allowed signers: ${line} >> ${allowed_signers_file}"
+    msg::ok 'allowed signers configured!'
+  else
+    msg::skipped 'addition of entry to allowed signers skipped.'
+  fi
+
   newline
 }
 
 configure_commit_signing() {
-  msg::proc 'configuring <hl>commit signing</hl>...'
+  msg::header 'commit signing configuration'
 
   local config
 
-  if ! config="$(_git_config_chk commit.gpgsign)" || [[ "$config" != 'true' ]]; then
+  if config="$(_git_config_chk commit.gpgsign)" && [[ "$config" == 'true' ]]; then
+    msg 'commit signing is already enabled.'
+    msg::skipped 'commit signing configuration skipped.'
+  else
     if msg::confirm --yes-no 'sign commits by default?'; then
       _git_config_set commit.gpgsign true
+      msg::ok 'commit signing configured!'
     else
-      msg::skip
-      newline
-      return 0
+      msg::skipped 'commit signing configuration skipped.'
     fi
-  else
-    msg::notice 'commit signing is already enabled.'
   fi
 
-  msg::ok 'commit signing is configured!'
   newline
 }
 

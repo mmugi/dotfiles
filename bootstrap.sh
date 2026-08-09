@@ -32,12 +32,10 @@ declare -r DOTFILES_INSTALL_SCRIPT="${DOTFILES_PATH}/scripts/dotfiles/install.sh
 
 WHITE=$(printf '\033[38;2;239;247;254m')
 RED=$(printf '\033[38;2;234;89;80m')
-BLUE_PURPLE=$(printf '\033[38;2;95;95;255m')
 PURPLE=$(printf '\033[38;2;148;140;243m')
 RESET=$(printf '\033[0;39m')
 
-msg() { printf '%s%s\n' "${BLUE_PURPLE}[>] ${RESET}" "${WHITE}$*${RESET}"; }
-msg_proc() { printf '%s%s\n' "${PURPLE}[<] ${RESET}" "${WHITE}$*${RESET}"; }
+msg() { printf '%s%s\n' "${PURPLE}[>] ${RESET}" "${WHITE}$*${RESET}"; }
 abort () { printf '%s%s\n' "${RED}[;] " "$*${RESET}"; exit 1; }
 newline() { printf '\n'; }
 
@@ -65,7 +63,7 @@ if [[ ! -e "$DOTFILES_PATH" ]]; then
     fi
   fi
 
-  msg_proc 'downloading dotfiles...'
+  msg 'downloading dotfiles...'
 
   if [[ "$downloader" == 'git' ]]; then
     git clone --recursive -b "$DOTFILES_BRANCH" "$DOTFILES_URL" "$DOTFILES_PATH"

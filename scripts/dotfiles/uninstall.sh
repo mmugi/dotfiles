@@ -43,24 +43,16 @@ ${DOTFILES_LOGO_UNINSTALL}
 hello:)
 this is the dotfiles uninstallation script.
 date: ${date}
-dotfiles path: <hl style="danger">${DOTFILES_PATH}</hl>
+dotfiles path: <hl>${DOTFILES_PATH}</hl>
 EOF
   )"
 
   msg::box -- "$greet_msg"
   newline
-
-  if (( DOTFILES_UNINSTALL_DRYRUN )); then
-    msg::notice 'dry-run mode is enabled.'
-    msg::notice 'empty directories resulting from configuration removal will be removed, but will not be shown in dry-run mode.'
-    newline
-  fi
 }
 
 uninstall_configs() {
   local pkg_dirs pkg_dir pkg_name
-
-  msg::header 'starting configuration file uninstallation.'
 
   if [[ -z "${DOTFILES_CONFIG_DIR:-}" ]]; then
     logger --fatal 'DOTFILES_CONFIG_DIR is not set'
@@ -82,7 +74,7 @@ uninstall_configs() {
   while read -r pkg_dir; do
     if [[ -d "$pkg_dir" ]]; then
       pkg_name="$(basename "$pkg_dir")"
-      msg::proc "removing <hl>${pkg_name}</hl> configs..."
+      msg "removing <hl>${pkg_name}</hl> configs..."
     else
       logger --fatal "directory not found: ${pkg_dir}"
       exit 1
@@ -115,7 +107,7 @@ uninstall_configs() {
         fi
 
         if [[ ! -L "$target" ]]; then
-          msg::skip "target is not symbolic link: ${target}"
+          msg::warning "target is not symbolic link: ${target}"
           continue
         fi
 
@@ -126,9 +118,9 @@ uninstall_configs() {
           if (( ! DOTFILES_UNINSTALL_DRYRUN )); then
             unlink -- "$target"
           fi
-          msg::changed --unlink "$target"
+          msg::rm "symbolic link unlinked: $target"
         else
-          msg::skip "target symlink points outside dotfiles management: ${target}"
+          msg::warning "symbolic link points outside dotfiles management: ${target}"
           continue
         fi
       done <<<"$src_files"
@@ -150,7 +142,7 @@ uninstall_configs() {
           if (( ! DOTFILES_UNINSTALL_DRYRUN )); then
             rmdir -- "$target"
           fi
-          msg::changed --rmdir "$target"
+          msg::rm "directory deleted: $target"
         else
           logger --debug "dir is not empty: ${target}"
         fi
@@ -164,8 +156,14 @@ uninstall_configs() {
 
 greet
 
+if (( DOTFILES_UNINSTALL_DRYRUN )); then
+  msg::notice 'dry-run mode is enabled.'
+  msg::notice \
+    'empty directories resulting from configuration removal will be removed,' \
+    'but will not be shown in dry-run mode.'
+fi
+
 if msg::confirm; then
-  newline
   uninstall_configs
   if (( ! DOTFILES_UNINSTALL_DRYRUN )); then
     msg::box --prompt='🛸' --base-style='success' -- 'DOTFILES UNINSTALLATION COMPLETED'
