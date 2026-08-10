@@ -134,7 +134,7 @@ export GIT_PS1_SHOWSTASHSTATE=1
 export GIT_PS1_SHOWUNTRACKEDFILES=1
 export GIT_PS1_SHOWUPSTREAM='auto'
 
-export PS1='\u@\h \w\$(__git_ps1 " (%s)")\\\$ '
+export PS1='\e[38;2;148;140;243m\u@\h\e[m:\e[38;2;148;140;243m\w\$(__git_ps1 "\e[38;2;94;97;100m (%s)")\e[38;2;148;140;243m > \e[m'
 # <<< git shell integration (bash) <<<
 EOF
 }
