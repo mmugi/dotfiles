@@ -1,65 +1,48 @@
 # starship configs
 
 format = """
-${custom.hostname_default}\
-${custom.hostname_prod}\
-$hostname\
+($username(@$hostname):)\
 $directory\
 $git_branch\
 $git_status\
 $git_commit\
 $git_state\
-$shlvl\
-$all\
 $time\
-$cmd_duration\
+(\
+  (${env_var.KUBECTL_ENV} )\
+)\
 $battery\
+$shlvl\
+$cmd_duration\
 $status\
 $line_break\
-$username\
-(\
-  \\(\
-    ${env_var.KUBECTL_ENV}\
-  \\)\
-)\
-$character"""
+$character\
+"""
 
-add_newline = true
+add_newline = false
 palette = 'mypalette'
 
 [battery]
 charging_symbol = '🔌'
 discharging_symbol = '🪫'
 
-[custom.hostname_default]
-command = 'uname -n | cut -d. -f1'
-when = 'test -n "$SSH_CONNECTION" && test "$DOTFILES_ENV" != "PROD"'
-style = 'green'
-format = '@[$symbol$output]($style) '
-
-[custom.hostname_prod]
-command = 'uname -n | cut -d. -f1'
-when = 'test -n "$SSH_CONNECTION" && test "$DOTFILES_ENV" == "PROD"'
-style = 'red'
-format = '@[$symbol$output]($style) '
-
 [character]
-success_symbol = '[>]()'
-error_symbol = '[><](red)'
+success_symbol = '[>](purple)'
+error_symbol = '[>](red)'
 
 [cmd_duration]
 format = '⌛[$duration]($style) '
-style = 'bold slate-blue'
+style = 'purple'
 
 [directory]
 truncation_length = 0
 truncation_symbol = '…/'
 truncate_to_repo = false
-style = ''
+style = 'purple'
 
 [env_var.KUBECTL_ENV]
 format = '[$env_value]($style)'
-style = 'red'
+style = 'pink'
 
 [gcloud]
 disabled = true
@@ -73,8 +56,7 @@ asia-northeast2 = 'osaka'
 [git_branch]
 format = '[$symbol$branch]($style)'
 symbol = ''
-#symbol = '🌱'
-style = 'purple'
+style = 'gray'
 
 [git_commit]
 commit_hash_length = 7
@@ -93,41 +75,43 @@ format = """
 [\
   [$conflicted](yellow)\
   [$deleted](red)\
-  [$renamed](lime)\
+  [$renamed](sky)\
   [$modified](pink)\
   [$typechanged](gray)\
   [$staged](green)\
   [$untracked](bright-black)\
-  [( $ahead_behind$stashed)](cyan)\
+  [$ahead_behind](mint)\
+  [$stashed](blue)\
 ]($style) \
 """
 style = ''
 conflicted = '!'
 deleted = '-'
-renamed = '^'
-modified = "*"
-typechanged = ""
-staged = "+"
-untracked = "?"
-stashed = "≡"
+renamed = '~'
+modified = '*'
+typechanged = ''
+staged = '+'
+untracked = '?'
+stashed = '='
 
 [hostname]
-disabled = true
-ssh_symbol = '🌐'
+disabled = false
 ssh_only = true
-format = '[$ssh_symbol$hostname]($style) '
-style = "green"
+format = '[$hostname]($style)'
+style = 'purple'
+
+[line_break]
+disabled = false
 
 [palettes.mypalette]
-blue = '#79bff9'
-cyan = '#cbf9dc'
-green = '#04dbb5'
-lime = '#afff5f'
-pink = '#d787af'
-purple = '#8e80e8'
-red = '#eb5b4e'
-slate-blue = '#5f5fff'
-yellow = '#f9eb4f'
+blue = '#417cff'
+mint = '#c9f9dc'
+green = '#0becca'
+pink = '#ec94ad'
+sky = '#7dbbfa'
+purple = '#948cf3'
+red = '#ea5950'
+yellow = '#fcdc00'
 gray = '#5e6164'
 
 [shlvl]
@@ -135,7 +119,7 @@ disabled = false
 threshold = 3
 format = '[\[$symbol$shlvl\]]($style) '
 symbol = ''
-style = ''
+style = 'purple'
 
 [status]
 disabled = false
@@ -153,4 +137,6 @@ time_format = '%Y-%m-%dT%H:%M:%S'
 utc_time_offset = '+9'
 
 [username]
-format = '[$user]()'
+format = '[$user]($style)'
+show_always = false
+style_user = 'purple'
