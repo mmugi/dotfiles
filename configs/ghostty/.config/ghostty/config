@@ -23,9 +23,9 @@ theme = Rebecca
 cursor-style = block
 cursor-style-blink = true
 
-background-opacity = 0.97
-#background-blur = true
-background-blur = macos-glass-clear
+background-opacity = 0.88
+background-blur = true
+#background-blur = macos-glass-clear
 
 unfocused-split-opacity = 1
 
