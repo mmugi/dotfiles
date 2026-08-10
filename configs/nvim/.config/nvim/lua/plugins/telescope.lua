@@ -58,7 +58,7 @@ return {
       --path_display = {
       --  filename_first = { reverse_directories = false }
       --},
-      file_ignore_patterns = { ".git/" },
+      file_ignore_patterns = { "%.git/" },
     },
     pickers = {
       live_grep = { additional_args = { "--follow", "--hidden" } },
