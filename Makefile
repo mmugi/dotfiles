@@ -29,12 +29,12 @@ init-os: ## Perform the initial setup specific to your operating system.
 .PHONY: git-sign git-completion-conf
 git-sign: ## Configure git commit signing settings.
 	@$(SCRIPT_DIR)/git/git-sign.sh
-git-completion-conf: ## Generate git-completion shell config (default is bash, e.g. make git-completion-conf TARGET_SHELL=bash).
+git-completion-conf: ## Generate git-completion shell config (default bash; TARGET_SHELL to override).
 	@$(SCRIPT_DIR)/git/git-completion-conf.sh --shell $(or $(TARGET_SHELL),bash)
 
 ## Shell
 .PHONY: shell-prompt-conf
-shell-prompt-conf: ## Generate shell prompt config (starship > git-aware PS1 > default PS1, e.g. make shell-prompt-conf TARGET_SHELL=bash).
+shell-prompt-conf: ## Generate shell prompt config (default bash; TARGET_SHELL to override).
 	@$(SCRIPT_DIR)/shell/generate-prompt-conf.sh --shell $(or $(TARGET_SHELL),bash)
 
 ## Homebrew
