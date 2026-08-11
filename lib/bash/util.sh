@@ -143,7 +143,7 @@ util::chk() {
 }
 
 util::install() {
-  # usage: util::install [--dry-run] src dst
+  # usage: util::install [--check] src dst
   #
   # srcに指定されたファイルをdstに指定されたパスに配置します。
   #
@@ -152,16 +152,18 @@ util::install() {
   #
   # dst先にファイルやシンボリックリンクがすでに存在する場合は、1を返します。
   #
-  # --dry-runオプションが指定された場合は、シンボリックリンクやディレクトリの
+  # --checkオプションが指定された場合は、シンボリックリンクやディレクトリの
   # 作成は行われず、srcがdstに配置できるかどうかの0、1だけを返します。
+  # 成功時(配置可能な場合)にメッセージは表示されません。プレビュー表示では
+  # なく、事前の衝突検証を目的としたオプションです。
 
-  local dry_run=0
-  local usage='usage: util::install [--dry-run] src dst'
+  local check=0
+  local usage='usage: util::install [--check] src dst'
 
   if (( $# == 3 )); then
-    if [[ "$1" == '--dry-run' ]]; then
+    if [[ "$1" == '--check' ]]; then
       shift
-      dry_run=1
+      check=1
     else
       logger --error "$usage"
       return 1
@@ -181,7 +183,7 @@ util::install() {
 
   # dst配置可能(ファイル、リンクが存在しない)
   if [[ ! -e "$dst" && ! -L "$dst" ]]; then
-    (( dry_run )) && return 0
+    (( check )) && return 0
 
     if [[ -d "$src" ]]; then
       mkdir -m 700 "$dst" || return 1
@@ -227,7 +229,7 @@ util::uninstall() {
   #
   # --dry-runオプションが指定された場合、シンボリックリンクの解除は
   # 行われませんが、解除される旨のメッセージは表示されます。
-  # util::install --dry-run とは異なり、衝突有無の事前検証ではなく
+  # util::install --check とは異なり、衝突有無の事前検証ではなく
   # 削除対象のプレビュー表示を目的としているため、この挙動です。
 
   local dry_run=0

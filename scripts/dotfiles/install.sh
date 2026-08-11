@@ -223,7 +223,7 @@ install_configs() {
       if _is_ignored "$config_relpath_fromhome"; then
         continue
       else
-        util::install --dry-run "$src" "$dst" || conflict=1
+        util::install --check "$src" "$dst" || conflict=1
       fi
     done <<<"$src_configs"
   done <<<"$pkg_dirs"
