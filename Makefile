@@ -26,9 +26,11 @@ init-os: ## Perform the initial setup specific to your operating system.
 	@$(SCRIPT_DIR)/init/os.sh
 
 ## Git
-.PHONY: git-sign
+.PHONY: git-sign git-completion-conf
 git-sign: ## Configure git commit signing settings.
 	@$(SCRIPT_DIR)/git/git-sign.sh
+git-completion-conf: ## Generate git-completion shell config (default is bash).
+	@$(SCRIPT_DIR)/git/git-completion-conf.sh
 
 ## Shell
 .PHONY: shell-prompt-conf

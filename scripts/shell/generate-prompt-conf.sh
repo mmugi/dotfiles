@@ -14,11 +14,12 @@ msg::init
 theme::load
 
 # シェル用のプロンプト設定を生成し、標準出力にそのままコピー&ペーストできる形式で出力します。
+# (git-completionのシェル設定生成は scripts/git/git-completion-conf.sh を参照)
 #
 # 優先順位:
 #   1. starship が利用可能な場合、starshipの初期化設定を出力する
-#   2. gitに内包される git-completion / git-prompt が見つかった場合、それらをsourceして
-#      git連携のPS1をexportする設定を出力する
+#   2. gitに内包される git-prompt が見つかった場合、それをsourceしてgit連携のPS1を
+#      exportする設定を出力する
 #   3. どちらも利用できない場合、gitのブランチ情報を含まないデフォルトのPS1を出力する
 #
 # 対応シェルを追加する場合:
@@ -43,7 +44,7 @@ EOF
 }
 
 _generate_prompt_conf_search_dirs() {
-  # git-completion.bash / git-prompt.sh が配置されていそうなディレクトリの候補を列挙する
+  # git-prompt.sh が配置されていそうなディレクトリの候補を列挙する
   local -a dirs=()
   local exec_path git_bin git_bin_dir brew_prefix
 
@@ -139,15 +140,10 @@ EOF
       ;;
 
     git)
-      local completion_path="$2"
-      local prompt_path="$3"
+      local prompt_path="$2"
 
       cat <<EOF
 # >>> shell prompt integration (bash / git) >>>
-if [[ -f "${completion_path}" ]]; then
-  source "${completion_path}"
-fi
-
 if [[ -f "${prompt_path}" ]]; then
   source "${prompt_path}"
 fi
@@ -232,17 +228,9 @@ fi
     msg "generating starship-based prompt configuration for <hl>${shell}</hl>..."
     config="$(_generate_prompt_conf_render_bash 'starship')"
   else
-    completion_path=
     prompt_path=
 
     if util::chk -c git; then
-      msg 'searching for <hl>git-completion.bash</hl>...'
-      if _generate_prompt_conf_locate 'git-completion.bash'; then
-        completion_path="$GENERATE_PROMPT_CONF_RESULT"
-      else
-        msg::warning 'git-completion.bash not found.'
-      fi
-
       msg 'searching for <hl>git-prompt.sh</hl>...'
       if _generate_prompt_conf_locate 'git-prompt.sh'; then
         prompt_path="$GENERATE_PROMPT_CONF_RESULT"
@@ -251,9 +239,9 @@ fi
       fi
     fi
 
-    if [[ -n "$completion_path" && -n "$prompt_path" ]]; then
+    if [[ -n "$prompt_path" ]]; then
       msg "generating git-aware prompt configuration for <hl>${shell}</hl>..."
-      config="$(_generate_prompt_conf_render_bash 'git' "$completion_path" "$prompt_path")"
+      config="$(_generate_prompt_conf_render_bash 'git' "$prompt_path")"
     else
       msg "generating default prompt configuration for <hl>${shell}</hl>..."
       config="$(_generate_prompt_conf_render_bash 'default')"
