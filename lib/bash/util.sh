@@ -213,3 +213,64 @@ util::install() {
   # dstディレクトリもしくはsrcにリンクされたdstファイルがすでに存在する
   return 0
 }
+
+util::uninstall() {
+  # usage: util::uninstall [--dry-run] src dst
+  #
+  # dstに指定されたシンボリックリンクを解除します。
+  #
+  # dstがsrcを指すシンボリックリンクである場合のみ解除の対象とします。
+  # dstが存在しない場合は何もせず0を返します。
+  #
+  # dstがシンボリックリンクでない場合、もしくはsrcを指していない場合は
+  # 1を返します。
+  #
+  # --dry-runオプションが指定された場合は、シンボリックリンクの解除は
+  # 行われず、dstが解除できるかどうかの0、1だけを返します。
+
+  local dry_run=0
+  local usage='usage: util::uninstall [--dry-run] src dst'
+
+  if (( $# == 3 )); then
+    if [[ "$1" == '--dry-run' ]]; then
+      shift
+      dry_run=1
+    else
+      logger --error "$usage"
+      return 1
+    fi
+  elif (( $# != 2 )); then
+    logger --error "$usage"
+    return 1
+  fi
+
+  local src="$1"
+  local dst="$2"
+
+  # dstが存在しない
+  if [[ ! -e "$dst" && ! -L "$dst" ]]; then
+    logger --debug "target is not exists: ${dst}"
+    return 0
+  fi
+
+  if [[ ! -L "$dst" ]]; then
+    msg::warning "target is not symbolic link: ${dst}"
+    return 1
+  fi
+
+  local link_path src_path
+  link_path="$(realpath "$dst")"
+  src_path="$(realpath "$src")"
+
+  if [[ "$link_path" != "$src_path" ]]; then
+    msg::warning "symbolic link points outside dotfiles management: ${dst}"
+    return 1
+  fi
+
+  (( dry_run )) && return 0
+
+  unlink -- "$dst" || return 1
+  msg::rm "symbolic link unlinked: ${dst}"
+
+  return 0
+}

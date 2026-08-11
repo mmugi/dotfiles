@@ -4,7 +4,7 @@ set -ueo pipefail
 
 # shellcheck source=/dev/null
 source "${DOTFILES_PATH}/lib/bash/import.sh"
-import log theme dotfiles msg
+import log theme dotfiles msg util
 
 theme::load
 msg::init
@@ -81,7 +81,7 @@ uninstall_configs() {
     fi
 
     local src_files src_dirs
-    local src_file src_link src_dirs src_dir target
+    local src_file src_dirs src_dir target
 
     src_files="$(find "$pkg_dir" -mindepth 1 -type f)"
     src_dirs="$(
@@ -101,27 +101,10 @@ uninstall_configs() {
         target="${HOME}/${src_file#"${pkg_dir}/"}"
         logger --debug "remove target config file: ${target}"
 
-        if [[ ! -e "$target" ]]; then
-          logger --debug "target file is not exists: ${target}"
-          continue
-        fi
-
-        if [[ ! -L "$target" ]]; then
-          msg::warning "target is not symbolic link: ${target}"
-          continue
-        fi
-
-        src_link="$(realpath "$target")"
-        logger --debug "target realpath: ${src_link}"
-
-        if [[ "$src_link" == "$src_file" ]]; then
-          if (( ! DOTFILES_UNINSTALL_DRYRUN )); then
-            unlink -- "$target"
-          fi
-          msg::rm "symbolic link unlinked: $target"
+        if (( DOTFILES_UNINSTALL_DRYRUN )); then
+          util::uninstall --dry-run "$src_file" "$target"
         else
-          msg::warning "symbolic link points outside dotfiles management: ${target}"
-          continue
+          util::uninstall "$src_file" "$target"
         fi
       done <<<"$src_files"
     fi
