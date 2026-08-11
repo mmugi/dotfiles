@@ -26,11 +26,14 @@ init-os: ## Perform the initial setup specific to your operating system.
 	@$(SCRIPT_DIR)/init/os.sh
 
 ## Git
-.PHONY: git-sign git-generate-shell-conf
+.PHONY: git-sign
 git-sign: ## Configure git commit signing settings.
 	@$(SCRIPT_DIR)/git/git-sign.sh
-git-generate-shell-conf: ## Generate git-completion/git-prompt shell config (default is bash).
-	@$(SCRIPT_DIR)/git/git-generate-shell-conf.sh
+
+## Shell
+.PHONY: shell-prompt-conf
+shell-prompt-conf: ## Generate shell prompt config (starship > git-aware PS1 > default PS1; default shell is bash).
+	@$(SCRIPT_DIR)/shell/generate-prompt-conf.sh
 
 ## Homebrew
 .PHONY: brew-diff brew-dump
