@@ -19,12 +19,6 @@ uninstall: ## Uninstall dotfiles.
 uninstall-dryrun: ## Show what would be uninstalled without making any changes.
 	@$(SCRIPT_DIR)/dotfiles/uninstall.sh --dryrun
 
-.PHONY: init init-os
-init: ## Run all initial setup tasks.
-	@$(SCRIPT_DIR)/init/init.sh --all
-init-os: ## Perform the initial setup specific to your operating system.
-	@$(SCRIPT_DIR)/init/os.sh
-
 ## Git
 .PHONY: git-sign git-completion-conf
 git-sign: ## Configure git commit signing settings.
