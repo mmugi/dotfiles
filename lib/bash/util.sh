@@ -225,8 +225,10 @@ util::uninstall() {
   # dstがシンボリックリンクでない場合、もしくはsrcを指していない場合は
   # 1を返します。
   #
-  # --dry-runオプションが指定された場合は、シンボリックリンクの解除は
-  # 行われず、dstが解除できるかどうかの0、1だけを返します。
+  # --dry-runオプションが指定された場合、シンボリックリンクの解除は
+  # 行われませんが、解除される旨のメッセージは表示されます。
+  # util::install --dry-run とは異なり、衝突有無の事前検証ではなく
+  # 削除対象のプレビュー表示を目的としているため、この挙動です。
 
   local dry_run=0
   local usage='usage: util::uninstall [--dry-run] src dst'
@@ -267,9 +269,9 @@ util::uninstall() {
     return 1
   fi
 
-  (( dry_run )) && return 0
-
-  unlink -- "$dst" || return 1
+  if (( ! dry_run )); then
+    unlink -- "$dst" || return 1
+  fi
   msg::rm "symbolic link unlinked: ${dst}"
 
   return 0
