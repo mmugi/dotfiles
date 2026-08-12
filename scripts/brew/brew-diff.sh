@@ -6,8 +6,8 @@ set -ueo pipefail
 source "${DOTFILES_PATH}/lib/bash/import.sh"
 import msg theme util log dotfiles
 
-msg::init
 theme::load
+msg::init
 
 util::chk -c brew
 

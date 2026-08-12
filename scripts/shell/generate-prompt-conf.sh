@@ -7,11 +7,13 @@ source "${DOTFILES_PATH}/lib/bash/import.sh"
 import util msg theme
 
 if [[ -t 2 ]]; then
+  # termcap.sh が参照する
+  # shellcheck disable=SC2034
   TERMCAP_COLOR_MODE=always
 fi
 
-msg::init
 theme::load
+msg::init
 
 # シェル用のプロンプト設定を生成し、標準出力にそのままコピー&ペーストできる形式で出力します。
 # (git-completionのシェル設定生成は scripts/git/git-completion-conf.sh を参照)
@@ -30,6 +32,8 @@ theme::load
 
 declare -ra GENERATE_PROMPT_CONF_SUPPORTED_SHELLS=( bash )
 
+# 表示用の文字列なので ~ は展開しない
+# shellcheck disable=SC2088
 declare -rA GENERATE_PROMPT_CONF_RC_HINT=(
   [bash]='~/.bashrc'
 )

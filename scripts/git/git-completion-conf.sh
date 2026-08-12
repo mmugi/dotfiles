@@ -7,11 +7,13 @@ source "${DOTFILES_PATH}/lib/bash/import.sh"
 import util msg theme
 
 if [[ -t 2 ]]; then
+  # termcap.sh が参照する
+  # shellcheck disable=SC2034
   TERMCAP_COLOR_MODE=always
 fi
 
-msg::init
 theme::load
+msg::init
 
 # gitに内包される git-completion をsourceするシェル設定を生成し、標準出力に
 # そのままコピー&ペーストできる形式で出力します。
@@ -29,6 +31,8 @@ declare -rA GIT_COMPLETION_CONF_FILENAME=(
   [bash]='git-completion.bash'
 )
 
+# 表示用の文字列なので ~ は展開しない
+# shellcheck disable=SC2088
 declare -rA GIT_COMPLETION_CONF_RC_HINT=(
   [bash]='~/.bashrc'
 )

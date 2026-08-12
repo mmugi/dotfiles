@@ -8,8 +8,8 @@ trap 'echo; echo "Interrupted."; exit 130' INT
 source "${DOTFILES_PATH}/lib/bash/import.sh"
 import util msg theme log
 
-msg::init
 theme::load
+msg::init
 
 _git_config_chk() {
   local key="$1"
