@@ -22,6 +22,11 @@ fi
 
 DOTFILES_UNINSTALL_DRYRUN=0
 
+# 集計用
+#   警告が出ても処理を止めず、最後にまとめて確認できるようにする。
+declare -a UNINSTALL_REMOVED=()
+declare -a UNINSTALL_WARNED=()
+
 case "${1:-notset}" in
   --dryrun) DOTFILES_UNINSTALL_DRYRUN=1 ;;
   notset) :;;
@@ -48,6 +53,71 @@ EOF
   )"
 
   msg::box -- "$greet_msg"
+  msg::newline
+}
+
+_uninstall_target() {
+  # usage: _uninstall_target src target
+  #
+  # util::uninstall をモードに応じて呼び分け、結果を集計する。
+  # 警告時に1を返すため、呼び出し側は if で受けて set -e を回避する。
+
+  local src="$1" target="$2"
+  local rc=0
+
+  # 対象が存在しない場合、util::uninstall は「何もすることがない」として0を
+  # 返す。それを削除予定として数えないよう、ここで先に除外する。
+  if [[ ! -e "$target" && ! -L "$target" ]]; then
+    logger --debug "target does not exist: ${target}"
+    return 0
+  fi
+
+  if (( DOTFILES_UNINSTALL_DRYRUN )); then
+    util::uninstall --dry-run "$src" "$target" || rc=$?
+  else
+    util::uninstall "$src" "$target" || rc=$?
+  fi
+
+  if (( rc == 0 )); then
+    UNINSTALL_REMOVED+=( "$target" )
+  else
+    UNINSTALL_WARNED+=( "$target" )
+  fi
+
+  return 0
+}
+
+print_summary() {
+  local target
+
+  msg::header 'summary'
+
+  if (( ${#UNINSTALL_REMOVED[@]} > 0 )); then
+    if (( DOTFILES_UNINSTALL_DRYRUN )); then
+      msg::rm "${#UNINSTALL_REMOVED[@]} symbolic link(s) to be removed:"
+    else
+      msg::rm "${#UNINSTALL_REMOVED[@]} symbolic link(s) removed:"
+    fi
+    for target in "${UNINSTALL_REMOVED[@]}"; do
+      msg --no-prompt --indent 4 --base-style='msg_rm' -- "$target"
+    done
+  else
+    msg::skipped 'no symbolic links to remove.'
+  fi
+
+  msg::newline
+
+  if (( ${#UNINSTALL_WARNED[@]} > 0 )); then
+    msg::warning "${#UNINSTALL_WARNED[@]} file(s) left in place (see the warnings above for the reason):"
+    for target in "${UNINSTALL_WARNED[@]}"; do
+      msg --no-prompt --indent 4 --base-style='msg_warning' -- "$target"
+    done
+    msg::newline
+    msg::notice 'these need to be handled manually.'
+  else
+    msg::ok 'no warnings:)'
+  fi
+
   msg::newline
 }
 
@@ -101,11 +171,7 @@ uninstall_configs() {
         target="${HOME}/${src_file#"${pkg_dir}/"}"
         logger --debug "remove target config file: ${target}"
 
-        if (( DOTFILES_UNINSTALL_DRYRUN )); then
-          util::uninstall --dry-run "$src_file" "$target"
-        else
-          util::uninstall "$src_file" "$target"
-        fi
+        _uninstall_target "$src_file" "$target"
       done <<<"$src_files"
     fi
 
@@ -123,7 +189,12 @@ uninstall_configs() {
         if [[ -z "$(ls -A "$target")" ]]; then
           logger --debug "dir is empty: ${target}"
           if (( ! DOTFILES_UNINSTALL_DRYRUN )); then
-            rmdir -- "$target"
+            # 削除できなくても他のコンフィグの処理は続ける
+            if ! rmdir -- "$target" 2>/dev/null; then
+              msg::warning "failed to remove directory: ${target}"
+              UNINSTALL_WARNED+=( "$target" )
+              continue
+            fi
           fi
           msg::rm "directory deleted: $target"
         else
@@ -133,7 +204,11 @@ uninstall_configs() {
     fi
   done <<<"$pkg_dirs"
 
-  msg::ok 'configuration files uninstalled:)'
+  if (( ${#UNINSTALL_WARNED[@]} > 0 )); then
+    msg::warning 'finished with warnings:/'
+  else
+    msg::ok 'configuration files uninstalled:)'
+  fi
   msg::newline
 }
 
@@ -148,6 +223,7 @@ fi
 
 if msg::confirm; then
   uninstall_configs
+  print_summary
   if (( ! DOTFILES_UNINSTALL_DRYRUN )); then
     msg::box --prompt='🛸' --base-style='success' -- 'DOTFILES UNINSTALLATION COMPLETED'
     msg::newline
