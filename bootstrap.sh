@@ -3,50 +3,44 @@
 # dotfiles bootstrapper
 # dotfilesをダウンロードして、installスクリプトを実行します。
 
-set -Eueo pipefail
+set -ueo pipefail
 
 if [ -z "${BASH_VERSION:-}" ]; then
   printf "\033[1;31m%s\033[0m\n" 'please run this script with bash;('
   exit 1
 fi
 
-RED=$(printf '\033[38;5;166m')
-CYAN=$(printf '\033[38;5;195m')
-PURPLE=$(printf '\033[38;5;105m')
-BOLD=$(printf '\033[1m')
-RESET=$(printf '\033[0;39m')
+exec_user=$(whoami)
+if [[ "$exec_user" == 'root' ]]; then
+  printf "\033[1;31m%s\033[0m\n" "don't run this script as root:<"
+  exit 1
+fi
 
 : "${DOTFILES_BRANCH:=trunk}"
 
+declare -r DOTFILES_URL='git@github.com:mmugi/dotfiles.git'
+declare -r DOTFILES_TARBALL_URL="https://github.com/mmugi/dotfiles/archive/${DOTFILES_BRANCH}.tar.gz"
+
 if [[ -z "${DOTFILES_PATH:-}" ]]; then
-  DOTFILES_PATH="${HOME}/.dotfiles"
-  DOTFILES_PATH_UNDEFINED=true
+  export DOTFILES_PATH="${HOME}/.dotfiles"
+  export DOTFILES_PATH_UNDEFINED=1
 else
-  DOTFILES_PATH_UNDEFINED=false
+  export DOTFILES_PATH_UNDEFINED=0
 fi
-export DOTFILES_PATH
-export DOTFILES_PATH_UNDEFINED
 
-readonly DOTFILES_URL='git@github.com:mmugi/dotfiles.git'
-readonly DOTFILES_TARBALL_URL="https://github.com/mmugi/dotfiles/archive/${DOTFILES_BRANCH}.tar.gz"
+declare -r DOTFILES_INSTALL_SCRIPT="${DOTFILES_PATH}/scripts/dotfiles/install.sh"
 
-msg() {
-  printf '%s%s\n' "${BOLD}${PURPLE}> ${RESET}" "${CYAN}$*${RESET}"
-  sleep 0.2
-}
+WHITE=$(printf '\033[38;2;239;247;254m')
+RED=$(printf '\033[38;2;234;89;80m')
+PURPLE=$(printf '\033[38;2;148;140;243m')
+RESET=$(printf '\033[0;39m')
 
-abort() {
-  printf '%s: %s: line %s: %s: %s\n' \
-    "${BOLD}${RED}ERROR${RESET}" \
-    "${BASH_SOURCE[0]##*/}" \
-    "${BASH_LINENO[0]}" \
-    "${FUNCNAME[1]:-main}" \
-    "$*" >&2
-  exit 1
-}
+msg() { printf '%s%s\n' "${PURPLE}[>] ${RESET}" "${WHITE}$*${RESET}"; }
+abort () { printf '%s%s\n' "${RED}[;] " "$*${RESET}"; exit 1; }
+newline() { printf '\n'; }
 
-exec_user=$(whoami)
-[[ "$exec_user" == 'root' ]] && abort "don't run this script as root"
+
+msg 'bootstrapping dotfiles...'
 
 if [[ ! -e "$DOTFILES_PATH" ]]; then
   if [[ -z "${DOTFILES_DOWNLOADER:-}" ]]; then
@@ -85,4 +79,5 @@ if [[ ! -e "$DOTFILES_PATH" ]]; then
   fi
 fi
 
-exec "${DOTFILES_PATH}/scripts/install.sh"
+newline
+exec "$DOTFILES_INSTALL_SCRIPT"

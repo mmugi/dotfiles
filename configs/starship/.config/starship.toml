@@ -1,60 +1,48 @@
 # starship configs
 
 format = """
-$all\
-$hostname_default\
-$hostname_prod\
+($username(@$hostname):)\
 $directory\
 $git_branch\
+$git_status\
 $git_commit\
 $git_state\
-$git_metrics\
-$git_status\
-$shlvl\
 $time\
+(\
+  (${env_var.KUBECTL_ENV} )\
+)\
+$battery\
+$shlvl\
 $cmd_duration\
 $status\
 $line_break\
-$username\
-$character"""
+$character\
+"""
 
-add_newline = true
+add_newline = false
 palette = 'mypalette'
 
-[custom.hostname_default]
-command = 'uname -n | cut -d. -f1'
-when = 'test -n "$SSH_CONNECTION" && test "$DOTFILES_ENV" != "PROD"'
-symbol = '🌐'
-style = 'green'
-format = '[$symbol$output]($style) '
-
-[custom.hostname_prod]
-command = 'uname -n | cut -d. -f1'
-when = 'test -n "$SSH_CONNECTION" && test "$DOTFILES_ENV" == "PROD"'
-symbol = '🌐'
-style = 'red'
-format = '[$symbol$output]($style) '
-
-[palettes.mypalette]
-red = '167'
-green = '43'
-blue = '63'
-pink = '175'
-purple = '105'
+[battery]
+charging_symbol = '🔌'
+discharging_symbol = '🪫'
 
 [character]
-success_symbol = '[>]()'
-error_symbol = '[!](bold red)'
+success_symbol = '[>](bold green)'
+error_symbol = '[>](bold red)'
 
 [cmd_duration]
 format = '⌛[$duration]($style) '
-style = 'bold blue'
+style = 'purple'
 
 [directory]
-truncation_length = 8
+truncation_length = 0
 truncation_symbol = '…/'
 truncate_to_repo = false
-style = ''
+style = 'purple'
+
+[env_var.KUBECTL_ENV]
+format = '[$env_value]($style)'
+style = 'pink'
 
 [gcloud]
 disabled = true
@@ -66,34 +54,72 @@ asia-northeast1 = 'tokyo'
 asia-northeast2 = 'osaka'
 
 [git_branch]
-symbol = '🌱'
-format = '[$symbol$branch]($style) '
-style = 'bold blue'
+format = '[$symbol$branch]($style)'
+symbol = ''
+style = 'gray'
 
 [git_commit]
-commit_hash_length = 4
-tag_symbol = '🔖'
+commit_hash_length = 7
+format = '[#$hash(:$tag)]($style) '
+style = 'purple'
+tag_disabled = false
+tag_symbol = ''
 
 [git_state]
-format = '[\($state( $progress_current of $progress_total)\)]($style) '
-cherry_pick = '[🍒 PICKING](bold pink)'
+format = '[*$state(\($progress_current/$progress_total\))*]($style) '
+cherry_pick = '[🍒PICKING](bold pink)'
+style = 'bold'
 
 [git_status]
-style = 'bold purple'
+format = """
+[\
+  [$conflicted](yellow)\
+  [$deleted](red)\
+  [$renamed](sky)\
+  [$modified](pink)\
+  [$typechanged](gray)\
+  [$staged](green)\
+  [$untracked](bright-black)\
+  [$ahead_behind](mint)\
+  [$stashed](blue)\
+]($style) \
+"""
+style = ''
+conflicted = '!'
+deleted = '-'
+renamed = '~'
+modified = '*'
+typechanged = ''
+staged = '+'
+untracked = '?'
+stashed = '='
 
 [hostname]
-disabled = true
-ssh_symbol = '🌐'
+disabled = false
 ssh_only = true
-format = '[$ssh_symbol$hostname]($style) '
-style = "green"
+format = '[$hostname]($style)'
+style = 'purple'
+
+[line_break]
+disabled = false
+
+[palettes.mypalette]
+blue = '#417cff'
+mint = '#c9f9dc'
+green = '#0becca'
+pink = '#ec94ad'
+sky = '#7dbbfa'
+purple = '#948cf3'
+red = '#ea5950'
+yellow = '#fcdc00'
+gray = '#5e6164'
 
 [shlvl]
 disabled = false
 threshold = 3
 format = '[\[$symbol$shlvl\]]($style) '
 symbol = ''
-style = ''
+style = 'purple'
 
 [status]
 disabled = false
@@ -106,9 +132,11 @@ map_symbol = true
 [time]
 disabled = false
 format = '[$time]($style) '
-style = 'green'
-time_format = '%H:%M'
+style = 'gray'
+time_format = '%Y-%m-%dT%H:%M:%S'
 utc_time_offset = '+9'
 
 [username]
-format = '[$user]()'
+format = '[$user]($style)'
+show_always = false
+style_user = 'purple'

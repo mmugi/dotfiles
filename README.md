@@ -6,19 +6,21 @@
 
 Install the dotfiles with a single command:
 
-
-``` shell
+```shell
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/mmugi/dotfiles/HEAD/bootstrap.sh)"
 ```
 
 ### > Install via Git
 
-Alternatively, clone the repository and run the installation using make:
+Alternatively, clone the repository and run the installation using `make`:
 
-``` shell
+```shell
 git clone git@github.com:mmugi/dotfiles.git ~/.dotfiles
+export DOTFILES_PATH="${HOME}/.dotfiles"
 cd ~/.dotfiles && make install
 ```
+
+Add the same `export` to your shell config as well, since the `make` targets need it at runtime. The one-line install above sets it for you.
 
 ### > Installation Options
 
@@ -28,48 +30,43 @@ You can customize the installation behavior by setting the following environment
 
 | Variable | Description |
 | --- | --- |
-| DOTFILES_BRANCH | Specify which branch to use (e.g., develop). |
-| DOTFILES_DOWNLOADER | Choose a downloader (git, curl, or wget). If unset, the installer will try them in that order. |
+| `DOTFILES_PATH` | Where the dotfiles live. Defaults to `~/.dotfiles`. The scripts require this at runtime, so export it from your shell config. |
+| `DOTFILES_BRANCH` | Which branch to use (e.g. `dev`). Defaults to `trunk`. |
+| `DOTFILES_DOWNLOADER` | Which downloader to use (`git`, `curl`, or `wget`). If unset, they are tried in that order. |
 
 #### Ignoring Configuration Files
 
-By default, the installation will stop when existing configuration files are detected to prevent accidental overwrites.
+To prevent accidental overwrites, the installation stops when existing configuration files are detected.
 
-If you prefer to keep your existing files and skip overwriting them, add a `.dotignore` file in your dotfiles directory:
+If you prefer to keep your existing files, add a `.dotignore` file to your dotfiles directory listing the paths to skip:
 
-``` plaintext
+```plaintext
+# vim
 .vimrc
+
 .config/git/ignore
 ```
 
-Each line in `.dotignore` should be a prefix pattern relative to your home directory.
+Each line in `.dotignore` is matched against the deployment path relative to your home directory, anchored at the beginning. Patterns are treated as regular expressions, so characters such as `.` and `*` have their usual regex meaning.
 
-## Initialization
-
-This repository includes optional initialization tasks intended for one-time system setup.
-
-Initialization tasks are not idempotent.
-To prevent accidental execution, they are available **only when the following environment variable is set**:
-
-``` shell
-export DOTFILES_INIT=true
-make init
-```
-
-If `DOTFILES_INIT` is not set, any attempt to run initialization tasks will fail.
+Blank lines and lines starting with `#` are ignored.
 
 ## Uninstallation
 
 To remove the installed dotfiles:
 
-``` shell
+```shell
 cd ~/.dotfiles && make uninstall
 ```
 
-This will remove the symlinks and any managed config files that were deployed by the install process.
+This removes the symlinks that the install process created, along with any directories left empty afterwards. The configuration files themselves live in this repository and are not deleted.
+
+Anything that is not a symlink owned by this repository is left untouched and reported with a warning.
 
 ## Help
 
-``` shell
+For the full list of commands:
+
+```shell
 cd ~/.dotfiles && make help
 ```

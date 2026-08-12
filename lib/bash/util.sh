@@ -1,87 +1,34 @@
 # shellcheck shell=bash
+
+# import.sh がsource時に読み取る変数
 # shellcheck disable=SC2034
 {
   LIB_VERSION='1.0.0'
-  LIB_DEPS=( esc msg log )
-  [[ "${1:-}" = '__META_PROBE__' ]] && return 0
+  LIB_DEPS=( log msg )
 }
+[[ "${1:-}" = '__IMPORT__' ]] && return 0
 
-# msg::chk 結果キャッシュ
+# util::chk 結果キャッシュ
 #   値: 0 = 存在する / 1 = 存在しない
 declare -gA _UTIL_CHK_CMD_CACHE=()
 
-util::sysinfo() {
-  local selector property
-  local silent=false
-  local force=false
-  local usage='usage: util::sysinfo <--os | --arch> [-q] [-f]'
-
-  while (( $# > 0 )); do
-    case "$1" in
-      # selectors
-      --os)   selector=os ;;
-      --arch) selector=arch ;;
-      # options
-      -q) silent=true ;;
-      -f) force=true ;;
-      *)
-        log::error "invalid option: $1"
-        return 1
-        ;;
-    esac
-    shift
-  done
-
-  [[ -z "${selector:-}" ]] && abort "$usage"
-
-  case "$selector" in
-    os)
-      [[ "$force" == 'false' && -n "${DOTFILES_SYS_OS:-}" ]] && return 0
-      [[ "$silent" == 'false' ]] && msg -n -p 'detecting operating system'
-      property="$(uname -o)"
-      case "$property" in
-        Darwin)    DOTFILES_SYS_OS='macos' ;;
-        GNU/Linux) DOTFILES_SYS_OS='linux' ;;
-        *)         DOTFILES_SYS_OS='unknown' ;;
-      esac
-      if [[ "$silent" == 'false' ]]; then
-        if [[ "$DOTFILES_SYS_OS" != 'unknown' ]]; then
-          msg -r --ok="$DOTFILES_SYS_OS" 'detecting operating system'
-        else
-          msg -r --ng="$DOTFILES_SYS_OS" 'detecting operating system'
-        fi
-      fi
-      export DOTFILES_SYS_OS
-      ;;
-
-    arch)
-      [[ "$force" == 'false' && -n "${DOTFILES_SYS_ARCH:-}" ]] && return 0
-      [[ "$silent" == 'false' ]] && msg -n -p 'detecting architecture'
-      property="$(uname -m)"
-      DOTFILES_SYS_ARCH="$property"
-      [[ "$silent" == 'false' ]] \
-        && msg -r --result="$DOTFILES_SYS_ARCH" 'detecting architecture'
-      export DOTFILES_SYS_ARCH
-      ;;
-
-    *)
-      log::error "invalid selector: $selector"
-      return 1
-      ;;
-  esac
-}
-
 util::chk() {
   # options
-  #   -2: msgの-2オプションを有効化
   #   -c: command
   #   -o: キャッシュを上書きする
   #   -q: 結果を出力しない
 
-  local selector target msg
-  local quiet=false override=false
-  local -a msg_opts=()
-  local -r usage='usage: [-c] [-q] target'
+  local override=0
+  local quiet=0
+  local selector target i
+  # 関数内で定義した関数はグローバルになり呼び出し側の usage を上書きするため、
+  # 他の util:: 関数と同じく文字列で持つ。
+  local usage='usage: util::chk <-c> [-oq] target'
+
+  if (( $# == 0 )); then
+    logger --error "$usage"
+    return 1
+  fi
 
   while (( $# > 0 )); do
     case "$1" in
@@ -89,15 +36,12 @@ util::chk() {
       -*)
         for (( i=1; i<${#1}; i++ )); do
           case "${1:$i:1}" in
-            2) msg_opts+=(-2) ;;
-            c)
-              [[ -n "${selector:-}" ]] && abort "$usage"
-              selector=command
-              ;;
-            o) override=true ;;
-            q) quiet=true ;;
+            c) selector='command' ;;
+            o) override=1 ;;
+            q) quiet=1 ;;
             *)
-              abort "invalid option: $1"
+              logger --error "invalid option: $1"
+              return 1
               ;;
           esac
         done
@@ -107,198 +51,69 @@ util::chk() {
     esac
   done
 
-  [[ $# -eq 0 ]] && abort "$usage"
-  [[ -z "${selector:-}" ]] && abort "$usage"
+  if [[ -z "${selector:-}" ]]; then
+    logger --error "$usage"
+    return 1
+  fi
 
   target="$*"
 
   case "$selector" in
     command)
-      if [[ "$override" != 'true' && -n "${_UTIL_CHK_CMD_CACHE["$target"]:-}" ]]; then
+      if (( ! override )) && [[ -n "${_UTIL_CHK_CMD_CACHE["$target"]:-}" ]]; then
         return "${_UTIL_CHK_CMD_CACHE["$target"]}"
       fi
-      msg="checking for the <b><hl>${target}</b></hl> command"
-      [[ "$quiet" != 'true' ]] && msg "${msg_opts[@]}" -n -p "$msg"
+
+      if (( ! quiet )); then
+        msg "checking <hl>${target}</hl> command..."
+      fi
+
       if type "$target" >/dev/null 2>&1; then
-        [[ "$quiet" != 'true' ]] && msg "${msg_opts[@]}" -r --ok='EXIST' "$msg"
         _UTIL_CHK_CMD_CACHE["$target"]=0
         return 0
       else
-        [[ "$quiet" != 'true' ]] && msg "${msg_opts[@]}" -r --ng='NOTFOUND' "$msg"
         _UTIL_CHK_CMD_CACHE["$target"]=1
+        if (( ! quiet )); then
+          msg::error "command not found: ${target}"
+        fi
         return 1
       fi
       ;;
-    *) abort "invalid selector: ${selector}"
+    *)
+      logger --error "invalid selector: ${selector}"
+      return 1
+      ;;
   esac
 }
 
-#util::chk() {
-#  local opt_exists=false
-#  local opt_selector=
-#  local opt_quiet=false
-#  local permission
-#  local positional_args=()
-#  local target
-#  local msg
-#  local msg_target
-#  local -r msg_usage='usage: [-c|-d|-f [-e]|-l|-p permission] [-q] target'
-#
-#  # options
-#  #   -c: command
-#  #   -d: directory
-#  #   -f: file
-#  #   -l: symlink
-#  #   -p: permission
-#  #   -q: 結果を出力しない
-#
-#  while (( $# > 0 )); do
-#    case $1 in
-#      --)
-#        shift
-#        positional_args+=("$@")
-#        set --
-#        ;;
-#      -*)
-#        options="$1"
-#        for (( i=1; i<${#options}; i++ )); do
-#          case "${options:$i:1}" in
-#            c)
-#              [[ -n "$opt_selector" ]] && abort "$msg_usage"
-#              opt_selector=c
-#              ;;
-#            d)
-#              [[ -n "$opt_selector" ]] && abort "$msg_usage"
-#              opt_selector=d
-#              ;;
-#            e)
-#              opt_exists=true
-#              ;;
-#            f)
-#              [[ -n "$opt_selector" ]] && abort "$msg_usage"
-#              opt_selector=f
-#              ;;
-#            l)
-#              [[ -n "$opt_selector" ]] && abort "$msg_usage"
-#              opt_selector=l
-#              ;;
-#            p)
-#              [[ -n "$opt_selector" ]] && abort "$msg_usage"
-#              opt_selector=p
-#              permission="$2"
-#              shift
-#              ;;
-#            q)
-#              opt_quiet=true
-#              ;;
-#            *)
-#              abort "invalid option: ${options}"
-#              ;;
-#          esac
-#        done
-#        shift
-#        ;;
-#      *)
-#        positional_args+=("$1")
-#        shift
-#        ;;
-#    esac
-#  done
-#
-#  [[ ${#positional_args[@]} -eq 0 ]] && abort "$msg_usage"
-#  [[ -z "$opt_selector" ]] && abort "$msg_usage"
-#
-#  set -- "${positional_args[@]}"
-#  target="$1"
-#  msg_target="${BOLD}${FG_ACCENT2}$1${RESET}"
-#
-#  if [[ "$opt_selector" == 'c' ]]; then
-#    msg="checking command ${BOLD}${FG_ACCENT2}${target}${RESET}"
-#    if type "$target" >/dev/null 2>&1; then
-#      [[ "$opt_quiet" == 'true' ]] || msg -2 -exist "$msg"
-#      return 0
-#    else
-#      [[ "$opt_quiet" == 'true' ]] || msg -2 -notfound "$msg"
-#      return 1
-#    fi
-#  elif [[ "$opt_selector" == 'd' ]]; then
-#    msg="checking directory ${BOLD}${FG_ACCENT2}${target}${RESET}"
-#    if [[ -d $target ]]; then
-#      [[ "$opt_quiet" == 'true' ]] || msg -2 -exist "$msg"
-#      return 0
-#    else
-#      [[ "$opt_quiet" == 'true' ]] || msg -2 -notfound "$msg"
-#      return 1
-#    fi
-#  elif [[ "$opt_selector" == 'f' ]]; then
-#    msg="checking file ${BOLD}${FG_ACCENT}${target}${RESET}"
-#    if "$opt_exists"; then
-#      if [[ -f "$target" ]]; then
-#        [[ "$opt_quiet" == 'true' ]] || msg -2 -exist "$msg"
-#        return 0
-#      else
-#        [[ "$opt_quiet" == 'true' ]] || msg -2 -notfound "$msg"
-#        return 1
-#      fi
-#    else
-#      if [[ -e "$target" ]]; then
-#        [[ "$opt_quiet" == 'true' ]] || msg -2 -exist "$msg"
-#        return 0
-#      else
-#        [[ "$opt_quiet" == 'true' ]] || msg -2 -notdounf "$msg"
-#        return 1
-#      fi
-#    fi
-#  elif [[ "$opt_selector" == 'l' ]]; then
-#    msg="checking symlink ${BOLD}${FG_ACCENT}${target}${RESET}"
-#    if [[ -L "$target" ]]; then
-#      [[ "$opt_quiet" == 'true' ]] || msg -2 -exist "$msg"
-#      return 0
-#    else
-#      [[ "$opt_quiet" == 'true' ]] || msg -2 -notfound "$msg"
-#      return 1
-#    fi
-#  elif [[ "$opt_selector" == 'p' ]]; then
-#    msg="checking permission ${msg_target} ${FG_BASE}(expected: ${permission})"
-#    if [[ -n "$(find "$target" -maxdepth 0 -perm "$permission")" ]]; then
-#      [[ "$opt_quiet" == 'true' ]] || msg -2 -ok "$msg"
-#      return 0
-#    else
-#      [[ "$opt_quiet" == 'true' ]] || msg -2 -mismatch "$msg"
-#      return 1
-#    fi
-#  fi
-#}
-
 util::install() {
-  # usage: util::install [--dry-run] src dst
+  # usage: util::install [--check] src dst
   #
-  # srcに指定されたファイルもしくはディレクトリを
-  # dstに指定されたパスに配置します。
+  # srcに指定されたファイルをdstに指定されたパスに配置します。
   #
   # srcが通常のファイルの場合、dstに指定された先にシンボリックリンクします。
-  # srcがディレクトリかつdstに指定された先に存在しない場合は作成し、
-  # 存在する場合は正常終了します。
+  # srcがディレクトリの場合、dstに指定されたパスのディレクトリを作成します。
   #
-  # dst先にファイルやリンクがすでに存在する場合は、1を返します。
+  # dst先にファイルやシンボリックリンクがすでに存在する場合は、1を返します。
   #
-  # --dry-runオプションが指定された場合は、シンボリックリンクやディレクトリの
+  # --checkオプションが指定された場合は、シンボリックリンクやディレクトリの
   # 作成は行われず、srcがdstに配置できるかどうかの0、1だけを返します。
+  # 成功時(配置可能な場合)にメッセージは表示されません。プレビュー表示では
+  # なく、事前の衝突検証を目的としたオプションです。
 
-  local cmd_result symlink
-  local dry_run=false
-  local usage='usage: util::install [--dry-run] src dst'
+  local check=0
+  local usage='usage: util::install [--check] src dst'
 
-  if [[ $# -eq 3 ]]; then
-    if [[ "$1" == '--dry-run' ]]; then
+  if (( $# == 3 )); then
+    if [[ "$1" == '--check' ]]; then
       shift
-      dry_run=true
+      check=1
     else
-      log::error "$usage"
+      logger --error "$usage"
       return 1
     fi
-  elif [[ $# -ne 2 ]]; then
-    log::error "$usage"
+  elif (( $# != 2 )); then
+    logger --error "$usage"
     return 1
   fi
 
@@ -306,49 +121,120 @@ util::install() {
   local dst="$2"
 
   if [[ ! -e "$src" ]]; then
-    log::error "source not found: ${src}"
+    logger --error "source not found: ${src}"
     return 1
   fi
 
+  # dst配置可能(ファイル、リンクが存在しない)
   if [[ ! -e "$dst" && ! -L "$dst" ]]; then
-    if "$dry_run"; then
-      : dry-run
+    (( check )) && return 0
+
+    if [[ -d "$src" ]]; then
+      mkdir -m 700 "$dst" || return 1
+      msg::changed "directory created: $dst"
     else
-      if [[ -d "$src" ]]; then
-        if cmd_result="$(mkdir -m 700 "$dst" 2>&1)"; then
-          msg::notice --mkdir "$dst"
-          return
-        else
-          log::error "$cmd_result"
-          return 1
-        fi
-      else
-        if cmd_result="$(ln -s "$src" "$dst" 2>&1)"; then
-          msg::notice --link "${src} ==> ${dst}"
-        else
-          log::error "$cmd_result"
-          return 1
-        fi
-      fi
+      ln -s "$src" "$dst" || return 1
+      msg::changed "symbolic link created: ${dst} -> ${src}"
+    fi
+
+    return 0
+  fi
+
+  # dstがすでに存在する
+  local link_target link_path src_path
+  if [[ -L "$dst" ]]; then
+    # リンク先が相対パスの場合、readlink の出力をそのまま realpath に渡すと
+    # カレントディレクトリ基準で解決されてしまうため、dst 自体を解決する。
+    if ! link_path="$(realpath "$dst" 2>/dev/null)"; then
+      link_target="$(readlink "$dst")"
+      msg::warning "broken symbolic link already exists: ${dst} -> ${link_target}"
+      return 1
+    fi
+    src_path="$(realpath "$src")"
+    if [[ "$src_path" != "$link_path" ]]; then
+      msg::warning "symbolic link already exists, not owned by dotfiles: ${dst} -> ${link_path}"
+      return 1
     fi
   else
-    if ! symlink="$(readlink "$dst")"; then
-      # not symlink
-      if [[ -d "$dst" ]]; then
-        : directory exists
-      else
-        log::warn "target already exists: ${dst}"
-        return 1
-      fi
-    elif [[ "$src" != "$symlink" ]]; then
-      log::warn "existing target is not owned by dotfiles: ${dst}"
+    if [[ ! -d "$dst" ]]; then
+      msg::warning "file already exists: ${dst}"
       return 1
-    elif [[ "$src" == "$symlink" ]]; then
-      : symlink are managed by dotfiles
-    else
-      log::error "readlink error: ${cmd_result}"
-      abort 'deploy failed;('
     fi
   fi
+
+  # dstディレクトリもしくはsrcにリンクされたdstファイルがすでに存在する
+  return 0
+}
+
+util::uninstall() {
+  # usage: util::uninstall [--dry-run] src dst
+  #
+  # dstに指定されたシンボリックリンクを解除します。
+  #
+  # dstがsrcを指すシンボリックリンクである場合のみ解除の対象とします。
+  # dstが存在しない場合は何もせず0を返します。
+  #
+  # dstがシンボリックリンクでない場合、もしくはsrcを指していない場合は
+  # 1を返します。
+  #
+  # --dry-runオプションが指定された場合、シンボリックリンクの解除は
+  # 行われませんが、解除される旨のメッセージは表示されます。
+  # util::install --check とは異なり、衝突有無の事前検証ではなく
+  # 削除対象のプレビュー表示を目的としているため、この挙動です。
+
+  local dry_run=0
+  local usage='usage: util::uninstall [--dry-run] src dst'
+
+  if (( $# == 3 )); then
+    if [[ "$1" == '--dry-run' ]]; then
+      shift
+      dry_run=1
+    else
+      logger --error "$usage"
+      return 1
+    fi
+  elif (( $# != 2 )); then
+    logger --error "$usage"
+    return 1
+  fi
+
+  local src="$1"
+  local dst="$2"
+
+  # dstが存在しない
+  if [[ ! -e "$dst" && ! -L "$dst" ]]; then
+    logger --debug "target does not exist: ${dst}"
+    return 0
+  fi
+
+  if [[ ! -L "$dst" ]]; then
+    if [[ -d "$dst" ]]; then
+      msg::warning "directory is not a symbolic link: ${dst}"
+    else
+      msg::warning "file is not a symbolic link: ${dst}"
+    fi
+    return 1
+  fi
+
+  # リンク先が相対パスの場合でも正しく解決するため、readlink の出力ではなく
+  # dst 自体を realpath に渡す。リンク切れの場合は解決に失敗する。
+  local link_target link_path src_path
+  if ! link_path="$(realpath "$dst" 2>/dev/null)"; then
+    link_target="$(readlink "$dst")"
+    msg::warning "broken symbolic link: ${dst} -> ${link_target}"
+    return 1
+  fi
+  src_path="$(realpath "$src")"
+
+  if [[ "$link_path" != "$src_path" ]]; then
+    msg::warning "symbolic link is not owned by dotfiles: ${dst} -> ${link_path}"
+    return 1
+  fi
+
+  if (( ! dry_run )); then
+    unlink -- "$dst" || return 1
+  fi
+  msg::rm "symbolic link unlinked: ${dst} -> ${link_path}"
+
   return 0
 }

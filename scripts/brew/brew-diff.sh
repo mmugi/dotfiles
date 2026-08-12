@@ -2,51 +2,48 @@
 
 set -ueo pipefail
 
+# shellcheck source=/dev/null
 source "${DOTFILES_PATH}/lib/bash/import.sh"
-import msg util log dotfiles
+import msg theme util log dotfiles
 
-BREWFILE_DUMP='/tmp/brewdump'
-
-select_brewfile() {
-  [[ -d "$DOTFILES_BREWFILE_DIR" ]] || abort "directory not found: ${DOTFILES_BREWFILE_DIR}"
-
-  local -a files=()
-  local f
-
-  # 通常ファイルのみを収集
-  while IFS= read -r -d '' f; do
-    files+=("$f")
-  done < <(find "$DOTFILES_BREWFILE_DIR" -type f -print0 | sort -z)
-
-  (( "${#files[@]}" )) || abort "no files found in ${DOTFILES_BREWFILE_DIR}"
-
-  PS3='choose the brewfile you want to compare: '
-  COLUMNS=1
-  select f in "${files[@]}" quit; do
-    if [[ -z "$f" ]]; then
-      log::error 'invalid selection'
-      continue
-    fi
-    printf '%s' "$f"
-    break
-  done
-}
+theme::load
+msg::init
 
 util::chk -c brew
 
-msg 'comparing the current system with the brewfile.'
-brewfile="$(select_brewfile)"
-if [[ "$brewfile" == 'quit' ]]; then
-  msg::marker --terminate 'quit'
+if [[ ! -d "$DOTFILES_BREWFILE_DIR" ]]; then
+  logger --fatal "directory not found: ${DOTFILES_BREWFILE_DIR}"
+fi
+
+# 通常ファイルのみを収集
+while IFS='' read -r -d '' file; do
+  files+=("$file")
+done < <(find "$DOTFILES_BREWFILE_DIR" -type f -print0 | sort -z)
+
+msg 'searching for brewfiles...'
+if (( ${#files[@]} == 0 )); then
+  msg::warning "no files found in ${DOTFILES_BREWFILE_DIR}"
   exit 1
 fi
 
-msg -p 'dumping all installed casks/formulae/images/taps into a brewfile'
-brew bundle dump --force --file "$BREWFILE_DUMP"
-newline
+if ! brewfile="$(
+  msg::select \
+    --ps='choose the brewfile you want to compare: ' \
+    "${files[@]}"
+)"; then
+  msg::error 'aborted.'
+  exit 1
+fi
+
+msg 'dumping all packages...'
+
+dump="$(
+  HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_ENV_HINTS=1 \
+    brew bundle dump --file=- --no-describe
+)"
 
 if util::chk -cq 'git'; then
-  git diff "$brewfile" "$BREWFILE_DUMP" || true
+  git diff "$brewfile" <(echo "$dump") && msg::ok 'no differences.'
 else
-  diff -u "$brewfile" "$BREWFILE_DUMP" || true
-fi
+  diff -u "$brewfile" <(echo "$dump") && msg::ok 'no differences.'
+fi || true

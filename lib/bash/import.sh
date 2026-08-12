@@ -1,96 +1,182 @@
-# bash library loader / import.sh
 # shellcheck shell=bash
 
-# usage:
+# Bash Library Loader <import.sh>
+#
+# * Usage *
+#
 #   source path/to/import.sh
-#   import <library名>...
+#   import <library名> ...
 #
-# DOTFILES_LIB_PATHから <library名>.sh を探索してsourceします。
-# 依存関係は各ライブラリのメタ情報で管理します。
-# デフォルトでは $DOTFILES_PATH/lib/bash から検索します。
+# * Library Import *
 #
-# ライブラリ側に必要なメタ情報
-# ライブラリの先頭に以下を定義する必要があります。
-# -----
-# # shellcheck disable=SC2034
-# {
-#   LIB_VERSION='1.0.0'
-#   LIB_DEPS=()
-#   [[ "${1:-}" = '__META_PROBE__' ]] && return 0
-# }
-# -----
+#   import.sh読み込み後、`import()` の引数に読み込むライブラリ名を指定して実行します。
+#   検索パス(後述)から `<library名>.sh` を検索しsourceします。
+#
+#   `import()` で読み込まれたライブラリは `IMPORT_IMPORTED_LIBS` 連想配列にセットされます。
+#   キーは `<library名>、バリューはメタデータ(後述)で定義されるライブラリバージョンがセットされます。
+#   この連想配列は、ライブラリの再読み込みなどを防ぐためのチェックなどに利用されるため、
+#   意図しない書き換えにご注意ください。
+#
+#   `IMPORT_IMPORTED_LIBS` を参照することで、読み込み済みのライブラリおよびバージョンを
+#   確認することができます。
+#
+#   コード例:
+#
+#     ```
+#     for key in "${!IMPORT_IMPORTED_LIBS[@]}"; do
+#       printf '%s: %s\n' "$key" "${IMPORT_IMPORTED_LIBS[${key}]}"
+#     done
+#
+#     ```
+# * Import Path *
+#
+#   デフォルトでは `${DOTFILES_PATH}/lib/bash` から `<library名>.sh` を検索します。
+#   検索パスを追加したい場合は `DOTFILES_IMPORT_PATH` を定義します。
+#   PATH環境変数と同じ形式(:区切り)で指定し、左から優先されます。
+#
+# * Metadata *
+#
+#   ライブラリのバージョン、依存関係は各ライブラリのメタ情報で管理します。
+#   import.shで管理するライブラリの先頭には以下を定義してください。
+#
+#     ```
+#     # shellcheck disable=SC2034
+#     LIB_VERSION='0.0.0'
+#     LIB_DEPS=()
+#     LIB_REQUIRES_BASH='>=0.0.0'
+#     [[ "${1:-}" = '__IMPORT__' ]] && return 0
+#     ```
+#
+#   `LIB_VERSION` は `x.y.z` 形式で指定します(接頭辞 `v` は不可)。
+#
+#   そのライブラリが依存するライブラリ名を `LIB_DEPS` に配列として保持します。
+#   `LIB_DEPS` が空でない場合、`import()` の引数として再帰的に依存ライブラリの解決を行います。#
+#
+#   `LIB_REQUIRES_BASH` には、そのライブラリが要求するbashバージョンを `<version specifier><version>`
+#   の形式の文字列で指定します。
+#   使用可能な指定子は `==` 、`!=` 、`>=` 、`<=` 、`>` 、`<` です。
+#   この変数は定義しないこともできます。その場合は、`>=0` として判定されます。
+#   条件が満たされない場合は、エラーでimportを停止します。
+#
+# * Debug *
+#
+#   IMPORT_DEBUG=1 を設定することで、詳細なdebug情報を出力します。
 
-[[ "${_IMPORT_IMPORTED:-false}" == 'true' ]] && return 0
-_IMPORT_IMPORTED=true
+: "${IMPORT_INITIALIZED=0}"
+: "${IMPORT_DEBUG:=0}"
+: "${DOTFILES_IMPORT_PATH:=}"
 
-if [ -z "${BASH_VERSION:-}" ]; then
-  printf "\033[1;31m%s\033[0m\n" 'import.sh: please source this library with bash.'
-  exit 1
-fi
+import::_depth() {
+  local func depth=0
+  for func in "${FUNCNAME[@]}"; do
+    [[ "$func" == 'import' ]] && (( depth++ ))
+  done
+  printf '%d\n' "$(( depth - 1 ))"
+}
 
-if (( "${BASH_VERSINFO[0]}" < 4 )); then
-  printf 'error: %s: this script requires bash 4 or newer.\n' "${BASH_SOURCE[0]}" >&2
-  exit 1
-fi
-
-if [[ -z "${DOTFILES_PATH:-}" ]]; then
-  printf 'To continue, the environment variables \033[1;32mDOTFILES_PATH\033[m must be defined.\n' >&2
-  exit 1
-fi
-
-_IMPORT_ENTITY="$(realpath -- "${BASH_SOURCE[0]}")"
-if [[ "$_IMPORT_ENTITY" != "${DOTFILES_PATH}/lib/bash/import.sh" ]]; then
-  printf \
-    "DOTFILES_PATH does not match the sourced import.sh: %s/lib/bash/import.sh\n" \
-    "$DOTFILES_PATH" >&2
-  exit 1
-fi
-
-: "${IMPORT_LOG:=false}"
-
-# ライブラリ検索パス定義
-# DOTFILES_LIB_PATH 環境変数を定義することで検索パスを追加できます。
-# :区切りで複数与えることも可能で、左から優先されます。
-declare -a _import_lib_path_default=( "${DOTFILES_PATH}/lib/bash" )
-if [[ -n "${DOTFILES_LIB_PATH:-}" ]]; then
-  IFS=: read -r -a _import_lib_path_extra <<< "$DOTFILES_LIB_PATH"
-  DOTFILES_LIB_PATH=( "${_import_lib_path_extra[@]}" "${_import_lib_path_default[@]}" )
-else
-  DOTFILES_LIB_PATH=( "${_import_lib_path_default[@]}" )
-fi
-
-if [[ -t 1 ]]; then
-  _import_green="$(printf '\033[32m')"
-  _import_blue="$(printf '\033[34m')"
-  _import_bold="$(printf '\033[1m')"
-  _import_reset="$(printf '\033[m')"
-else
-  _import_green=''
-  _import_blue=''
-  _import_bold=''
-  _import_reset=''
-fi
-
-declare -A _IMPORT_LOADED_LIBS=()
-declare -a _IMPORT_RESOLVING_STACK=()
-
-import::_abort() { printf 'import error: %s\n' "$*" >&2; exit 1; }
-
-import::_log() {
+import::_debug() {
+  local tab=2
   local spaces=''
-  local depth="$(( ${#FUNCNAME[@]} - 3 ))"
-  if [[ "${IMPORT_LOG:-false}" == 'true' ]]; then
-    (( depth > 0 )) && spaces="$(printf '%*s' "$(( depth * 2 ))" '')"
-    printf '%s%s\n' "$spaces" "$*"
+  local depth
+  (( IMPORT_DEBUG )) || return 0
+  depth="$(import::_depth)"
+  depth="$(( depth < 0 ? 0 : depth ))"
+  (( depth > 0 )) && spaces="$(printf '%*s' "$(( depth * tab ))" '')"
+  printf '[IMPORT DEBUG] depth[%02d]: %s%s\n' "$depth" "$spaces" "$*" >&2
+}
+
+import::_error() {
+  printf '[IMPORT ERROR] %b%s%b\n' "$_IMPORT_RED" "$*" "$_IMPORT_RESET" >&2
+}
+
+import::_abort() {
+  import::_error "$@"
+  exit 1
+}
+
+import::_hl() { printf '%b%s%b' "${_IMPORT_BOLD}${_IMPORT_GREEN}" "$*" "$_IMPORT_RESET"; }
+import::_hl_lib() { printf '%b%s%b' "$_IMPORT_GREEN" "$*" "$_IMPORT_RESET"; }
+import::_hl_deps() { printf '%b%s%b' "$_IMPORT_BLUE" "$*" "$_IMPORT_RESET"; }
+import::_hl_bold() { printf '%b%s%b' "$_IMPORT_BOLD" "$*" "$_IMPORT_RESET"; }
+import::_hl_keyword() { printf '%b%s%b' "$_IMPORT_CYAN" "$*" "$_IMPORT_RESET"; }
+
+import::_version_compare() {
+  # usage: import::_version_compare "a_version" "b_version"
+  # a = b: 0
+  # a > b: 1
+  # a < b: -1
+
+  local a_version="$1"
+  local b_version="$2"
+  local a_versions=()
+  local b_versions=()
+
+  IFS='.' read -ra a_versions <<< "$a_version"
+  IFS='.' read -ra b_versions <<< "$b_version"
+
+  local i
+  local max="${#a_versions[@]}"
+  (( ${#b_versions[@]} > max )) && max="${#b_versions[@]}"
+
+   for (( i = 0; i < max; i++ )); do
+     local a="${a_versions[i]:-0}"
+     local b="${b_versions[i]:-0}"
+
+     if (( a > b )); then
+       printf '%d' 1
+       return 0
+     fi
+
+     if (( a < b )); then
+       printf '%d' -1
+       return 0
+     fi
+   done
+
+   printf '%d' 0
+   return 0
+}
+
+import::_version_satisfies() {
+  local requirement="$1"
+  local version="${2:-"${BASH_VERSION}"}"
+  local op required cmp
+
+  if [[ "$requirement" =~ ^([><=!]=?)([0-9]+(\.[0-9]+)*)$ ]]; then
+    op="${BASH_REMATCH[1]}"
+    required="${BASH_REMATCH[2]}"
   else
-    :
+    import::_error "invalid version requirement: ${requirement}"
+    return 1
   fi
+
+  if [[ "$version" =~ ^([0-9]+(\.[0-9]+)*).*$ ]]; then
+    version="${BASH_REMATCH[1]}"
+  else
+    import::_error "invalid version: ${version}"
+    return 1
+  fi
+
+  cmp="$(import::_version_compare "$version" "$required")"
+  case "$op" in
+    '==') (( cmp == 0 )) ;;
+    '!=') (( cmp != 0 )) ;;
+    '>')  (( cmp > 0 )) ;;
+    '>=') (( cmp >= 0 )) ;;
+    '<')  (( cmp < 0 )) ;;
+    '<=') (( cmp <= 0 )) ;;
+    *)
+      import::_error "unsupported operator: ${op}"
+      return 1
+      ;;
+  esac
 }
 
 import::_find_library_file() {
-  local library="$1" p filepath
-  for p in "${DOTFILES_LIB_PATH[@]}"; do
-    filepath="${p}/${library}.sh"
+  local lib="$1"
+  local p filepath
+  for p in "${DOTFILES_IMPORT_PATH[@]}"; do
+    filepath="${p}/${lib}.sh"
     [[ -r "$filepath" ]] && { printf '%s\n' "$filepath"; return 0; }
   done
   return 1
@@ -104,80 +190,154 @@ import::_resolving_stack_contains(){
   return 1
 }
 
-import::show_loaded_libs() {
-  local library
-  for library in "${!_IMPORT_LOADED_LIBS[@]}"; do
-    printf '%s %s\n' "$library" "${_IMPORT_LOADED_LIBS[$library]}"
-  done | sort
-}
-
 import() {
-  local library libfile library_version library_deps
-  local -r bar='----------------'
+  local lib libfile libver
 
-  import::_log "${_import_bold}${bar} import loop ($*) ${bar}${_import_reset}"
-  import::_log \
-    "${_import_bold}${_import_blue}*${_import_reset} imported libraries:" \
-    "${_import_bold}${_import_blue}${!_IMPORT_LOADED_LIBS[*]}${_import_reset}"
+  import::_debug \
+    "currently imported libraries: $(import::_hl_bold "${!IMPORT_IMPORTED_LIBS[@]}")"
+  import::_debug "importing libraries: $(import::_hl_bold "$*")"
 
-  for library in "$@"; do
-    import::_log "${_import_green}>>>${_import_reset} import (${library})"
+  for lib in "$@"; do
+    import::_debug "$(import::_hl_lib '>>>') importing $(import::_hl_lib "$lib")"
 
-    # 読み込み済み
-    if [[ -n "${_IMPORT_LOADED_LIBS[$library]:-}" ]]; then
-      import::_log 'already imported.'
-      import::_log "${_import_green}<<<${_import_reset} continue"
+    # 読み込み済みチェック
+    if [[ -n "${IMPORT_IMPORTED_LIBS[${lib}]:-}" ]]; then
+      import::_debug 'already imported.'
+      import::_debug "$(import::_hl_lib '<<<') continue"
       continue
     fi
 
     # 循環検出
-    import::_log "checking if '${library}' is in the resolving stack..."
-    if import::_resolving_stack_contains "$library"; then
+    import::_debug "checking if $(import::_hl_bold "$lib") is in the resolving stack..."
+    if import::_resolving_stack_contains "$lib"; then
       import::_abort \
-        "cyclic dependency detected: ${_IMPORT_RESOLVING_STACK[*]} -> ${library}"
+        "circular library dependency detected: ${_IMPORT_RESOLVING_STACK[*]} -> ${lib}"
     else
-      import::_log "'${library}' is not in the resolving stack."
-      import::_log 'adding resolving stack...'
-      _IMPORT_RESOLVING_STACK+=("$library")
+      import::_debug "$(import::_hl_bold "$lib") is not in the resolving stack."
+      import::_debug 'pushing to resolving stack...'
+      _IMPORT_RESOLVING_STACK+=( "$lib" )
     fi
 
-    import::_log "resolving stack: ${_IMPORT_RESOLVING_STACK[*]}"
+    import::_debug "resolving stack: $(import::_hl_bold "${_IMPORT_RESOLVING_STACK[*]}")"
 
     # モジュール探索
-    import::_log "searching library file '${library}.sh'..."
-    if ! libfile=$(import::_find_library_file "$library"); then
-      import::_abort "library file not found: ${library} (searched: ${DOTFILES_LIB_PATH[*]})"
+    import::_debug "searching library file $(import::_hl_bold "${lib}.sh")..."
+    if ! libfile=$(import::_find_library_file "$lib"); then
+      import::_abort "library file not found: ${lib} (searched: ${DOTFILES_IMPORT_PATH[*]})"
     else
-      import::_log "library file found: ${libfile}"
+      import::_debug "library file found: $(import::_hl_keyword "$libfile")"
     fi
 
-    # ライブラリのメタ情報を取得
-    # 各ライブラリは '__META_PROBE__' を引数に指定した場合に、
-    # メタ情報を持つ変数がされるようライブラリ冒頭に定義する。
-    import::_log "retrieving metadata..."
+    if ! grep "$_IMPORT_MARKER" "$libfile" >/dev/null 2>&1; then
+      import::_abort "library marker not found: ${_IMPORT_MARKER}: ${libfile}"
+    fi
+
+    # メタ情報取得
+    import::_debug "retrieving metadata..."
+    declare LIB_VERSION=
+    declare -a LIB_DEPS=()
+    declare LIB_REQUIRES_BASH=
+
     # shellcheck source=/dev/null
-    if ! source "$libfile" '__META_PROBE__'; then
+    if ! source "$libfile" "$_IMPORT_MARKER"; then
       import::_abort "failed to retrieve library metadata: ${libfile}"
     else
-      # メタ情報
-      library_version="${LIB_VERSION:-0.0.0}"
-      library_deps=( "${LIB_DEPS[@]+"${LIB_DEPS[@]}"}" )
-      import::_log "dependency librarys: ${library_deps[*]:-none}"
+      if [[ -z "${LIB_VERSION:-}" ]]; then
+        libver='undefined'
+      elif [[ "${LIB_VERSION,,}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        libver="$LIB_VERSION"
+      else
+        import::_error "invalid version format. expected: x.y.z: ${LIB_VERSION}"
+        libver='???'
+      fi
+
+      import::_debug "library version: $(import::_hl_keyword "$libver")"
+      import::_debug "dependent libraries: $(import::_hl_keyword "${LIB_DEPS[*]:-none}")"
+      import::_debug "library requires bash version: $(import::_hl_keyword "${LIB_REQUIRES_BASH:-*}")"
     fi
 
-    # 依存ライブラリを先に読み込む
-    if (( "${#library_deps[@]}" != 0 )); then
-      import::_log 'importing dependency libraries...'
-      import "${library_deps[@]}"
+    if ! import::_version_satisfies "${LIB_REQUIRES_BASH:=">=0"}"; then
+      import::_abort "${lib}: bash ${LIB_REQUIRES_BASH} is required (current: ${BASH_VERSION})"
+    fi
+
+    # 依存ライブラリ解決
+    if (( "${#LIB_DEPS[@]}" != 0 )); then
+      import::_debug "$(import::_hl_deps "{{{") resolving dependent libraries..."
+      import "${LIB_DEPS[@]}"
+      import::_debug "$(import::_hl_deps "}}}") resolved library dependencies."
     fi
 
     # ライブラリ読み込み
+    import::_debug "loading $(import::_hl_bold "$lib")..."
     # shellcheck source=/dev/null
     source "$libfile" || import::_abort "failed to source ${libfile}"
+    import::_debug 'removing from resolving stack...'
     unset '_IMPORT_RESOLVING_STACK[${#_IMPORT_RESOLVING_STACK[@]}-1]'
-    _IMPORT_LOADED_LIBS["$library"]="$library_version"
-    import::_log "sourced library: ${libfile}"
-    import::_log "${_import_green}<<<${_import_reset} imported '${libfile}'"
+    IMPORT_IMPORTED_LIBS["$lib"]="$libver"
+    import::_debug "$(import::_hl_lib '<<<') imported $(import::_hl_lib "$lib")"
   done
-  import::_log "${_import_bold}${bar} import loop end ($*) ${bar}${_import_reset}"
+
+  if (( $(import::_depth) == 0 )); then
+    import::_debug "$(import::_hl 'import completed!')"
+  fi
 }
+
+import::_init() {
+  local requires_bash='>=4.0'
+  local preload_libs=( core )
+
+  if [ -z "${BASH_VERSION:-}" ]; then
+    printf 'import: must be sourced from bash.\n' >&2
+    exit 1
+  fi
+
+  (( IMPORT_INITIALIZED )) && return 0
+
+  declare -g _IMPORT_RESET=
+  declare -g _IMPORT_BOLD=
+  declare -g _IMPORT_RED=
+  declare -g _IMPORT_GREEN=
+  declare -g _IMPORT_BLUE=
+  declare -g _IMPORT_CYAN=
+
+  if [[ -t 2  && -z "${NO_COLOR:-}" ]]; then
+    _IMPORT_RESET="$(printf '\033[m')"
+    _IMPORT_BOLD="$(printf '\033[1m')"
+    _IMPORT_RED="$(printf '\033[31m')"
+    _IMPORT_GREEN="$(printf '\033[32m')"
+    _IMPORT_BLUE="$(printf '\033[34m')"
+    _IMPORT_CYAN="$(printf '\033[36m')"
+  fi
+
+  import::_debug "bash version ${BASH_VERSION}"
+  import::_debug "initializing..."
+
+  if ! import::_version_satisfies "$requires_bash"; then
+    import::_abort "bash ${requires_bash} is required (current: ${BASH_VERSION})"
+  fi
+
+  if [[ -z "${DOTFILES_PATH:-}" ]]; then
+    import::_abort 'DOTFILES_PATH is not defined.' >&2
+  fi
+
+  declare -gA IMPORT_IMPORTED_LIBS=()
+  declare -ga _IMPORT_RESOLVING_STACK=()
+  declare -gr _IMPORT_MARKER='__IMPORT__'
+
+  import::_debug "import path initializing..."
+  local _import_path_default=( "${DOTFILES_PATH}/lib/bash" )
+  local _import_path_extra
+  if [[ -n "${DOTFILES_IMPORT_PATH:-}" ]]; then
+    IFS=':' read -r -a _import_path_extra <<< "$DOTFILES_IMPORT_PATH"
+    DOTFILES_IMPORT_PATH=( "${_import_path_extra[@]}" "${_import_path_default[@]}" )
+  else
+    DOTFILES_IMPORT_PATH=( "${_import_path_default[@]}" )
+  fi
+
+  import::_debug "preloading core libraries..."
+  import "${preload_libs[@]}"
+
+  IMPORT_INITIALIZED=1
+}
+
+import::_init
