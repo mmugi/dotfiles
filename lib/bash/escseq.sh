@@ -228,7 +228,9 @@ escseq::sgr() {
     shift
   done
 
-  local joined_code
-  IFS=';' joined_code="${code_arr[*]}"
+  # IFS はこの関数内でのみ有効にする。代入のみのコマンドに前置した IFS は
+  # カレントシェルに残り続けるため、local で宣言してから join する。
+  local IFS=';'
+  local joined_code="${code_arr[*]}"
   escseq::csi --sgr "$joined_code"
 }
