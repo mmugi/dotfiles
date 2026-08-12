@@ -16,6 +16,10 @@ export DOTFILES_PATH
 export MSG_DELAY=0
 export TERMCAP_COLOR_MODE=never
 
+# 色の有無はテスト内で TERMCAP_COLOR_MODE で切り替える。NO_COLOR は
+# TERMCAP_COLOR_MODE より優先されるため、実行環境の値を持ち込まない。
+unset NO_COLOR
+
 # shellcheck source=/dev/null
 source "${DOTFILES_PATH}/lib/bash/import.sh"
 import core escseq termcap trap theme log msg util dotfiles
@@ -172,19 +176,27 @@ check_rc 'msg::_push_token_stack 引数4は失敗する' 1 msg::_push_token_stac
 
 # --- msg::box -----------------------------------------------------------------
 
-check 'msg::box が枠を描く' '1' \
-  "$(( $(msg::box -- 'x' | grep -c '[┌└]') == 2 ? 1 : 0 ))"
+if (( _MSG_PYTHON3_UNAVAILABLE )); then
+  # python3 が無い環境では msg::box は枠を描かず msg にフォールバックする。
+  printf 'skip - msg::box の幅計算 (python3 なし。フォールバックのみ確認)\n'
+  check 'python3なしでは枠を描かない' '0' \
+    "$(msg::box -- 'x' | grep -c '[┌└]')"
+  check 'python3なしでもメッセージは出る' '[>] x' "$(msg::box -- 'x')"
+else
+  check 'msg::box が枠を描く' '1' \
+    "$(( $(msg::box -- 'x' | grep -c '[┌└]') == 2 ? 1 : 0 ))"
 
-# awk の length はロケール次第でバイト数を数えるため、表示幅の比較には
-# ライブラリ自身の幅計算を使う。全行が同じ表示幅になれば枠が揃っている。
-check 'msg::box 全角文字の幅が揃う' '1' \
-  "$(msg::_calc_line_widths "$(msg::box -- '日本語' 'ab')" | sort -u | wc -l | tr -d ' ')"
+  # awk の length はロケール次第でバイト数を数えるため、表示幅の比較には
+  # ライブラリ自身の幅計算を使う。全行が同じ表示幅になれば枠が揃っている。
+  check 'msg::box 全角文字の幅が揃う' '1' \
+    "$(msg::_calc_line_widths "$(msg::box -- '日本語' 'ab')" | sort -u | wc -l | tr -d ' ')"
 
-check 'msg::_calc_line_widths は入力と同じ行数を返す' \
-  '3' "$(msg::_calc_line_widths "$(printf 'a\n\nbb')" | wc -l | tr -d ' ')"
+  check 'msg::_calc_line_widths は入力と同じ行数を返す' \
+    '3' "$(msg::_calc_line_widths "$(printf 'a\n\nbb')" | wc -l | tr -d ' ')"
 
-check 'msg::_calc_line_widths が全角を2幅で数える' \
-  '6' "$(msg::_calc_line_widths '日本語')"
+  check 'msg::_calc_line_widths が全角を2幅で数える' \
+    '6' "$(msg::_calc_line_widths '日本語')"
+fi
 
 check 'MSG_BOX=0 でboxを描かない' '0' \
   "$(MSG_BOX=0 msg::box -- 'x' | grep -c '[┌└]')"
