@@ -28,6 +28,7 @@ msg::init() {
 
   declare -gi _MSG_PYTHON3_UNAVAILABLE=0
   if ! python3 --version >/dev/null 2>&1; then
+    _MSG_PYTHON3_UNAVAILABLE=1
     logger --warning 'python3 is not available. falling back to simplified mode.'
   fi
 
