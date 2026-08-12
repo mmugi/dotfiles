@@ -419,7 +419,9 @@ msg::_render_append_escseq() {
   fi
 
   if (( _MSG_RENDERER_CONTEXT['readline'] )); then
-    _MSG_RENDER_OUTPUT+="\x01${1}\x02"
+    # 出力時に printf %b で変換すると本文中のバックスラッシュまで
+    # 解釈されてしまうため、実際の制御文字をそのまま埋める。
+    _MSG_RENDER_OUTPUT+=$'\x01'"${1}"$'\x02'
   else
     _MSG_RENDER_OUTPUT+="$1"
   fi
@@ -793,7 +795,9 @@ ${raw}"
   logger --debug --ch="$_MSG_LOG_CH_RENDERER" "↓↓ rendering result ↓↓
 $(printf '%q' "$_MSG_RENDER_OUTPUT")"
   logger --debug --ch="$_MSG_LOG_CH_RENDERER" "↑↑ rendering result ↑↑"
-  printf '%b' "$_MSG_RENDER_OUTPUT"
+  # %b にすると本文のバックスラッシュが解釈されてしまう。
+  # 制御文字はバッファ構築時に実文字で入れているため %s でよい。
+  printf '%s' "$_MSG_RENDER_OUTPUT"
 
   return 0
 }
@@ -1510,11 +1514,11 @@ msg::box() {
   rule="$(msg::_repeat_char '─' "$(( max_width + box_padding_left + box_padding_right ))")"
 
   # top
-  printf '%b┌%b┐\n' "${STYLE_STDOUT[${box_style}]:-}" "$rule"
+  printf '%s┌%s┐\n' "${STYLE_STDOUT[${box_style}]:-}" "$rule"
 
   # padding top
   for (( i = 0; i < box_padding_top; i++ )); do
-    printf '%b│%*s│\n' \
+    printf '%s│%*s│\n' \
       "${STYLE_STDOUT[${box_style}]:-}" \
       "$(( max_width + box_padding_left + box_padding_right ))" ''
   done
@@ -1523,7 +1527,7 @@ msg::box() {
   for i in "${!inner_rendered_lines[@]}"; do
     pad="$(( max_width - inner_line_widths[i] ))"
 
-    printf '│%*s%b%*s%*s%b│\n' \
+    printf '│%*s%s%*s%*s%s│\n' \
       "$box_padding_left" '' \
       "${inner_rendered_lines[i]}" \
       "$pad" '' \
@@ -1537,7 +1541,7 @@ msg::box() {
   done
 
   # bottom
-  printf '└%b┘%b\n' "$rule" "${STYLE_STDOUT['rst']:-}"
+  printf '└%s┘%s\n' "$rule" "${STYLE_STDOUT['rst']:-}"
 
   #[[ -t 1 ]] && sleep "$MSG_DELAY"
 

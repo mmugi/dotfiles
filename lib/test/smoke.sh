@@ -174,6 +174,15 @@ check '閉じ忘れタグの後もstyleが復帰する' "$_ctl" "$_aft"
 # 回帰: 属性値にglob文字があってもトークナイザが止まらない
 check 'glob文字を含む属性値' '[>] x' "$(msg '<hl style="a[b*">x</hl>')"
 
+# 回帰: 本文のバックスラッシュを解釈しない (printf %b をやめた)
+check 'msg がバックスラッシュを保つ' \
+  'path\with\backslash' "$(msg --no-prompt -- 'path\with\backslash')"
+check 'msg が \n を改行にしない' 'a\nb' "$(msg --no-prompt -- 'a\nb')"
+check 'msg が \\ を畳まない' 'a\\b' "$(msg --no-prompt -- 'a\\b')"
+
+# 改行したい場合の代替手段が使えること
+check '<@br> で改行できる' "$(printf 'a\nb')" "$(msg --no-prompt -- 'a<@br>b')"
+
 check_rc 'msg::_push_token_stack 引数0は失敗する' 1 msg::_push_token_stack
 check_rc 'msg::_push_token_stack 引数4は失敗する' 1 msg::_push_token_stack a b c d
 
@@ -199,6 +208,11 @@ else
 
   check 'msg::_calc_line_widths が全角を2幅で数える' \
     '6' "$(msg::_calc_line_widths '日本語')"
+
+  # 回帰: box経由でもバックスラッシュが壊れない
+  # (以前は msg と msg::box で %b が二重にかかり、幅計算が非印字文字で失敗していた)
+  check 'msg::box がバックスラッシュを保つ' '1' \
+    "$(msg::box -- 'a\bc' | grep -c 'a\\bc')"
 
   # --box-rendered: 整形済みの行をそのまま枠で囲む
   check 'msg::box --box-rendered が枠を描く' '1' \
