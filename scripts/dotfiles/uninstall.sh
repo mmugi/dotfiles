@@ -126,8 +126,10 @@ _summary_body() {
 }
 
 print_summary() {
+  # 末尾に空行は入れない。dry-runではこれが最後の出力になり、
+  # 空行で終わるとプロンプトとの間隔が他のスクリプトと揃わなくなる。
+  # 後続の出力がある場合は呼び出し側で区切りを入れる。
   msg::box --box-rendered -- "$(_summary_body)"
-  msg::newline
 }
 
 uninstall_configs() {
@@ -231,10 +233,10 @@ if msg::confirm; then
   uninstall_configs
   print_summary
   if (( ! DOTFILES_UNINSTALL_DRYRUN )); then
+    msg::newline
     msg::box --prompt='🛸' --base-style='success' -- 'DOTFILES UNINSTALLATION COMPLETED'
     msg::newline
     msg 'goodbye👋'
-    msg::newline
   fi
 else
   msg::newline
