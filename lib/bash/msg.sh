@@ -1247,12 +1247,15 @@ msg::_repeat_char() {
   printf '%s' "${output// /${char}}"
 }
 
-msg::_calc_width() {
+msg::_calc_line_widths() {
   # 表示幅の計算
   # msg() に渡す文字列には `<hl></hl>` やエスケープシーケンスなどの
   # 表示時の文字数に反映されない文字が含まれることがあるため、--plain で
   # 装飾なしの実際に表示される文字列を取得して、表示幅を計算する。
   # pythonが利用できる場合、unicodedataから表示幅を計算する。
+  #
+  # 入力の各行に対して幅を1行ずつ出力する(入力と同じ行数)。
+  # 行ごとにpython3を起動すると1行あたり30ms程度かかるため、まとめて処理する。
 
   python3 - "$1" <<'PYTHON'
 import os
@@ -1267,22 +1270,18 @@ sys.path.insert(0, os.path.join(dotfiles_path, 'lib/python/_vendor'))
 from wcwidth import wcswidth
 
 if len(sys.argv) != 2:
-  raise RuntimeError("usage: msg::_calc_width <string>")
+  raise RuntimeError("usage: msg::_calc_line_widths <string>")
 
-s = sys.argv[1]
-max_width = 0
-
-for line in s.splitlines():
+# splitlines()ではなくsplit('\n')を使うのは、空行を含めて入力と同じ行数を
+# 返すため。呼び出し側は行数が一致することを前提にしている。
+for line in sys.argv[1].split('\n'):
   w = wcswidth(line)
 
   if w < 0:
     escaped = line.encode("unicode_escape").decode()
     raise RuntimeError(f"string contains non-printable characters: {escaped}")
 
-  if w > max_width:
-    max_width = w
-
-print(max_width)
+  print(w)
 PYTHON
 }
 
@@ -1424,7 +1423,7 @@ msg::box() {
   local max_width=0
   local count_line=0
   local str i line
-  local rendered rendered_plain width tmp rule pad
+  local rendered rendered_plain widths width rule pad
 
   for str in "$@"; do
     logger --debug 'rendering messages...'
@@ -1438,13 +1437,16 @@ msg::box() {
       count_line=$(( count_line + 1 ))
     done <<<"$rendered"
 
-    while IFS= read -r line; do
-      width="$(msg::_calc_width "$line")"
+    logger --debug 'calculating line widths...'
+    if ! widths="$(msg::_calc_line_widths "$rendered_plain")"; then
+      logger --error 'failed to calculate line widths'
+      return 1
+    fi
+
+    while IFS= read -r width; do
       inner_line_widths+=( "$width" )
-      tmp="$(printf '%03d' "$width")"
-      logger --debug "calculating line width ... ${tmp}: ${line}"
       (( width > max_width )) && max_width="$width"
-    done <<<"$rendered_plain"
+    done <<<"$widths"
   done
 
   logger --debug "line count: ${count_line}"
