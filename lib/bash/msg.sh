@@ -484,7 +484,6 @@ msg::_push_prompt_stack() {
   local symbol="$1"
   logger --debug --ch="$_MSG_LOG_CH_RENDERER" "symbol=\"${symbol}\""
   _MSG_RENDERER_PROMPT_STACK+=( "$symbol" )
-  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p _MSG_RENDERER_PROMPT_STACK)"
 }
 
 msg::_drop_prompt_stack() {
@@ -493,7 +492,6 @@ msg::_drop_prompt_stack() {
 
   local last_idx=$(( ${#_MSG_RENDERER_PROMPT_STACK[@]} - 1 ))
   unset "_MSG_RENDERER_PROMPT_STACK[${last_idx}]"
-  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p _MSG_RENDERER_PROMPT_STACK)"
 }
 
 msg::_push_indent_stack() {
@@ -503,7 +501,6 @@ msg::_push_indent_stack() {
   local width="$1"
   logger --debug --ch="$_MSG_LOG_CH_RENDERER" "width=\"${width}\""
   _MSG_RENDERER_INDENT_STACK+=( "$width" )
-  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p _MSG_RENDERER_INDENT_STACK)"
 }
 
 msg::_drop_indent_stack() {
@@ -512,7 +509,6 @@ msg::_drop_indent_stack() {
 
   local last_idx=$(( ${#_MSG_RENDERER_INDENT_STACK[@]} - 1 ))
   unset "_MSG_RENDERER_INDENT_STACK[${last_idx}]"
-  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p _MSG_RENDERER_INDENT_STACK)"
 }
 
 msg::_push_inline_style() {
@@ -527,8 +523,6 @@ msg::_push_inline_style() {
   _MSG_RENDERER_INLINE_STYLE_TAG_STACK+=( "$tag" )
   _MSG_RENDERER_INLINE_STYLE_STACK+=( "$style" )
 
-  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p _MSG_RENDERER_INLINE_STYLE_TAG_STACK)"
-  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p _MSG_RENDERER_INLINE_STYLE_STACK)"
 }
 
 msg::_drop_inline_style() {
@@ -547,8 +541,6 @@ msg::_drop_inline_style() {
       _MSG_RENDERER_INLINE_STYLE_TAG_STACK=( "${_MSG_RENDERER_INLINE_STYLE_TAG_STACK[@]}" )
       _MSG_RENDERER_INLINE_STYLE_STACK=( "${_MSG_RENDERER_INLINE_STYLE_STACK[@]}" )
 
-      logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p _MSG_RENDERER_INLINE_STYLE_TAG_STACK)"
-      logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p _MSG_RENDERER_INLINE_STYLE_STACK)"
 
       return 0
     fi
@@ -569,8 +561,6 @@ msg::_push_block_style() {
   _MSG_RENDERER_BLOCK_STYLE_TAG_STACK+=( "$tag" )
   _MSG_RENDERER_BLOCK_STYLE_STACK+=( "$style" )
 
-  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p _MSG_RENDERER_BLOCK_STYLE_TAG_STACK)"
-  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p _MSG_RENDERER_BLOCK_STYLE_STACK)"
 }
 
 msg::_drop_block_style() {
@@ -589,8 +579,6 @@ msg::_drop_block_style() {
       _MSG_RENDERER_BLOCK_STYLE_TAG_STACK=( "${_MSG_RENDERER_BLOCK_STYLE_TAG_STACK[@]}" )
       _MSG_RENDERER_BLOCK_STYLE_STACK=( "${_MSG_RENDERER_BLOCK_STYLE_STACK[@]}" )
 
-      logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p _MSG_RENDERER_BLOCK_STYLE_TAG_STACK)"
-      logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p _MSG_RENDERER_BLOCK_STYLE_STACK)"
 
       return 0
     fi
