@@ -442,7 +442,7 @@ msg::_render_style() {
   (( _MSG_RENDERER_CONTEXT['plain'] )) && return 0
 
   local base_style="${_MSG_RENDERER_CONTEXT['base_style']}"
-  local style output
+  local style output i
 
   output+="${STYLE_STDOUT['rst']:-}${STYLE_STDOUT[${base_style}]:-}"
 
@@ -601,7 +601,7 @@ msg::_render_block_tag_open() {
       msg::_push_prompt_stack ''
       ;;
     indent)
-      msg::_push_indent_stack "${_MSG_TOKENIZER_OUTPUT_ATTR[${i}:width]}"
+      msg::_push_indent_stack "${_MSG_TOKENIZER_OUTPUT_ATTR[${idx}:width]:-0}"
       ;;
     b|it|hl) # style tags
       (( _MSG_RENDERER_CONTEXT['plain'] )) && return 0
