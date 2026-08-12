@@ -137,30 +137,6 @@ configure_git_for_dotfiles() {
   msg::newline
 }
 
-_is_ignored() {
-  # usage: _is_ignored config_relpath_from_home
-  #
-  # 引数として入力されたコンフィグのパスが、DOTFILES_PATH ディレクトリに配置
-  # される .dotignore ファイルに含まれるかどうか判定します。
-  # 引数のコンフィグは、ホームディレクトリからの相対パスで指定します。
-  # .dotignore に記載のパスと前方一致する場合、trueを返します。
-
-  local -r ignorefile="${DOTFILES_PATH}/.dotignore"
-  local config_relpath_from_home
-
-  (( $# == 1 )) || logger --fatal '_is_ignored: invalid args'
-
-  config_relpath_from_home="$1"
-
-  [[ -s "$ignorefile" ]] || return
-
-  while read -r pattern; do
-    [[ -z "$pattern" || "$pattern" =~ ^# ]] && continue
-    [[ "$config_relpath_from_home" =~ ^$pattern ]] && return 0
-  done < "$ignorefile"
-  return 1
-}
-
 install_configs() {
   # DOTFILES_CONFIG_DIR で管理されるコンフィグファイルの
   # シンボリックリンクを配置します。
@@ -222,7 +198,7 @@ install_configs() {
       config_relpath_fromhome="${src#"${pkg_dir}/"}"
       dst="${HOME}/${config_relpath_fromhome}"
 
-      if _is_ignored "$config_relpath_fromhome"; then
+      if dotfiles::is_ignored "$config_relpath_fromhome"; then
         continue
       else
         util::install --check "$src" "$dst" || conflict=1
@@ -257,7 +233,7 @@ install_configs() {
 
       if [[ "$src" =~ \.swp$ ]]; then
         continue
-      elif _is_ignored "$config_relpath_fromhome"; then
+      elif dotfiles::is_ignored "$config_relpath_fromhome"; then
         msg::skipped "skipped: ${HOME}/${config_relpath_fromhome}"
         continue
       else

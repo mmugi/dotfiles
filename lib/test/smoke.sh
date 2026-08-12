@@ -292,8 +292,33 @@ check_rc 'util::uninstall シンボリックリンク以外は失敗' 1 \
 # --- dotfiles -----------------------------------------------------------------
 
 check 'DOTFILES_CONFIG_DIR' "${DOTFILES_PATH}/configs" "$DOTFILES_CONFIG_DIR"
+check 'DOTFILES_IGNOREFILE' "${DOTFILES_PATH}/.dotignore" "$DOTFILES_IGNOREFILE"
 check 'DOTFILES_LOGO が定義されている' '1' \
   "$(( ${#DOTFILES_LOGO} > 0 ? 1 : 0 ))"
+
+# dotfiles::is_ignored
+#   実際の .dotignore はユーザー固有のファイルなので触らない。
+#   DOTFILES_IGNOREFILE は declare -g なので、import 後に差し替えられる。
+_ignorefile_orig="$DOTFILES_IGNOREFILE"
+DOTFILES_IGNOREFILE="${_tmp}/dotignore"
+
+printf '# comment\n.vimrc\n\n.config/git\n' > "$DOTFILES_IGNOREFILE"
+
+check_rc 'is_ignored 完全一致' 0 dotfiles::is_ignored '.vimrc'
+check_rc 'is_ignored 前方一致' 0 dotfiles::is_ignored '.config/git/ignore'
+check_rc 'is_ignored 一致しない' 1 dotfiles::is_ignored '.config/nvim/init.lua'
+check_rc 'is_ignored コメント行は無視' 1 dotfiles::is_ignored 'comment'
+check_rc 'is_ignored 空行は全一致しない' 1 dotfiles::is_ignored 'anything/else'
+check_rc 'is_ignored 引数なしは失敗' 1 dotfiles::is_ignored
+check_rc 'is_ignored 引数過多は失敗' 1 dotfiles::is_ignored a b
+
+: > "$DOTFILES_IGNOREFILE"
+check_rc 'is_ignored 空ファイルでは何も除外しない' 1 dotfiles::is_ignored '.vimrc'
+
+rm -f "$DOTFILES_IGNOREFILE"
+check_rc 'is_ignored ファイルが無い場合も失敗しない' 1 dotfiles::is_ignored '.vimrc'
+
+DOTFILES_IGNOREFILE="$_ignorefile_orig"
 
 # --- 結果 ---------------------------------------------------------------------
 
