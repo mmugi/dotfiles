@@ -199,7 +199,30 @@ else
 
   check 'msg::_calc_line_widths が全角を2幅で数える' \
     '6' "$(msg::_calc_line_widths '日本語')"
+
+  # --box-rendered: 整形済みの行をそのまま枠で囲む
+  check 'msg::box --box-rendered が枠を描く' '1' \
+    "$(( $(msg::box --box-rendered -- "$(msg::rm 'x')" | grep -c '[┌└]') == 2 ? 1 : 0 ))"
+
+  # rm と skipped がそれぞれのプロンプトで1行ずつ出ること
+  check '--box-rendered が行ごとのプロンプトを保つ' '2' \
+    "$(msg::box --box-rendered -- "$(msg::rm 'a'; msg::skipped 'b')" \
+       | grep -cE '\[/\] a|\[-\] b' | tr -d ' ')"
+
+  # 色付きでも枠が揃う(幅計算がエスケープシーケンスを除去できている)
+  check '--box-rendered 色付きでも幅が揃う' '1' \
+    "$(msg::_calc_line_widths \
+        "$(msg::_strip_escseq \
+            "$(TERMCAP_COLOR_MODE=always msg::box --box-rendered -- \
+                "$(TERMCAP_COLOR_MODE=always msg::rm 'removed')")")" \
+       | sort -u | wc -l | tr -d ' ')"
 fi
+
+check 'msg::_strip_escseq がCSIを除去する' 'bold' \
+  "$(msg::_strip_escseq "$(printf '\033[1mbold\033[0m')")"
+
+check 'msg::_strip_escseq がSOH/STXを除去する' 'x' \
+  "$(msg::_strip_escseq "$(printf '\001x\002')")"
 
 check 'MSG_BOX=0 でboxを描かない' '0' \
   "$(MSG_BOX=0 msg::box -- 'x' | grep -c '[┌└]')"

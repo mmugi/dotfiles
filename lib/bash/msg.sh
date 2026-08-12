@@ -1239,6 +1239,17 @@ msg::_repeat_char() {
   printf '%s' "${output// /${char}}"
 }
 
+msg::_strip_escseq() {
+  # 表示幅に影響しない制御文字を除去する
+  #   - CSIシーケンス (色や属性)
+  #   - readline用のSOH/STXマーカー (msg -R が付与する)
+  #
+  # 整形済み文字列の表示幅を測るために使う。
+
+  printf '%s' "$1" \
+    | sed -e $'s/\x1b\\[[0-9;:?]*[a-zA-Z]//g' -e $'s/[\x01\x02]//g'
+}
+
 msg::_calc_line_widths() {
   # 表示幅の計算
   # msg() に渡す文字列には `<hl></hl>` やエスケープシーケンスなどの
@@ -1306,9 +1317,26 @@ msg::box() {
   #            box_padding_bottom=0
   #            box_padding_left=1
   #            box_padding_right=1
+  #
+  #   --box-rendered
+  #
+  #        引数を整形済みの文字列として扱い、msg() を通さずそのまま枠で囲みます。
+  #        行ごとに異なるプロンプトやスタイルを使いたい場合に利用します。
+  #        表示幅はエスケープシーケンスを除去して計算されるため、
+  #        msg::rm や msg::skipped などの出力をそのまま渡せます。
+  #
+  #        例:
+  #            content="$(
+  #              msg::rm 'removed:'
+  #              msg::skipped 'skipped:'
+  #            )"
+  #            msg::box --box-rendered -- "$content"
+  #
+  #        このモードでは `msg()` に渡すオプションは意味を持ちません。
 
   msg::_isinit || return 1
 
+  local box_rendered=0
   local box_style='msg_box'
   local box_padding_top_default=1
   local box_padding_bottom_default=1
@@ -1379,6 +1407,7 @@ msg::box() {
         ;;
       --box-padding-fit) box_padding_fit=1 ;;
       --box-padding-nofit) box_padding_nofit=1 ;;
+      --box-rendered) box_rendered=1 ;;
       *) msg_args+=( "$1" ) ;;
     esac
     shift
@@ -1401,11 +1430,20 @@ msg::box() {
     return 1
   fi
 
+  if (( box_rendered && ${#msg_args[@]} > 0 )); then
+    logger --warning "--box-rendered: msg options are ignored: ${msg_args[*]}"
+  fi
+
   # fallback
-  # python3が利用できない場合、msg()にそのまま渡す
+  # python3が利用できない場合、枠なしでそのまま出力する
   if (( _MSG_PYTHON3_UNAVAILABLE || ! MSG_BOX )); then
-    for msg in "$@"; do
-      msg "${msg_args[@]}" -- "$msg"
+    local fallback
+    for fallback in "$@"; do
+      if (( box_rendered )); then
+        printf '%s\n' "$fallback"
+      else
+        msg "${msg_args[@]}" -- "$fallback"
+      fi
     done
     return 0
   fi
@@ -1418,11 +1456,18 @@ msg::box() {
   local rendered rendered_plain widths width rule pad
 
   for str in "$@"; do
-    logger --debug 'rendering messages...'
-    rendered="$(msg "${msg_args[@]}" -- "$str")"
+    if (( box_rendered )); then
+      # 整形済みなので msg() は通さず、幅計算用にエスケープシーケンスだけ落とす
+      logger --debug 'using pre-rendered message...'
+      rendered="$str"
+      rendered_plain="$(msg::_strip_escseq "$str")"
+    else
+      logger --debug 'rendering messages...'
+      rendered="$(msg "${msg_args[@]}" -- "$str")"
 
-    logger --debug 'rendering plain messages...'
-    rendered_plain="$(msg -ppp "${msg_args[@]}" -- "$str")"
+      logger --debug 'rendering plain messages...'
+      rendered_plain="$(msg -ppp "${msg_args[@]}" -- "$str")"
+    fi
 
     while IFS= read -r line; do
       inner_rendered_lines+=( "$line" )
