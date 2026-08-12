@@ -8,67 +8,6 @@ LIB_DEPS=( log msg )
 #   値: 0 = 存在する / 1 = 存在しない
 declare -gA _UTIL_CHK_CMD_CACHE=()
 
-util::sysinfo() {
-  local selector property
-  local silent=false
-  local force=false
-  local usage='usage: util::sysinfo <--os | --arch> [-q] [-f]'
-
-  while (( $# > 0 )); do
-    case "$1" in
-      # selectors
-      --os)   selector=os ;;
-      --arch) selector=arch ;;
-      # options
-      -q) silent=true ;;
-      -f) force=true ;;
-      *)
-        log::error "invalid option: $1"
-        return 1
-        ;;
-    esac
-    shift
-  done
-
-  [[ -z "${selector:-}" ]] && abort "$usage"
-
-  case "$selector" in
-    os)
-      [[ "$force" == 'false' && -n "${DOTFILES_SYS_OS:-}" ]] && return 0
-      [[ "$silent" == 'false' ]] && msg -n -p 'detecting operating system'
-      property="$(uname -o)"
-      case "$property" in
-        Darwin)    DOTFILES_SYS_OS='macos' ;;
-        GNU/Linux) DOTFILES_SYS_OS='linux' ;;
-        *)         DOTFILES_SYS_OS='unknown' ;;
-      esac
-      if [[ "$silent" == 'false' ]]; then
-        if [[ "$DOTFILES_SYS_OS" != 'unknown' ]]; then
-          msg -r --ok="$DOTFILES_SYS_OS" 'detecting operating system'
-        else
-          msg -r --ng="$DOTFILES_SYS_OS" 'detecting operating system'
-        fi
-      fi
-      export DOTFILES_SYS_OS
-      ;;
-
-    arch)
-      [[ "$force" == 'false' && -n "${DOTFILES_SYS_ARCH:-}" ]] && return 0
-      [[ "$silent" == 'false' ]] && msg -n -p 'detecting architecture'
-      property="$(uname -m)"
-      DOTFILES_SYS_ARCH="$property"
-      [[ "$silent" == 'false' ]] \
-        && msg -r --result="$DOTFILES_SYS_ARCH" 'detecting architecture'
-      export DOTFILES_SYS_ARCH
-      ;;
-
-    *)
-      log::error "invalid selector: $selector"
-      return 1
-      ;;
-  esac
-}
-
 util::chk() {
   # options
   #   -c: command
