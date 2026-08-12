@@ -28,7 +28,8 @@ You can customize the installation behavior by setting the following environment
 
 | Variable | Description |
 | --- | --- |
-| DOTFILES_BRANCH | Specify which branch to use (e.g., develop). |
+| DOTFILES_PATH | Where the dotfiles live. Defaults to `~/.dotfiles`. The scripts require this at runtime, so export it from your shell config. |
+| DOTFILES_BRANCH | Specify which branch to use (e.g., dev). Defaults to `trunk`. |
 | DOTFILES_DOWNLOADER | Choose a downloader (git, curl, or wget). If unset, the installer will try them in that order. |
 
 #### Ignoring Configuration Files
@@ -38,25 +39,15 @@ By default, the installation will stop when existing configuration files are det
 If you prefer to keep your existing files and skip overwriting them, add a `.dotignore` file in your dotfiles directory:
 
 ``` plaintext
+# vim
 .vimrc
+
 .config/git/ignore
 ```
 
-Each line in `.dotignore` should be a prefix pattern relative to your home directory.
+Each line in `.dotignore` is matched against the deployment path relative to your home directory, anchored at the beginning. Patterns are treated as regular expressions, so characters such as `.` and `*` carry their regex meaning.
 
-## Initialization
-
-This repository includes optional initialization tasks intended for one-time system setup.
-
-Initialization tasks are not idempotent.
-To prevent accidental execution, they are available **only when the following environment variable is set**:
-
-``` shell
-export DOTFILES_INIT=true
-make init
-```
-
-If `DOTFILES_INIT` is not set, any attempt to run initialization tasks will fail.
+Blank lines and lines starting with `#` are ignored.
 
 ## Uninstallation
 
@@ -66,9 +57,13 @@ To remove the installed dotfiles:
 cd ~/.dotfiles && make uninstall
 ```
 
-This will remove the symlinks and any managed config files that were deployed by the install process.
+This removes the symlinks that the install process created, along with any directories left empty afterwards. The configuration files themselves live in this repository and are not deleted.
+
+Files that are not symlinks owned by this repository are left untouched and reported as warnings.
 
 ## Help
+
+For the full list of available commands:
 
 ``` shell
 cd ~/.dotfiles && make help
