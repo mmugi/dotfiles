@@ -1,7 +1,7 @@
 # shellcheck shell=bash
 
 LIB_VERSION='1.0.0'
-LIB_DEPS=()
+LIB_DEPS=( core )
 [[ "${1:-}" = '__IMPORT__' ]] && return 0
 
 # Escape Sequence <escseq.sh>
@@ -108,6 +108,7 @@ escseq::sgr() {
   fi
 
   local rgb code_arr=()
+  local invalid=0
   while (( $# > 0 )); do
     case "$1" in
       # attributes
@@ -176,21 +177,25 @@ escseq::sgr() {
       --fg-256)
         if [[ -z "${2:-}" ]]; then
           core::error "color code required: $1"
+          invalid=1
         elif [[ "$2" =~ ^[0-9]+$ ]]; then
           code_arr+=( "${fg_set_color};5;$2" )
           shift
         else
           core::error "$1: invalid color code: $2"
+          invalid=1
         fi
         ;;
       --bg-256)
         if [[ -z "${2:-}" ]]; then
           core::error "color code required: $1"
+          invalid=1
         elif [[ "$2" =~ ^[0-9]+$ ]]; then
           code_arr+=( "${bg_set_color};5;$2" )
           shift
         else
           core::error "$1: invalid color code: $2"
+          invalid=1
         fi
         ;;
 
@@ -198,35 +203,54 @@ escseq::sgr() {
       --fg-tc)
         if [[ -z "${2:-}" ]]; then
           core::error "missing color argument: $1"
+          invalid=1
         elif [[ "$2" =~ ^[0-9]+(:|;)[0-9]+(:|;)[0-9]+$ ]]; then
           code_arr+=( "${fg_set_color};2;${2//:/;}" )
           shift
-        elif [[ "$2" =~ ^#?[0-9a-zA-Z]{6}$ ]]; then
-          rgb="$(escseq::_hexcc2rgb "$2")"
-          code_arr+=( "${fg_set_color};2;${rgb}" )
+        elif [[ "$2" =~ ^#?[0-9a-fA-F]{6}$ ]]; then
+          if rgb="$(escseq::_hexcc2rgb "$2")"; then
+            code_arr+=( "${fg_set_color};2;${rgb}" )
+          else
+            invalid=1
+          fi
           shift
         else
           core::error "$1: invalid color code (expected: \"R:G:B\" or \"#RRGGBB\"): $2"
+          invalid=1
         fi
         ;;
       --bg-tc)
         if [[ -z "${2:-}" ]]; then
           core::error "missing color argument: $1"
+          invalid=1
         elif [[ "$2" =~ ^[0-9]+(:|;)[0-9]+(:|;)[0-9]+$ ]]; then
           code_arr+=( "${bg_set_color};2;${2//:/;}" )
           shift
-        elif [[ "$2" =~ ^#?[0-9a-zA-Z]{6}$ ]]; then
-          rgb="$(escseq::_hexcc2rgb "$2")"
-          code_arr+=( "${bg_set_color};2;${rgb}" )
+        elif [[ "$2" =~ ^#?[0-9a-fA-F]{6}$ ]]; then
+          if rgb="$(escseq::_hexcc2rgb "$2")"; then
+            code_arr+=( "${bg_set_color};2;${rgb}" )
+          else
+            invalid=1
+          fi
           shift
         else
           core::error "$1: invalid color code (expected: \"R:G:B\" or \"#RRGGBB\"): $2"
+          invalid=1
         fi
         ;;
-      *) core::error "illegal option: $1" ;;
+      *)
+        core::error "illegal option: $1"
+        invalid=1
+        ;;
     esac
     shift
   done
+
+  # 不正な引数があった場合、部分的に組み立てたシーケンスは出力せず失敗を返す。
+  # 呼び出し側(theme等)がコマンド置換で受けるため、黙って壊れた値を渡さない。
+  if (( invalid )); then
+    return 1
+  fi
 
   # IFS はこの関数内でのみ有効にする。代入のみのコマンドに前置した IFS は
   # カレントシェルに残り続けるため、local で宣言してから join する。
