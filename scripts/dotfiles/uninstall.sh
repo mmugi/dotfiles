@@ -48,7 +48,7 @@ EOF
   )"
 
   msg::box -- "$greet_msg"
-  newline
+  msg::newline
 }
 
 uninstall_configs() {
@@ -134,7 +134,7 @@ uninstall_configs() {
   done <<<"$pkg_dirs"
 
   msg::ok 'configuration files uninstalled:)'
-  newline
+  msg::newline
 }
 
 greet
@@ -150,12 +150,12 @@ if msg::confirm; then
   uninstall_configs
   if (( ! DOTFILES_UNINSTALL_DRYRUN )); then
     msg::box --prompt='🛸' --base-style='success' -- 'DOTFILES UNINSTALLATION COMPLETED'
-    newline
+    msg::newline
     msg 'goodbye👋'
-    newline
+    msg::newline
   fi
 else
-  newline
+  msg::newline
   msg::box --prompt='👾' --base-style='abort' -- 'UNINSTALLATION ABORTED'
   exit 1
 fi

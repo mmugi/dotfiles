@@ -48,7 +48,7 @@ msg::_isinit() {
   fi
 }
 
-newline() { printf '\n'; }
+msg::newline() { printf '\n'; }
 
 msg::_tokenizer_init() {
   declare -ga _MSG_TOKENIZER_OUTPUT_TYPE=()
@@ -1124,7 +1124,7 @@ msg::confirm() {
       IFS='' read -r -n 1 -d '' -p 'ready? ' input
       /bin/stty "$tty_state"
       trap::restore_handler
-      newline
+      msg::newline
 
       if [[ "$input" == $'\n' ]]; then
         return 0

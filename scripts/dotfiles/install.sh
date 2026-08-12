@@ -79,7 +79,7 @@ dotfiles path: <hl>${DOTFILES_PATH}</hl>
 EOF
   )"
   msg::box -- "$greet_msg"
-  newline
+  msg::newline
 }
 
 configure_git_for_dotfiles() {
@@ -132,7 +132,7 @@ configure_git_for_dotfiles() {
     msg::ok 'git configured for dotfiles:)'
   fi
 
-  newline
+  msg::newline
 }
 
 _is_ignored() {
@@ -230,7 +230,7 @@ install_configs() {
 
   if (( conflict )); then
     msg::warning 'conflicting files detected:/'
-    newline
+    msg::newline
     _nextstep --config-conflict
   fi
 
@@ -262,7 +262,7 @@ install_configs() {
   done <<<"$pkg_dirs"
 
   msg::ok 'configuration files installed:)'
-  newline
+  msg::newline
 }
 
 theme::load

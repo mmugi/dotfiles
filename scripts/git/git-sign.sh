@@ -37,7 +37,7 @@ configure_signing_format() {
   if config="$(_git_config_chk gpg.format)"; then
     msg "gpg.format is already configured: <hl>${config}</hl>"
     msg::skipped 'signing format configuration skipped.'
-    newline
+    msg::newline
     return 0
   fi
 
@@ -54,7 +54,7 @@ configure_signing_format() {
   esac
 
   msg::ok 'signing format configured!'
-  newline
+  msg::newline
 }
 
 _validation_signingkey() {
@@ -92,7 +92,7 @@ configure_signing_key() {
     if _validation_signingkey "$config"; then
       SIGNING_KEY="$config"
       msg::skipped 'signing key configuration skipped.'
-      newline
+      msg::newline
       return 0
     fi
   fi
@@ -177,7 +177,7 @@ configure_signing_key() {
   _git_config_set user.signingkey "$SIGNING_KEY"
 
   msg::ok 'signing key configured!'
-  newline
+  msg::newline
 }
 
 configure_allowed_signers() {
@@ -236,7 +236,7 @@ configure_allowed_signers() {
   if grep "$line" "$allowed_signers_file" >/dev/null 2>&1; then
     msg "already registered in the allowed signers file: <hl>${line}</hl>"
     msg::skipped 'allowed signers configuration skipped.'
-    newline
+    msg::newline
     return 0
   fi
 
@@ -248,7 +248,7 @@ configure_allowed_signers() {
     msg::skipped 'addition of entry to allowed signers skipped.'
   fi
 
-  newline
+  msg::newline
 }
 
 configure_commit_signing() {
@@ -268,11 +268,11 @@ configure_commit_signing() {
     fi
   fi
 
-  newline
+  msg::newline
 }
 
 util::chk -c git
-newline
+msg::newline
 
 configure_signing_format
 configure_signing_key

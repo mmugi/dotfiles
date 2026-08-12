@@ -149,6 +149,9 @@ check 'msg --raw はそのまま出す' '<hl>raw</hl>' "$(msg -r --no-prompt '<h
 check 'msg::ok のプロンプト' '[^] done' "$(msg::ok 'done')"
 check 'msg::error のプロンプト' '[;] oops' "$(msg::error 'oops')"
 
+check 'msg::newline は改行だけ出す' '1' "$(msg::newline | wc -l | tr -d ' ')"
+check '名前空間なしの newline は定義しない' '' "$(type -t newline 2>/dev/null || true)"
+
 # 回帰: width属性なしの <@indent> が set -u で落ちない
 check '<@indent> 属性なし' '[>] x' "$(msg '<@indent>x</@indent>')"
 
