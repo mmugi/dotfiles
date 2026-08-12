@@ -142,8 +142,11 @@ _summary_body() {
     msg::ok 'no warnings:)'
   fi
 
-  # 完了通知もこのboxに含める。dry-runでは何も削除していないので出さない。
-  if (( ! DOTFILES_UNINSTALL_DRYRUN )); then
+  # 完了通知もこのboxに含める。
+  #   - dry-run: 何も削除していないので出さない
+  #   - 警告あり: 残ったものがあるので「完了」と言い切らない。
+  #               対応方法は上の notice で案内している
+  if (( ! DOTFILES_UNINSTALL_DRYRUN && ${#UNINSTALL_WARNED[@]} == 0 )); then
     msg::newline
     msg --no-prompt --base-style='success' -- '🛸 DOTFILES UNINSTALLATION COMPLETED'
   fi
@@ -240,8 +243,13 @@ uninstall_configs() {
     fi
   done <<<"$pkg_dirs"
 
-  # 警告の有無は print_summary のboxで示すため、ここでは重複させない
-  msg::ok 'configuration files uninstalled:)'
+  # 警告がある場合、boxは完了を言い切らない (COMPLETED を出さない) ため、
+  # 結論はこの行で示す。
+  if (( ${#UNINSTALL_WARNED[@]} > 0 )); then
+    msg::warning 'finished with warnings:/'
+  else
+    msg::ok 'configuration files uninstalled:)'
+  fi
   msg::newline
 }
 
@@ -257,7 +265,9 @@ fi
 if msg::confirm; then
   uninstall_configs
   print_summary
-  if (( ! DOTFILES_UNINSTALL_DRYRUN )); then
+  # 別れの挨拶は、きれいに終わったときだけ。
+  # dry-run と警告ありは COMPLETED と同じ条件で抑制する。
+  if (( ! DOTFILES_UNINSTALL_DRYRUN && ${#UNINSTALL_WARNED[@]} == 0 )); then
     msg::newline
     msg 'goodbye👋'
   fi
