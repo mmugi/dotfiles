@@ -44,7 +44,7 @@ if [[ "$brewfile" == 'newfile' ]]; then
   if ! brewfile="$(
     msg::read -e \
       -i "${DOTFILES_BREWFILE_DIR}/" \
-      -- 'enter the path of the new brewfile:'
+      -- 'enter the path of the new brewfile: '
   )"; then
     msg::error 'aborted.'
     exit 1
