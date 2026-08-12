@@ -1,2 +1,10 @@
 .dotignore
 __pycache__/
+
+# configs/git/.config/git/ignore と同じ内容。
+# あちらは make install で ~/.config/git/ignore に配置される global gitignore で、
+# このリポジトリが配布する側にあたる。clone 直後(install 前)と uninstall 後は
+# その保護が効かないため、ここにも書いておく。
+.DS_Store
+*~
+*.swp
