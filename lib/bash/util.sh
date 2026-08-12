@@ -190,29 +190,30 @@ util::install() {
       msg::changed "directory created: $dst"
     else
       ln -s "$src" "$dst" || return 1
-      msg::changed "symbolic link created: ${src} -> ${dst}"
+      msg::changed "symbolic link created: ${dst} -> ${src}"
     fi
 
     return 0
   fi
 
   # dstがすでに存在する
-  local link_path src_path
+  local link_target link_path src_path
   if [[ -L "$dst" ]]; then
     # リンク先が相対パスの場合、readlink の出力をそのまま realpath に渡すと
     # カレントディレクトリ基準で解決されてしまうため、dst 自体を解決する。
     if ! link_path="$(realpath "$dst" 2>/dev/null)"; then
-      msg::warning "broken symbolic link exists: ${dst}"
+      link_target="$(readlink "$dst")"
+      msg::warning "broken symbolic link already exists: ${dst} -> ${link_target}"
       return 1
     fi
     src_path="$(realpath "$src")"
     if [[ "$src_path" != "$link_path" ]]; then
-      msg::warning "existing destination target is not owned by dotfiles: ${dst}"
+      msg::warning "symbolic link already exists, not owned by dotfiles: ${dst} -> ${link_path}"
       return 1
     fi
   else
     if [[ ! -d "$dst" ]]; then
-      msg::warning "already file exists: ${dst}"
+      msg::warning "file already exists: ${dst}"
       return 1
     fi
   fi
@@ -258,33 +259,38 @@ util::uninstall() {
 
   # dstが存在しない
   if [[ ! -e "$dst" && ! -L "$dst" ]]; then
-    logger --debug "target is not exists: ${dst}"
+    logger --debug "target does not exist: ${dst}"
     return 0
   fi
 
   if [[ ! -L "$dst" ]]; then
-    msg::warning "target is not symbolic link: ${dst}"
+    if [[ -d "$dst" ]]; then
+      msg::warning "directory is not a symbolic link: ${dst}"
+    else
+      msg::warning "file is not a symbolic link: ${dst}"
+    fi
     return 1
   fi
 
   # リンク先が相対パスの場合でも正しく解決するため、readlink の出力ではなく
   # dst 自体を realpath に渡す。リンク切れの場合は解決に失敗する。
-  local link_path src_path
+  local link_target link_path src_path
   if ! link_path="$(realpath "$dst" 2>/dev/null)"; then
-    msg::warning "broken symbolic link: ${dst}"
+    link_target="$(readlink "$dst")"
+    msg::warning "broken symbolic link: ${dst} -> ${link_target}"
     return 1
   fi
   src_path="$(realpath "$src")"
 
   if [[ "$link_path" != "$src_path" ]]; then
-    msg::warning "symbolic link points outside dotfiles management: ${dst}"
+    msg::warning "symbolic link is not owned by dotfiles: ${dst} -> ${link_path}"
     return 1
   fi
 
   if (( ! dry_run )); then
     unlink -- "$dst" || return 1
   fi
-  msg::rm "symbolic link unlinked: ${dst}"
+  msg::rm "symbolic link unlinked: ${dst} -> ${link_path}"
 
   return 0
 }
