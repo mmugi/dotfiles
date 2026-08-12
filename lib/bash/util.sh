@@ -4,7 +4,7 @@ LIB_VERSION='1.0.0'
 LIB_DEPS=( log msg )
 [[ "${1:-}" = '__IMPORT__' ]] && return 0
 
-# msg::chk 結果キャッシュ
+# util::chk 結果キャッシュ
 #   値: 0 = 存在する / 1 = 存在しない
 declare -gA _UTIL_CHK_CMD_CACHE=()
 
@@ -16,12 +16,13 @@ util::chk() {
 
   local override=0
   local quiet=0
-  local selector target
-
-  usage() { logger --error 'usage: <-c> [-oq] target'; }
+  local selector target i
+  # 関数内で定義した関数はグローバルになり呼び出し側の usage を上書きするため、
+  # 他の util:: 関数と同じく文字列で持つ。
+  local usage='usage: util::chk <-c> [-oq] target'
 
   if (( $# == 0 )); then
-    usage
+    logger --error "$usage"
     return 1
   fi
 
@@ -47,7 +48,7 @@ util::chk() {
   done
 
   if [[ -z "${selector:-}" ]]; then
-    usage
+    logger --error "$usage"
     return 1
   fi
 
