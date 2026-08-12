@@ -17,8 +17,11 @@ Alternatively, clone the repository and run the installation using make:
 
 ``` shell
 git clone git@github.com:mmugi/dotfiles.git ~/.dotfiles
+export DOTFILES_PATH="${HOME}/.dotfiles"
 cd ~/.dotfiles && make install
 ```
+
+Every make target except `help`, `test` and `lint` needs `DOTFILES_PATH`, so add the same `export` to your shell config as well. The one-line install above sets it for you.
 
 ### > Installation Options
 
