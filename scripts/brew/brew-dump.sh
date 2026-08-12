@@ -16,6 +16,9 @@ if [[ ! -d "$DOTFILES_BREWFILE_DIR" ]]; then
 fi
 
 # 通常ファイルのみを収集
+# 1件も無い場合に ${#files[@]} が set -u で落ちないよう、先に宣言する
+declare -a files=()
+
 msg 'searching for brewfiles...'
 while IFS='' read -r -d '' file; do
   files+=("$file")
@@ -36,15 +39,29 @@ else
 fi
 
 if [[ "$brewfile" == 'newfile' ]]; then
-  filename="$(
+  # -i でディレクトリを初期値として入れているため、入力結果はフルパスで返る。
+  # ここで DOTFILES_BREWFILE_DIR を再度前置すると二重になる。
+  if ! brewfile="$(
     msg::read -e \
       -i "${DOTFILES_BREWFILE_DIR}/" \
-      -- 'enter the file name of the new brewfile:'
-  )"
-  brewfile="${DOTFILES_BREWFILE_DIR}/${filename}"
+      -- 'enter the path of the new brewfile: '
+  )"; then
+    msg::error 'aborted.'
+    exit 1
+  fi
 
-  if [[ -f "$brewfile" ]]; then
+  if [[ -z "$brewfile" || "$brewfile" == */ ]]; then
+    logger --fatal 'file name is not specified'
+  fi
+
+  if [[ -e "$brewfile" ]]; then
     logger --fatal "file already exists: ${brewfile}"
+  fi
+
+  # 初期値を消して別のディレクトリを打った場合に備える
+  brewfile_dir="$(dirname -- "$brewfile")"
+  if [[ ! -d "$brewfile_dir" ]]; then
+    logger --fatal "directory not found: ${brewfile_dir}"
   fi
 fi
 
