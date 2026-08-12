@@ -1120,9 +1120,18 @@ msg::confirm() {
       read -sr -t 0.1 -N 255 _
 
       tty_state="$(/bin/stty -g)"
+
+      # raw中に中断されると端末がエコーなしのまま残るため、復帰処理を
+      # トラップにも登録しておく。既存ハンドラは trap::concat で保持される。
+      trap::save_handler 'EXIT' 'INT' 'TERM'
+      trap::concat 'EXIT' "/bin/stty '${tty_state}'"
+      trap::concat 'INT'  "/bin/stty '${tty_state}'"
+      trap::concat 'TERM' "/bin/stty '${tty_state}'"
+
       /bin/stty raw -echo
       IFS='' read -r -n 1 -d '' -p 'ready? ' input
       /bin/stty "$tty_state"
+      trap::restore_handler
       newline
 
       if [[ "$input" == $'\n' ]]; then
