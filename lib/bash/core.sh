@@ -1,7 +1,11 @@
 # shellcheck shell=bash
 
-LIB_VERSION='1.0.0'
-LIB_DEPS=()
+# import.sh がsource時に読み取る変数
+# shellcheck disable=SC2034
+{
+  LIB_VERSION='1.0.0'
+  LIB_DEPS=()
+}
 [[ "${1:-}" = '__IMPORT__' ]] && return 0
 
 core::_log_header() {

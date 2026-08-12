@@ -100,11 +100,11 @@ import::_hl_deps() { printf '%b%s%b' "$_IMPORT_BLUE" "$*" "$_IMPORT_RESET"; }
 import::_hl_bold() { printf '%b%s%b' "$_IMPORT_BOLD" "$*" "$_IMPORT_RESET"; }
 import::_hl_keyword() { printf '%b%s%b' "$_IMPORT_CYAN" "$*" "$_IMPORT_RESET"; }
 
-import::_version_compere() {
-  # usage: import::_version_compere "a_version" "b_version"
+import::_version_compare() {
+  # usage: import::_version_compare "a_version" "b_version"
   # a = b: 0
   # a > b: 1
-  # a > b: -1
+  # a < b: -1
 
   local a_version="$1"
   local b_version="$2"
@@ -157,7 +157,7 @@ import::_version_satisfies() {
     return 1
   fi
 
-  cmp="$(import::_version_compere "$version" "$required")"
+  cmp="$(import::_version_compare "$version" "$required")"
   case "$op" in
     '==') (( cmp == 0 )) ;;
     '!=') (( cmp != 0 )) ;;
@@ -247,13 +247,13 @@ import() {
       elif [[ "${LIB_VERSION,,}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
         libver="$LIB_VERSION"
       else
-        import::_error "invalid version format. epected: x.y.z: ${LIB_VERSION}"
+        import::_error "invalid version format. expected: x.y.z: ${LIB_VERSION}"
         libver='???'
       fi
 
       import::_debug "library version: $(import::_hl_keyword "$libver")"
-      import::_debug "dependent librarys: $(import::_hl_keyword "${LIB_DEPS[*]:-none}")"
-      import::_debug "library reqruies bash version: $(import::_hl_keyword "${LIB_REQUIRES_BASH:-*}")"
+      import::_debug "dependent libraries: $(import::_hl_keyword "${LIB_DEPS[*]:-none}")"
+      import::_debug "library requires bash version: $(import::_hl_keyword "${LIB_REQUIRES_BASH:-*}")"
     fi
 
     if ! import::_version_satisfies "${LIB_REQUIRES_BASH:=">=0"}"; then
@@ -271,7 +271,7 @@ import() {
     import::_debug "loading $(import::_hl_bold "$lib")..."
     # shellcheck source=/dev/null
     source "$libfile" || import::_abort "failed to source ${libfile}"
-    import::_debug 'removinging from resolving stack...'
+    import::_debug 'removing from resolving stack...'
     unset '_IMPORT_RESOLVING_STACK[${#_IMPORT_RESOLVING_STACK[@]}-1]'
     IMPORT_IMPORTED_LIBS["$lib"]="$libver"
     import::_debug "$(import::_hl_lib '<<<') imported $(import::_hl_lib "$lib")"

@@ -1,8 +1,12 @@
 # shellcheck shell=bash
 
-LIB_VERSION='1.0.0';
-LIB_DEPS=( trap log theme )
-LIB_REQUIRES_BASH='>=4.1'
+# import.sh がsource時に読み取る変数
+# shellcheck disable=SC2034
+{
+  LIB_VERSION='1.0.0';
+  LIB_DEPS=( trap log theme )
+  LIB_REQUIRES_BASH='>=4.1'
+}
 [[ "${1:-}" = '__IMPORT__' ]] && return 0;
 
 : "${MSG_DELAY:=0.1}"
@@ -756,7 +760,7 @@ msg::_render_token() {
       END)
         ;;
       *)
-        logger --error "invaid token type: ${type}"
+        logger --error "invalid token type: ${type}"
         return 1
         ;;
     esac

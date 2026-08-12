@@ -1,7 +1,11 @@
 # shellcheck shell=bash
 
-LIB_VERSION='1.1.0'
-LIB_DEPS=( core )
+# import.sh がsource時に読み取る変数
+# shellcheck disable=SC2034
+{
+  LIB_VERSION='1.1.0'
+  LIB_DEPS=( core )
+}
 [[ "${1:-}" = '__IMPORT__' ]] && return 0
 
 # Trap Handler <trap.sh>
@@ -54,7 +58,7 @@ trap::save_handler() {
 
 trap::concat() {
   # 現在のシグナルハンドラの先頭に引数のハンドラを連結する
-  # $1: signal, $2: 連結するハンドラ
+  # $1: signal / $2: 連結するハンドラ
   local signal="${1:?}" new_handler="${2:?}" current_handler
   current_handler="$(trap::_print_handler "$signal")"
   if [[ -n "$current_handler" ]]; then
