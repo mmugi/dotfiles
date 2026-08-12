@@ -21,6 +21,10 @@ source "${DOTFILES_PATH:?}/lib/bash/import.sh"
 import theme msg dotfiles util
 
 _nextstep() {
+  # 次にユーザーがやることを案内するだけの関数。
+  # 案内の内容によって成否が変わる(衝突は失敗、パス未定義はインストール成功後の
+  # 案内)ため、終了コードは呼び出し側で決める。
+
   [[ -z "${1:-}" ]] && { logger --error 'missing scenario'; return 1; }
 
   local header msg
@@ -58,8 +62,6 @@ EOF
       return 1
       ;;
   esac
-
-  exit 0
 }
 
 greet() {
@@ -232,6 +234,9 @@ install_configs() {
     msg::warning 'conflicting files detected:/'
     msg::newline
     _nextstep --config-conflict
+    # 何も配置せずに中断するため、失敗として終了する。
+    # 0で返すと make install が成功扱いになってしまう。
+    exit 1
   fi
 
   # installation
