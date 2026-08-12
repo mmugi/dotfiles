@@ -12,7 +12,7 @@ help: ## Show this help message.
 	@$(SCRIPT_DIR)/make/help.sh "$(MAKEFILE)"
 
 ## Dotfiles
-.PHONY: install uninstall dryrun-uninstall
+.PHONY: install uninstall uninstall-dryrun
 install: ## Install dotfiles.
 	@$(SCRIPT_DIR)/dotfiles/install.sh
 uninstall: ## Uninstall dotfiles.
