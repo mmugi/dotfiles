@@ -123,6 +123,12 @@ _summary_body() {
   else
     msg::ok 'no warnings:)'
   fi
+
+  # 完了通知もこのboxに含める。dry-runでは何も削除していないので出さない。
+  if (( ! DOTFILES_UNINSTALL_DRYRUN )); then
+    msg::newline
+    msg --no-prompt --base-style='success' -- '🛸 DOTFILES UNINSTALLATION COMPLETED'
+  fi
 }
 
 print_summary() {
@@ -233,8 +239,6 @@ if msg::confirm; then
   uninstall_configs
   print_summary
   if (( ! DOTFILES_UNINSTALL_DRYRUN )); then
-    msg::newline
-    msg::box --prompt='🛸' --base-style='success' -- 'DOTFILES UNINSTALLATION COMPLETED'
     msg::newline
     msg 'goodbye👋'
   fi
