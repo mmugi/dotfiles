@@ -87,10 +87,15 @@ _uninstall_target() {
   return 0
 }
 
-print_summary() {
+_summary_body() {
+  # summaryの中身を組み立てる。
+  # msg::rm / msg::skipped などの既存フォーマットをそのまま使い、
+  # 出力を msg::box --box-rendered に渡して枠で囲む。
+
   local target
 
-  msg::header 'summary'
+  msg --no-prompt --base-style='msg_header' -- '🚀 summary'
+  msg::newline
 
   if (( ${#UNINSTALL_REMOVED[@]} > 0 )); then
     if (( DOTFILES_UNINSTALL_DRYRUN )); then
@@ -99,7 +104,7 @@ print_summary() {
       msg::rm "${#UNINSTALL_REMOVED[@]} symbolic link(s) removed:"
     fi
     for target in "${UNINSTALL_REMOVED[@]}"; do
-      msg --no-prompt --indent 4 --base-style='msg_rm' -- "$target"
+      msg --no-prompt --indent 5 -- "${target/#"${HOME}"/\~}"
     done
   else
     msg::skipped 'no symbolic links to remove.'
@@ -108,16 +113,20 @@ print_summary() {
   msg::newline
 
   if (( ${#UNINSTALL_WARNED[@]} > 0 )); then
-    msg::warning "${#UNINSTALL_WARNED[@]} file(s) left in place (see the warnings above for the reason):"
+    msg::warning "${#UNINSTALL_WARNED[@]} file(s) left in place:"
     for target in "${UNINSTALL_WARNED[@]}"; do
-      msg --no-prompt --indent 4 --base-style='msg_warning' -- "$target"
+      msg --no-prompt --indent 5 -- "${target/#"${HOME}"/\~}"
     done
     msg::newline
+    msg::notice 'see the warnings above for the reason.'
     msg::notice 'these need to be handled manually.'
   else
     msg::ok 'no warnings:)'
   fi
+}
 
+print_summary() {
+  msg::box --box-rendered -- "$(_summary_body)"
   msg::newline
 }
 
@@ -204,11 +213,8 @@ uninstall_configs() {
     fi
   done <<<"$pkg_dirs"
 
-  if (( ${#UNINSTALL_WARNED[@]} > 0 )); then
-    msg::warning 'finished with warnings:/'
-  else
-    msg::ok 'configuration files uninstalled:)'
-  fi
+  # 警告の有無は print_summary のboxで示すため、ここでは重複させない
+  msg::ok 'configuration files uninstalled:)'
   msg::newline
 }
 
