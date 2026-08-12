@@ -197,12 +197,17 @@ util::install() {
   fi
 
   # dstがすでに存在する
-  local link link_path src_path
-  if link="$(readlink "$dst")"; then
-    link_path="$(realpath "$link")"
+  local link_path src_path
+  if [[ -L "$dst" ]]; then
+    # リンク先が相対パスの場合、readlink の出力をそのまま realpath に渡すと
+    # カレントディレクトリ基準で解決されてしまうため、dst 自体を解決する。
+    if ! link_path="$(realpath "$dst" 2>/dev/null)"; then
+      msg::warning "broken symbolic link exists: ${dst}"
+      return 1
+    fi
     src_path="$(realpath "$src")"
     if [[ "$src_path" != "$link_path" ]]; then
-      msg::warning "existing distination target is not owned by dotfiles: ${dst}"
+      msg::warning "existing destination target is not owned by dotfiles: ${dst}"
       return 1
     fi
   else
@@ -262,8 +267,13 @@ util::uninstall() {
     return 1
   fi
 
+  # リンク先が相対パスの場合でも正しく解決するため、readlink の出力ではなく
+  # dst 自体を realpath に渡す。リンク切れの場合は解決に失敗する。
   local link_path src_path
-  link_path="$(realpath "$dst")"
+  if ! link_path="$(realpath "$dst" 2>/dev/null)"; then
+    msg::warning "broken symbolic link: ${dst}"
+    return 1
+  fi
   src_path="$(realpath "$src")"
 
   if [[ "$link_path" != "$src_path" ]]; then
