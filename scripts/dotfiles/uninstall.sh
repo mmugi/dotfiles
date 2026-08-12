@@ -26,6 +26,7 @@ DOTFILES_UNINSTALL_DRYRUN=0
 #   警告が出ても処理を止めず、最後にまとめて確認できるようにする。
 declare -a UNINSTALL_REMOVED=()
 declare -a UNINSTALL_WARNED=()
+declare -a UNINSTALL_IGNORED=()
 
 case "${1:-notset}" in
   --dryrun) DOTFILES_UNINSTALL_DRYRUN=1 ;;
@@ -57,18 +58,27 @@ EOF
 }
 
 _uninstall_target() {
-  # usage: _uninstall_target src target
+  # usage: _uninstall_target src target relpath
   #
   # util::uninstall をモードに応じて呼び分け、結果を集計する。
   # 警告時に1を返すため、呼び出し側は if で受けて set -e を回避する。
 
-  local src="$1" target="$2"
+  local src="$1" target="$2" relpath="$3"
   local rc=0
 
   # 対象が存在しない場合、util::uninstall は「何もすることがない」として0を
   # 返す。それを削除予定として数えないよう、ここで先に除外する。
   if [[ ! -e "$target" && ! -L "$target" ]]; then
     logger --debug "target does not exist: ${target}"
+    return 0
+  fi
+
+  # .dotignore で除外されたパスは install が配置していないので、解除もしない。
+  # ユーザー自身のファイルが置かれているだけなので、警告ではなくスキップとして
+  # 扱う。残っているものが見えるように、集計して summary には出す。
+  if dotfiles::is_ignored "$relpath"; then
+    msg::skipped "ignored by .dotignore: ${target}"
+    UNINSTALL_IGNORED+=( "$target" )
     return 0
   fi
 
@@ -110,6 +120,14 @@ _summary_body() {
     msg::skipped 'no symbolic links to remove.'
   fi
 
+  if (( ${#UNINSTALL_IGNORED[@]} > 0 )); then
+    msg::newline
+    msg::skipped "${#UNINSTALL_IGNORED[@]} path(s) ignored by .dotignore:"
+    for target in "${UNINSTALL_IGNORED[@]}"; do
+      msg --no-prompt --indent 5 -- "${target/#"${HOME}"/\~}"
+    done
+  fi
+
   msg::newline
 
   if (( ${#UNINSTALL_WARNED[@]} > 0 )); then
@@ -139,7 +157,7 @@ print_summary() {
 }
 
 uninstall_configs() {
-  local pkg_dirs pkg_dir pkg_name
+  local pkg_dirs pkg_dir pkg_name config_relpath_fromhome
 
   if [[ -z "${DOTFILES_CONFIG_DIR:-}" ]]; then
     logger --fatal 'DOTFILES_CONFIG_DIR is not set'
@@ -185,10 +203,11 @@ uninstall_configs() {
     # シンボリックリンクの削除
     if [[ -n "$src_files" ]]; then
       while read -r src_file; do
-        target="${HOME}/${src_file#"${pkg_dir}/"}"
+        config_relpath_fromhome="${src_file#"${pkg_dir}/"}"
+        target="${HOME}/${config_relpath_fromhome}"
         logger --debug "remove target config file: ${target}"
 
-        _uninstall_target "$src_file" "$target"
+        _uninstall_target "$src_file" "$target" "$config_relpath_fromhome"
       done <<<"$src_files"
     fi
 
