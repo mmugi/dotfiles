@@ -748,7 +748,11 @@ msg::_render_token() {
         msg::_render_block_tag_close "$value"
         ;;
       END_LINE)
-        unset '_MSG_RENDERER_INLINE_STYLE_TAG_STACK[@]'
+        # inline tagは行内でのみ有効なので行末で破棄する。
+        # tag名とstyleは添字で対応する並列配列なので、必ず両方リセットする。
+        # 片方だけ空にすると添字がずれ、次の行で別のstyleが復帰してしまう。
+        _MSG_RENDERER_INLINE_STYLE_TAG_STACK=()
+        _MSG_RENDERER_INLINE_STYLE_STACK=()
         if (( ! _MSG_RENDERER_CONTEXT['plain'] )); then
           msg::_render_append_escseq "${STYLE_STDOUT['rst']:-}"
         fi
