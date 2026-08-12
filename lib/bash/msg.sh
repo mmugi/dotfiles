@@ -79,7 +79,7 @@ msg::_peek_token_type_stack() {
 msg::_drop_token_stack() {
   msg::_tokenizer_isinit || return 1
 
-  local last_idx type value
+  local last_idx type value key
 
   last_idx=$(( ${#_MSG_TOKENIZER_OUTPUT_TYPE[@]} - 1 ))
   if (( last_idx >= 0 )); then
@@ -104,7 +104,9 @@ msg::_drop_token_stack() {
 
 msg::_push_token_stack() {
   msg::_tokenizer_isinit || return 1
-  (( 1 <= $# <= 3 )) || { logger --error 'invalid options'; return 1; }
+  # C形式の連鎖比較 `1 <= $# <= 3` は (1 <= $#) <= 3 と評価され常に真になるため、
+  # 条件を分けて書く。
+  (( $# >= 1 && $# <= 3 )) || { logger --error 'invalid options'; return 1; }
 
   local type="$1"
   local value="${2:-_}"
@@ -127,7 +129,9 @@ msg::_push_token_stack() {
       logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "index=\"${idx}\" attr=\"${attr}\" attr_value=\"${attr_value}\""
 
       _MSG_TOKENIZER_OUTPUT_ATTR["${idx}:${attr}"]="$attr_value"
-      attrs="${attrs#*${matched}}"
+      # matched をクォートしないとパターンとして解釈され、属性値に * や [ が
+      # 含まれる場合に切り落としに失敗してこのループが終わらなくなる。
+      attrs="${attrs#*"${matched}"}"
     done
   fi
 
@@ -1165,6 +1169,9 @@ msg::select() {
 
   local -a msg_args=()
   local ps
+  # PS3 と COLUMNS は select が参照する変数。関数を抜けたあとのシェルに
+  # 影響を残さないよう local で宣言する (select は関数ローカルの値を見る)。
+  local PS3 COLUMNS s
 
   while (( $# > 0 )); do
     case "$1" in
@@ -1202,12 +1209,20 @@ msg::select() {
 msg::line() {
   local -r length="${1:-80}"
   local -r symbol='.'
-  local line
+  local line i
 
-  for i in $(seq "$length"); do
-    line="$(printf "${symbol}%.0s" $(seq 1 "$i"))"
+  # 端末以外では \r による上書きが効かず、各段階の出力がすべて連結されて
+  # sum(1..length) 文字になってしまうため、アニメーションは行わない。
+  if [[ ! -t 1 ]]; then
+    line="$(msg::_repeat_char "$symbol" "$length")"
+    printf '%s\n' "$line"
+    return 0
+  fi
+
+  for (( i = 1; i <= length; i++ )); do
+    line="$(msg::_repeat_char "$symbol" "$i")"
     printf "\r%s" "${STYLE_STDOUT['msg_line']:-}${line}${STYLE_STDOUT['rst']:-}"
-    [[ -t 1 ]] && sleep 0.002
+    sleep 0.002
   done
   printf '\n'
 }
