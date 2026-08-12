@@ -160,8 +160,9 @@ theme::_apply_styles() {
       init_map["$key"]="${style_map["$key"]}"
     done
   else
-    # shellcheck disable=SC2034
-    declare -g -A init_map=()
+    # nameref に対して declare を使うと参照先ではなく `init_map` という名前の
+    # 変数が新規に作られてしまうため、nameref 経由の通常代入でクリアする。
+    init_map=()
   fi
 }
 
