@@ -41,11 +41,13 @@
 #
 #     ```
 #     # shellcheck disable=SC2034
-#     LIB_VERSION='v0.0.0'
+#     LIB_VERSION='0.0.0'
 #     LIB_DEPS=()
 #     LIB_REQUIRES_BASH='>=0.0.0'
 #     [[ "${1:-}" = '__IMPORT__' ]] && return 0
 #     ```
+#
+#   `LIB_VERSION` は `x.y.z` 形式で指定します(接頭辞 `v` は不可)。
 #
 #   そのライブラリが依存するライブラリ名を `LIB_DEPS` に配列として保持します。
 #   `LIB_DEPS` が空でない場合、`import()` の引数として再帰的に依存ライブラリの解決を行います。#
@@ -242,7 +244,7 @@ import() {
     else
       if [[ -z "${LIB_VERSION:-}" ]]; then
         libver='undefined'
-      elif [[ "${LIB_VERSION,,}" =~ ^[0-9]\.[0-9]\.[0-9]$ ]]; then
+      elif [[ "${LIB_VERSION,,}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
         libver="$LIB_VERSION"
       else
         import::_error "invalid version format. epected: x.y.z: ${LIB_VERSION}"
