@@ -1,6 +1,7 @@
 MAKEFILE      := $(firstword $(MAKEFILE_LIST))
 DOTFILES_ROOT := $(realpath $(dir $(MAKEFILE)))
 SCRIPT_DIR    := $(DOTFILES_ROOT)/scripts
+LIB_DIR       := $(DOTFILES_ROOT)/lib
 SHELL         := /usr/bin/env bash
 
 .DEFAULT_GOAL := help
@@ -37,3 +38,11 @@ brew-diff: ## Show differences between installed brew package and those in the d
 	@$(SCRIPT_DIR)/brew/brew-diff.sh
 brew-dump: ## Write all installed packages into a Brewfile in dotfiles.
 	@$(SCRIPT_DIR)/brew/brew-dump.sh
+
+## Development
+.PHONY: test lint
+test: ## Run the bash library smoke tests.
+	@bash $(LIB_DIR)/test/smoke.sh
+lint: ## Run shellcheck over the bash library and scripts.
+	@shellcheck -s bash $(LIB_DIR)/bash/*.sh $(LIB_DIR)/bash/themes/*.sh \
+		$(LIB_DIR)/test/*.sh $(SCRIPT_DIR)/*/*.sh $(DOTFILES_ROOT)/bootstrap.sh
