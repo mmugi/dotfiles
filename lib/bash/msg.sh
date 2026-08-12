@@ -186,7 +186,9 @@ msg::_tokenize_tag() {
         /@hl) msg::_push_token_stack 'BLOCK_CLOSE' 'hl' ;;
       esac
 
-      (( restore_newline )) && msg::_push_token_stack 'NEWLINE'
+      if (( restore_newline )); then
+        msg::_push_token_stack 'NEWLINE'
+      fi
       ;;
     /*)
       case "$tag" in
@@ -199,6 +201,11 @@ msg::_tokenize_tag() {
       esac
       ;;
   esac
+
+  # 上のcaseが偽の条件で終わった場合に1を返さないようにする。
+  # 呼び出し元 msg::_tokenize_line は set -e 下でこの戻り値を受けるため、
+  # ここで1を返すとスクリプト全体が停止してしまう。
+  return 0
 }
 
 msg::_tokenize_line() {
@@ -637,13 +644,23 @@ msg::_render_block_tag_close() {
       msg::_drop_indent_stack
       ;;
     b|it|hl) # style tags
-      msg::_drop_block_style "$tag"
+      # plain時は_render_block_tag_openがpushをスキップするため、
+      # closeも同様にスキップする。ここを揃えないと、対応漏れとして
+      # 検出されてしまう。(msg::_render_tag_close と同じ扱い)
+      (( _MSG_RENDERER_CONTEXT['plain'] )) && return 0
+
+      # 対応する開始タグがない場合、_drop_block_styleは1を返す。
+      # タグの対応漏れでスクリプトを止めないよう、警告にとどめる。
+      msg::_drop_block_style "$tag" \
+        || logger --warning "unmatched block close tag: ${tag}"
       ;;
     *)
       logger --error "invalid tag: ${tag}"
       return 1
       ;;
   esac
+
+  return 0
 }
 
 msg::_render_tag_open() {
