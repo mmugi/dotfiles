@@ -1,7 +1,11 @@
 # shellcheck shell=bash
 
-LIB_VERSION='1.0.0'
-LIB_DEPS=( core escseq termcap )
+# import.sh がsource時に読み取る変数
+# shellcheck disable=SC2034
+{
+  LIB_VERSION='1.0.0'
+  LIB_DEPS=( core escseq termcap )
+}
 [[ "${1:-}" = '__IMPORT__' ]] && return 0
 
 # Bash Theme Loader <theme.sh>
@@ -147,11 +151,6 @@ theme::_apply_styles() {
   local -n style_map="$THEME_STYLE_MAP_NAME"
   local -n init_map="$init_map_name"
 
-  if ! theme::_check_duplicate_map_key 'THEME_STYLE_COMMON' "$THEME_STYLE_MAP_NAME"; then
-    theme::clear
-    return 1
-  fi
-
   if termcap::is_color_supported "$fd"; then
     for key in "${!THEME_STYLE_COMMON[@]}"; do
       init_map["$key"]="${THEME_STYLE_COMMON["$key"]}"
@@ -198,9 +197,22 @@ theme::load() {
   theme::clear
 
   # shellcheck source=/dev/null
-  source "$theme_file"
+  if ! source "$theme_file"; then
+    core::error "failed to source theme file: ${theme_file}"
+    theme::clear
+    return 1
+  fi
+
   if ! "${theme}::setup"; then
     core::error 'setup failed'
+    theme::clear
+    return 1
+  fi
+
+  # fdごとではなくテーマ単位のチェックなので、_apply_styles ではなくここで
+  # 1度だけ行う。_apply_styles 内で行うと同じエラーが2度出ていた。
+  if ! theme::_check_duplicate_map_key 'THEME_STYLE_COMMON' "$THEME_STYLE_MAP_NAME"; then
+    theme::clear
     return 1
   fi
 

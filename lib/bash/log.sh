@@ -1,7 +1,11 @@
 # shellcheck shell=bash
 
-LIB_VERSION='1.0.0'
-LIB_DEPS=( core theme )
+# import.sh がsource時に読み取る変数
+# shellcheck disable=SC2034
+{
+  LIB_VERSION='1.0.0'
+  LIB_DEPS=( core theme )
+}
 [[ "${1:-}" = '__IMPORT__' ]] && return 0
 
 # ログレベル
@@ -125,21 +129,6 @@ log::_log_stacktrace() {
   done
 }
 
-log::_caller_libname() {
-  # 0: log::_caller_libname
-  # 1: log::_should_output_log
-  # 2: logger
-  # 3: 呼び出し元
-
-  local libname="${BASH_SOURCE[3]:-}"
-  libname="${libname##*/}"      # path/to/foo-bar.sh -> foo-bar.sh
-  libname="${libname%.sh}"      # foo-bar.sh -> foo-bar
-  libname="${libname//-/_}"     # foo-bar -> foo_bar
-  libname="${libname^^}"        # foo_bar -> FOO_BAR
-
-  echo "$libname"
-}
-
 log::_ge_level() {
   local log_level="$1"
   local log_level_var="$2"
@@ -159,6 +148,10 @@ log::_should_output_log() {
   local ch="${2:-}"
   local lib var
 
+  # ファイル別ログレベルの解決に使うファイル名は呼び出し元のスタック位置から
+  # 求める。そのため logger をラップする関数を挟むと、ラッパーのファイル名で
+  # 解決されてしまう点に注意。
+  #
   # 0: log::_should_output_log
   # 1: logger
   # 2: caller
