@@ -146,7 +146,7 @@ _is_ignored() {
   local -r ignorefile="${DOTFILES_PATH}/.dotignore"
   local config_relpath_from_home
 
-  [[ $# -ne 1 ]] && abort "_is_ignored: invalid args"
+  (( $# == 1 )) || logger --fatal '_is_ignored: invalid args'
 
   config_relpath_from_home="$1"
 
