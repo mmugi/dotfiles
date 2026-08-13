@@ -46,6 +46,18 @@ EOF
       )"
       msg::box -- "$msg"
       ;;
+    --duplicate-config)
+      msg="$(cat <<EOF
+${header}
+the same destination is provided by more than one config root.
+a private overlay adds configuration files, it does not replace them.
+please do one of the following:
+ -> remove the duplicate from one of the config roots.
+ -> add it to <hl>${DOTFILES_PATH}/.dotignore</hl> to ignore them.
+EOF
+      )"
+      msg::box -- "$msg"
+      ;;
     --config-conflict)
       msg="$(cat <<EOF
 ${header}
@@ -171,6 +183,12 @@ install_configs() {
   local pkg_dirs pkg_dir pkg_name config_dir
   local src_configs src config_relpath_fromhome dst
   local conflict=0
+  local duplicate=0
+
+  # 配置先ごとに、それを提供する探索ルート側のパスを覚えておく。
+  # util::install --check はリンクを作らないため、複数のルートが同じ配置先を
+  # 持っていても衝突として検出できない。ここで自前に突き合わせる。
+  local -A provided_by=()
 
   msg::header 'configuration file installation'
 
@@ -206,16 +224,46 @@ install_configs() {
 
       if dotfiles::is_ignored "$config_relpath_fromhome"; then
         continue
-      else
-        util::install --check "$src" "$dst" || conflict=1
       fi
+
+      # ディレクトリは各ルートに存在してよい (どのルートも .config などを
+      # 持つ)。重複として扱うのはファイルだけ。
+      if [[ ! -d "$src" ]]; then
+        if [[ -n "${provided_by["$dst"]:-}" ]]; then
+          msg::warning "provided by multiple config roots: ${dst}"
+          msg --no-prompt --indent 5 -- "${provided_by["$dst"]}"
+          msg --no-prompt --indent 5 -- "${src}"
+          duplicate=1
+          continue
+        fi
+        provided_by["$dst"]="$src"
+      fi
+
+      util::install --check "$src" "$dst" || conflict=1
     done <<<"$src_configs"
   done <<<"$pkg_dirs"
 
+  # 原因が異なるため、警告も next step も別々に出す。
+  # duplicate はコンフィグ側の重複、conflict は配置先に既にあるファイルとの衝突。
+  if (( duplicate )); then
+    msg::warning 'duplicate destinations detected:/'
+  fi
+
   if (( conflict )); then
     msg::warning 'conflicting files detected:/'
+  fi
+
+  if (( duplicate || conflict )); then
     msg::newline
-    _nextstep --config-conflict
+
+    if (( duplicate )); then
+      _nextstep --duplicate-config
+    fi
+
+    if (( conflict )); then
+      _nextstep --config-conflict
+    fi
+
     # 何も配置せずに中断するため、失敗として終了する。
     # 0で返すと make install が成功扱いになってしまう。
     exit 1

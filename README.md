@@ -67,7 +67,7 @@ Some configuration is not meant to be published. Keep it in a separate private r
 
 When `DOTFILES_PRIVATE_PATH` points at an existing directory, `make install` and `make uninstall` walk its `configs/` alongside this repository's. This repository never references the overlay contents, so it stays publishable on its own and everything still works when the overlay is absent.
 
-The overlay adds files rather than replacing them. If both repositories deploy to the same path, the installation reports a conflict.
+The overlay adds files rather than replacing them. If both repositories deploy to the same path, the installation names both sources and stops before deploying anything.
 
 ## Uninstallation
 
