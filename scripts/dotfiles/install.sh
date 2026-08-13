@@ -222,31 +222,41 @@ install_configs() {
   fi
 
   # installation
-  while read -r pkg_dir; do
-    pkg_name=$(basename "$pkg_dir")
+  #
+  # 同じパッケージ名が複数の探索ルートに存在しうる (公開分と private overlay)。
+  # 由来ごとに見出しを出すと同じパッケージが分かれて見えるため、パッケージ名で
+  # まとめる。どのルートから来たかは、リンク先のパスとして各行に出る。
+  local pkg_names
+  pkg_names="$(while read -r pkg_dir; do basename -- "$pkg_dir"; done <<<"$pkg_dirs" | sort -u)"
+
+  while read -r pkg_name; do
     msg "installing <hl>${pkg_name}</hl> configs..."
 
-    src_configs="$(find "$pkg_dir" -mindepth 1)"
+    while read -r pkg_dir; do
+      [[ "$(basename -- "$pkg_dir")" == "$pkg_name" ]] || continue
 
-    if [[ -z "$src_configs" ]]; then
-      msg::skipped "package directory is empty: ${pkg_dir}"
-      continue
-    fi
+      src_configs="$(find "$pkg_dir" -mindepth 1)"
 
-    while read -r src; do
-      config_relpath_fromhome="${src#"${pkg_dir}/"}"
-      dst="${HOME}/${config_relpath_fromhome}"
-
-      if [[ "$src" =~ \.swp$ ]]; then
+      if [[ -z "$src_configs" ]]; then
+        msg::skipped "package directory is empty: ${pkg_dir}"
         continue
-      elif dotfiles::is_ignored "$config_relpath_fromhome"; then
-        msg::skipped "skipped: ${HOME}/${config_relpath_fromhome}"
-        continue
-      else
-        util::install "$src" "$dst"
       fi
-    done <<<"$src_configs"
-  done <<<"$pkg_dirs"
+
+      while read -r src; do
+        config_relpath_fromhome="${src#"${pkg_dir}/"}"
+        dst="${HOME}/${config_relpath_fromhome}"
+
+        if [[ "$src" =~ \.swp$ ]]; then
+          continue
+        elif dotfiles::is_ignored "$config_relpath_fromhome"; then
+          msg::skipped "skipped: ${HOME}/${config_relpath_fromhome}"
+          continue
+        else
+          util::install "$src" "$dst"
+        fi
+      done <<<"$src_configs"
+    done <<<"$pkg_dirs"
+  done <<<"$pkg_names"
 
   msg::ok 'configuration files installed:)'
   msg::newline
