@@ -4,6 +4,7 @@ SCRIPT_DIR    := $(DOTFILES_ROOT)/scripts
 LIB_DIR       := $(DOTFILES_ROOT)/lib
 CONFIG_DIR    := $(DOTFILES_ROOT)/configs
 SHELL_DIR     := $(DOTFILES_ROOT)/shell
+TEST_DIR      := $(DOTFILES_ROOT)/test
 SHELL         := /usr/bin/env bash
 
 .DEFAULT_GOAL := help
@@ -48,9 +49,9 @@ brew-dump: ## Write all installed packages into a Brewfile in dotfiles.
 
 ## Development
 .PHONY: test lint
-test: ## Run the bash library smoke tests.
-	@bash $(LIB_DIR)/test/smoke.sh
-lint: ## Run shellcheck over the bash library, scripts and distributed hooks.
+test: ## Run the smoke tests.
+	@bash $(TEST_DIR)/run.sh
+lint: ## Run shellcheck over the bash library, scripts, tests and distributed hooks.
 	@shellcheck -s bash $(LIB_DIR)/bash/*.sh $(LIB_DIR)/bash/themes/*.sh \
-		$(LIB_DIR)/test/*.sh $(SCRIPT_DIR)/*/*.sh $(SHELL_DIR)/*/*.sh \
+		$(TEST_DIR)/*.sh $(SCRIPT_DIR)/*/*.sh $(SHELL_DIR)/*/*.sh \
 		$(DOTFILES_ROOT)/bootstrap.sh $(CONFIG_DIR)/claude/.claude/hooks/*.sh

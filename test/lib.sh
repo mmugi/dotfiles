@@ -2,53 +2,24 @@
 #
 # lib/bash のスモークテスト
 #
-#   bash lib/test/smoke.sh
+#   bash test/lib.sh
 #
 # 網羅を狙ったものではなく、「import できて主要関数が壊れていない」ことと、
 # 過去に踏んだ不具合を再発させないことを確認する。
+#
+# コマンドとしての振る舞い (引数の解釈、標準出力と標準エラー出力の分離など) は
+# test/cli.sh が見る。
 
 set -ueo pipefail
 
-DOTFILES_PATH="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
-export DOTFILES_PATH
-
-# 出力を安定させる
-export MSG_DELAY=0
-export TERMCAP_COLOR_MODE=never
-
-# 色の有無はテスト内で TERMCAP_COLOR_MODE で切り替える。NO_COLOR は
-# TERMCAP_COLOR_MODE より優先されるため、実行環境の値を持ち込まない。
-unset NO_COLOR
+# shellcheck source=/dev/null
+source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/helper.sh"
 
 # shellcheck source=/dev/null
 source "${DOTFILES_PATH}/lib/bash/import.sh"
 import core escseq termcap trap theme log msg util dotfiles shellconf
 theme::load
 msg::init
-
-declare -i _tests=0
-declare -i _failed=0
-
-check() {
-  # check <説明> <期待値> <実際値>
-  local desc="$1" expected="$2" actual="$3"
-  _tests=$(( _tests + 1 ))
-  if [[ "$expected" == "$actual" ]]; then
-    printf 'ok   %d - %s\n' "$_tests" "$desc"
-  else
-    _failed=$(( _failed + 1 ))
-    printf 'FAIL %d - %s\n      expected: %q\n      actual:   %q\n' \
-      "$_tests" "$desc" "$expected" "$actual"
-  fi
-}
-
-check_rc() {
-  # check_rc <説明> <期待status> <コマンド...>
-  local desc="$1" expected="$2"; shift 2
-  local rc=0
-  "$@" >/dev/null 2>&1 || rc=$?
-  check "$desc" "$expected" "$rc"
-}
 
 # --- import -------------------------------------------------------------------
 
@@ -477,9 +448,4 @@ SHELLCONF_LOCAL_DIR="$_local_orig"
 
 # --- 結果 ---------------------------------------------------------------------
 
-printf '\n'
-if (( _failed )); then
-  printf '%d/%d failed\n' "$_failed" "$_tests"
-  exit 1
-fi
-printf 'all %d tests passed\n' "$_tests"
+test::summary
