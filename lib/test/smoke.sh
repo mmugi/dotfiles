@@ -22,7 +22,7 @@ unset NO_COLOR
 
 # shellcheck source=/dev/null
 source "${DOTFILES_PATH}/lib/bash/import.sh"
-import core escseq termcap trap theme log msg util dotfiles
+import core escseq termcap trap theme log msg util dotfiles shellconf
 theme::load
 msg::init
 
@@ -53,7 +53,7 @@ check_rc() {
 # --- import -------------------------------------------------------------------
 
 check 'すべてのライブラリが読み込まれている' \
-  '9' "${#IMPORT_IMPORTED_LIBS[@]}"
+  '10' "${#IMPORT_IMPORTED_LIBS[@]}"
 
 check 'ライブラリバージョンが記録されている' \
   '1.0.0' "${IMPORT_IMPORTED_LIBS['core']}"
@@ -319,6 +319,161 @@ rm -f "$DOTFILES_IGNOREFILE"
 check_rc 'is_ignored ファイルが無い場合も失敗しない' 1 dotfiles::is_ignored '.vimrc'
 
 DOTFILES_IGNOREFILE="$_ignorefile_orig"
+
+# --- shellconf ----------------------------------------------------------------
+
+# 出力ヘルパ
+#   生成物はシェルに読ませる文字列そのものなので、描画結果を固定して
+#   意図しない変化に気づけるようにする。
+
+# 期待値は生成先のシェルが評価するコードなので、ここでは展開させない
+# shellcheck disable=SC2016
+check 'eval_init bash' 'eval "$(starship init bash)"' \
+  "$(_SHELLCONF_SHELL=bash shellconf::eval_init starship)"
+# shellcheck disable=SC2016
+check 'eval_init zsh' 'eval "$(starship init zsh)"' \
+  "$(_SHELLCONF_SHELL=zsh shellconf::eval_init starship)"
+check 'eval_init fish' 'starship init fish | source' \
+  "$(_SHELLCONF_SHELL=fish shellconf::eval_init starship)"
+# shellcheck disable=SC2016
+check 'eval_init 追加引数' 'eval "$(zoxide init bash --cmd cd)"' \
+  "$(_SHELLCONF_SHELL=bash shellconf::eval_init zoxide --cmd cd)"
+
+check 'export posix' "export EDITOR='vim'" \
+  "$(_SHELLCONF_SHELL=bash shellconf::export EDITOR 'vim')"
+check 'export fish' "set -gx EDITOR 'vim'" \
+  "$(_SHELLCONF_SHELL=fish shellconf::export EDITOR 'vim')"
+
+# シングルクォートの流儀がシェルで異なる。posix は '\'' で閉じ直し、
+# fish は \' でエスケープする。
+check 'export posix のクォート脱出' "export X='a'\\''b'" \
+  "$(_SHELLCONF_SHELL=bash shellconf::export X "a'b")"
+check 'export fish のクォート脱出' "set -gx X 'a\\'b'" \
+  "$(_SHELLCONF_SHELL=fish shellconf::export X "a'b")"
+check 'export fish はバックスラッシュも escape する' "set -gx X 'a\\\\b'" \
+  "$(_SHELLCONF_SHELL=fish shellconf::export X 'a\b')"
+
+check 'path_prepend posix' "__dotfiles_path_prepend '/opt/bin'" \
+  "$(_SHELLCONF_SHELL=bash shellconf::path_prepend '/opt/bin')"
+check 'path_prepend fish' "fish_add_path -gp '/opt/bin'" \
+  "$(_SHELLCONF_SHELL=fish shellconf::path_prepend '/opt/bin')"
+
+check 'source_if posix' "$(printf "if [ -r '/x' ]; then\n  . '/x'\nfi")" \
+  "$(_SHELLCONF_SHELL=bash shellconf::source_if '/x')"
+check 'source_if fish' "$(printf "if test -r '/x'\n  source '/x'\nend")" \
+  "$(_SHELLCONF_SHELL=fish shellconf::source_if '/x')"
+
+check_rc 'export 引数不足は失敗する' 1 shellconf::export ONLYNAME
+check_rc 'path_prepend 引数不足は失敗する' 1 shellconf::path_prepend
+
+check '_indent は空行を字下げしない' "$(printf '  a\n\n  b')" \
+  "$(printf 'a\n\nb' | shellconf::_indent)"
+
+# エントリの描画
+_reg="${_tmp}/reg"
+mkdir -p "${_reg}/shell/rc.d"
+
+cat > "${_reg}/shell/rc.d/50-guarded.sh" <<'ENTRY'
+guard='somecmd'
+render() { shellconf::raw 'BODY'; }
+ENTRY
+
+check 'guard で実行時チェックが巻かれる (posix)' \
+  "$(printf 'if command -v somecmd >/dev/null 2>&1; then\n  BODY\nfi')" \
+  "$(shellconf::render_entry "${_reg}/shell/rc.d/50-guarded.sh" bash | grep -v '^#' | sed '/^$/d')"
+
+check 'guard で実行時チェックが巻かれる (fish)' \
+  "$(printf 'if type -q somecmd\n  BODY\nend')" \
+  "$(shellconf::render_entry "${_reg}/shell/rc.d/50-guarded.sh" fish | grep -v '^#' | sed '/^$/d')"
+
+cat > "${_reg}/shell/rc.d/60-fishonly.sh" <<'ENTRY'
+shells='fish'
+render() { shellconf::raw 'FISHBODY'; }
+ENTRY
+
+check 'shells で対象外のシェルには何も出さない' '' \
+  "$(shellconf::render_entry "${_reg}/shell/rc.d/60-fishonly.sh" bash)"
+check 'shells で対象のシェルには出す' '1' \
+  "$(shellconf::render_entry "${_reg}/shell/rc.d/60-fishonly.sh" fish | grep -c 'FISHBODY')"
+
+cat > "${_reg}/shell/rc.d/70-empty.sh" <<'ENTRY'
+render() { :; }
+ENTRY
+
+check 'render が無出力なら見出しも出さない' '' \
+  "$(shellconf::render_entry "${_reg}/shell/rc.d/70-empty.sh" bash)"
+
+# エントリはサブシェルで読むため、名前が呼び出し側へ漏れない
+check 'エントリの guard が呼び出し側へ漏れない' '' "${guard:-}"
+check 'エントリの render が呼び出し側へ漏れない' '' "$(declare -F render 2>/dev/null || true)"
+
+check_rc '読めないエントリは失敗する' 1 \
+  shellconf::render_entry "${_reg}/shell/rc.d/__nosuch__.sh" bash
+
+# レジストリの合流
+#   プライベートオーバーレイのエントリが、公開側とファイル名順で混ざること。
+#   公開リポジトリに置かない設定を差し込むための性質。
+_private_orig="$DOTFILES_PRIVATE_PATH"
+DOTFILES_PRIVATE_PATH="$_reg"
+
+check 'registry_dirs が両方のルートを返す' '2' \
+  "$(shellconf::registry_dirs rc | wc -l | tr -d ' ')"
+
+check 'entries がファイル名順で合流する' \
+  "$(printf '50-guarded.sh\n50-prompt.sh\n60-fishonly.sh\n70-empty.sh\n70-git-completion.sh\n80-fish-plugins.sh')" \
+  "$(shellconf::entries rc | while read -r _e; do basename -- "$_e"; done)"
+
+DOTFILES_PRIVATE_PATH="$_private_orig"
+
+check 'env.d が存在する' '1' \
+  "$(( $(shellconf::registry_dirs env | wc -l) >= 1 ? 1 : 0 ))"
+
+# 配置先とフック
+check 'outputs は5件' '5' "$(shellconf::outputs | wc -l | tr -d ' ')"
+check 'outputs は src と相対配置先のタブ区切り' '.config/shell/rc.bash' \
+  "$(shellconf::outputs | awk -F'\t' '$1 ~ /rc\.bash$/ { print $2 }')"
+check 'outputs の fish は conf.d へ向く' '.config/fish/conf.d/00-dotfiles.fish' \
+  "$(shellconf::outputs | awk -F'\t' '$1 ~ /dotfiles\.fish$/ { print $2 }')"
+
+check 'hook_rcfile bash' "${HOME}/.bashrc" "$(shellconf::hook_rcfile bash)"
+check_rc 'hook_rcfile fish はフック不要' 1 shellconf::hook_rcfile fish
+check_rc 'hook_block fish はフック不要' 1 shellconf::hook_block fish
+check_rc 'hook_target fish はフック不要' 1 shellconf::hook_target fish
+
+check 'hook_target bash' "${HOME}/.config/shell/rc.bash" \
+  "$(shellconf::hook_target bash)"
+
+# 利用者が rc に足すのは1行だけ。囲むべき中身が1行しかないため、目印の
+# コメントは付けない。
+check 'hook_block は1行' '1' "$(shellconf::hook_block bash | wc -l | tr -d ' ')"
+# $HOME はリテラルで埋め込む。ホームの場所が変わっても、また rc を別の
+# マシンへ持っていっても壊れないようにするため。
+# shellcheck disable=SC2016
+check 'hook_block の中身' '[ -r "$HOME/.config/shell/rc.zsh" ] && . "$HOME/.config/shell/rc.zsh"' \
+  "$(shellconf::hook_block zsh)"
+
+# hook_installed
+#   rc は利用者のものなので、こちらが出した文面そのままとは限らない。
+#   目印のコメントではなく読み込み先のパスで判定していることを確認する。
+_home_orig="$HOME"
+_local_orig="$SHELLCONF_LOCAL_DIR"
+HOME="${_tmp}/home"
+SHELLCONF_LOCAL_DIR="${HOME}/.config/shell"
+mkdir -p "$HOME"
+
+check_rc 'hook_installed rc が無ければ未導入' 1 shellconf::hook_installed bash
+
+printf 'export FOO=1\n' > "${HOME}/.bashrc"
+check_rc 'hook_installed 無関係な rc は未導入' 1 shellconf::hook_installed bash
+
+shellconf::hook_block bash >> "${HOME}/.bashrc"
+check_rc 'hook_installed 出力どおりなら導入済み' 0 shellconf::hook_installed bash
+
+printf 'source ~/.config/shell/rc.zsh\n' > "${HOME}/.zshrc"
+check_rc 'hook_installed 書き方が違っても導入済み' 0 shellconf::hook_installed zsh
+
+HOME="$_home_orig"
+SHELLCONF_LOCAL_DIR="$_local_orig"
 
 # --- 結果 ---------------------------------------------------------------------
 

@@ -18,7 +18,11 @@ declare -r GITHUB_EMAIL='173437276+mmugi@users.noreply.github.com'
 
 # shellcheck source=/dev/null
 source "${DOTFILES_PATH:?}/lib/bash/import.sh"
-import theme msg dotfiles util
+import theme msg dotfiles util shellconf
+
+# フックがまだ入っていないシェル。install_shell_configs が積み、
+# 最後の案内で参照する。
+declare -a SHELL_HOOK_PENDING=()
 
 _nextstep() {
   # 次にユーザーがやることを案内するだけの関数。
@@ -65,6 +69,32 @@ configuration files already exist.
 please do one of the following:
  -> move the configuration files out of the target directory.
  -> add them to <hl>${DOTFILES_PATH}/.dotignore</hl> to ignore them.
+EOF
+      )"
+      msg::box -- "$msg"
+      ;;
+
+    --shell-hook)
+      # dotfiles は ~/.bashrc を所有しない。既存の設定ファイルを書き換えずに
+      # 済むよう、利用者が足すのは1行フックだけにしている。
+      #
+      # 貼り付けてもらう部分なので <@noprompt> で囲み、行頭にプロンプトが
+      # 付かないようにする。
+      local shell rcfile hooks=''
+
+      for shell in "${SHELL_HOOK_PENDING[@]}"; do
+        rcfile="$(shellconf::hook_rcfile "$shell")"
+        hooks+=$'\n'" -> ${rcfile/#"${HOME}"/\~}"$'\n'
+        hooks+="$(shellconf::hook_block "$shell")"$'\n'
+      done
+      hooks+=$'\n'
+
+      msg="$(cat <<EOF
+${header}
+add the dotfiles hook to your shell config file.
+<@noprompt>${hooks}</@noprompt>
+run <hl>make shell-hook TARGET_SHELL=NAME</hl> to print it again.
+fish needs no hook. conf.d is loaded automatically.
 EOF
       )"
       msg::box -- "$msg"
@@ -310,12 +340,98 @@ install_configs() {
   msg::newline
 }
 
+install_shell_configs() {
+  # シェル設定は configs/ 配下ではなく shell/{env.d,rc.d} のレジストリから
+  # 生成する。configs/ の walk には乗らないため、git-hooks と同様に
+  # util::install で直接配置する。
+  #
+  # 生成物は run/ 配下に置く。マシン固有の絶対パス (git-prompt.sh の場所など)
+  # が焼き込まれるため、git 管理下に置いてはいけない。
+  #
+  # 生成し直すだけで配置し直しは不要になるよう、配置はシンボリックリンクで行う。
+
+  local src relpath dst dstdir part current shell
+  local conflict=0
+
+  msg::header 'shell configuration'
+
+  msg 'generating shell configuration...'
+  if ! shellconf::generate_all; then
+    logger --fatal 'failed to generate shell configuration'
+    exit 1
+  fi
+
+  msg 'checking shell configuration to be installed...'
+
+  while IFS=$'\t' read -r src relpath; do
+    dotfiles::is_ignored "$relpath" && continue
+    util::install --check "$src" "${HOME}/${relpath}" || conflict=1
+  done < <(shellconf::outputs)
+
+  if (( conflict )); then
+    msg::warning 'conflicting files detected:/'
+    msg::newline
+    _nextstep --config-conflict
+    exit 1
+  fi
+
+  msg 'installing shell configuration...'
+
+  while IFS=$'\t' read -r src relpath; do
+    dst="${HOME}/${relpath}"
+
+    if dotfiles::is_ignored "$relpath"; then
+      msg::skipped "skipped: ${dst}"
+      continue
+    fi
+
+    # 配置先のディレクトリはレジストリ側に現れないため、ここで作る。
+    # configs の配置と同じくパーミッションは 700 とする。
+    #
+    # mkdir -p は中間ディレクトリに -m を適用しないため、1階層ずつ作る。
+    dstdir="$(dirname -- "$dst")"
+    if [[ ! -d "$dstdir" ]]; then
+      current="$HOME"
+      while IFS= read -r part; do
+        [[ -z "$part" ]] && continue
+        current="${current}/${part}"
+        [[ -d "$current" ]] && continue
+
+        if ! mkdir -m 700 -- "$current"; then
+          logger --fatal "failed to create directory: ${current}"
+          exit 1
+        fi
+        msg::changed "directory created: ${current}"
+      done < <(printf '%s\n' "${relpath%/*}" | tr '/' '\n')
+    fi
+
+    util::install "$src" "$dst"
+  done < <(shellconf::outputs)
+
+  # フックの案内は、まだ入っていないシェルについてだけ出す。
+  # 導入済みのマシンで毎回出さないため。使わないシェルは配置先を .dotignore に
+  # 書けば、配置とあわせて案内も止まる。
+  for shell in bash zsh; do
+    dotfiles::is_ignored ".config/shell/rc.${shell}" && continue
+    shellconf::hook_installed "$shell" && continue
+    SHELL_HOOK_PENDING+=( "$shell" )
+  done
+
+  msg::ok 'shell configuration installed:)'
+  msg::newline
+}
+
 theme::load
 msg::init
 
 greet
 configure_git_for_dotfiles
 install_configs
+install_shell_configs
+
+if (( ${#SHELL_HOOK_PENDING[@]} > 0 )); then
+  _nextstep --shell-hook
+fi
 
 if (( ${DOTFILES_PATH_UNDEFINED:-0} )); then
   _nextstep --undefined-dotfiles-path

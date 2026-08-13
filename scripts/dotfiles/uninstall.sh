@@ -4,7 +4,7 @@ set -ueo pipefail
 
 # shellcheck source=/dev/null
 source "${DOTFILES_PATH}/lib/bash/import.sh"
-import log theme dotfiles msg util
+import log theme dotfiles msg util shellconf
 
 theme::load
 msg::init
@@ -251,15 +251,49 @@ uninstall_configs() {
       fi
     done <<<"$pkg_dirs"
   done <<<"$pkg_names"
+}
 
-  # 警告がある場合、boxは完了を言い切らない (COMPLETED を出さない) ため、
-  # 結論はこの行で示す。
-  if (( ${#UNINSTALL_WARNED[@]} > 0 )); then
-    msg::warning 'finished with warnings:/'
-  else
-    msg::ok 'configuration files uninstalled:)'
-  fi
-  msg::newline
+uninstall_shell_configs() {
+  # シェル設定は configs/ の walk に乗らないため、install と同じ固定テーブルを
+  # 見て個別に解除する。生成物 (run/ 配下) 自体は消さない。再生成できるうえ、
+  # git 管理外なので残っていても害がない。
+
+  local src relpath target dstdir
+
+  msg 'removing shell configs...'
+
+  while IFS=$'\t' read -r src relpath; do
+    target="${HOME}/${relpath}"
+    logger --debug "remove target shell config: ${target}"
+
+    _uninstall_target "$src" "$target" "$relpath"
+  done < <(shellconf::outputs)
+
+  # 空になった配置先ディレクトリを片付ける。install がこれらを作るため、
+  # 解除もこちらで責任を持つ。深い順に見て、空でなければ触らない
+  # (~/.config/fish/conf.d に利用者のファイルが残っている場合など)。
+  while read -r dstdir; do
+    [[ -d "$dstdir" ]] || continue
+    [[ -z "$(ls -A "$dstdir")" ]] || continue
+
+    if (( ! DOTFILES_UNINSTALL_DRYRUN )); then
+      if ! rmdir -- "$dstdir" 2>/dev/null; then
+        msg::warning "failed to remove directory: ${dstdir}"
+        UNINSTALL_WARNED+=( "$dstdir" )
+        continue
+      fi
+    fi
+    msg::rm "directory deleted: ${dstdir}"
+  done < <(
+    shellconf::outputs \
+      | cut -f2 \
+      | while IFS= read -r relpath; do printf '%s/%s\n' "$HOME" "${relpath%/*}"; done \
+      | awk '{ print gsub("/", "/"), $0 }' \
+      | sort -nru \
+      | cut -d ' ' -f 2-
+  )
+
+  return 0
 }
 
 greet
@@ -273,6 +307,17 @@ fi
 
 if msg::confirm; then
   uninstall_configs
+  uninstall_shell_configs
+
+  # 警告がある場合、boxは完了を言い切らない (COMPLETED を出さない) ため、
+  # 結論はこの行で示す。
+  if (( ${#UNINSTALL_WARNED[@]} > 0 )); then
+    msg::warning 'finished with warnings:/'
+  else
+    msg::ok 'configuration files uninstalled:)'
+  fi
+  msg::newline
+
   print_summary
   # 別れの挨拶は、きれいに終わったときだけ。
   # dry-run と警告ありは COMPLETED と同じ条件で抑制する。
