@@ -30,7 +30,7 @@ LOGO
   )"
 
   declare -g DOTFILES_CONFIG_DIR="${DOTFILES_PATH:?}/configs"
-  declare -g DOTFILES_PRIVATE_PATH="${DOTFILES_PRIVATE_PATH:-${HOME}/.dotfiles-private}"
+  declare -g DOTFILES_PRIVATE_PATH="${DOTFILES_PRIVATE_PATH:-${HOME}/.me}"
   declare -g DOTFILES_PRIVATE_CONFIG_DIR="${DOTFILES_PRIVATE_PATH}/configs"
   declare -g DOTFILES_RUNTIME_DIR="${DOTFILES_PATH:?}/run"
   declare -g DOTFILES_GITHOOKS_DIR="${DOTFILES_PATH:?}/misc/git/hooks/dotfiles"
