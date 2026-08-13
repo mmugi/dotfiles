@@ -24,5 +24,8 @@
       }
     ]
   },
-  "theme": "auto"
+  "theme": "auto",
+  "permissions": {
+    "defaultMode": "auto"
+  }
 }
