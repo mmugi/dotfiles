@@ -51,7 +51,7 @@ You can customize the installation behavior by setting the following environment
 | `DOTFILES_PATH` | Where the dotfiles live. Defaults to `~/.dotfiles`. The scripts require this at runtime, so export it from your shell config. |
 | `DOTFILES_BRANCH` | Which branch to use (e.g. `dev`). Defaults to `trunk`. |
 | `DOTFILES_DOWNLOADER` | Which downloader to use (`git`, `curl`, or `wget`). If unset, they are tried in that order. |
-| `DOTFILES_PRIVATE_PATH` | Where an optional private overlay repository lives. Defaults to `~/.dotfiles-private`. Ignored when the directory does not exist. |
+| `DOTFILES_PRIVATE_PATH` | Where an optional private overlay repository lives. Defaults to `~/.me`. Ignored when the directory does not exist. |
 
 #### Ignoring Configuration Files
 
