@@ -91,7 +91,7 @@ Entries live under `shell/`, split by when they are needed:
 ```plaintext
 shell
 ├── env.d               # needed outside interactive shells too (PATH and friends)
-│   └── 10-homebrew.sh
+│   └── 20-homebrew.sh
 └── rc.d                # interactive shells only
     └── 50-prompt.sh
 ```
