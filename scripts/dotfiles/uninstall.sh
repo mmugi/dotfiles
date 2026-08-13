@@ -160,18 +160,19 @@ print_summary() {
 }
 
 uninstall_configs() {
-  local pkg_dirs pkg_dir pkg_name config_relpath_fromhome
+  local pkg_dirs pkg_dir pkg_name config_relpath_fromhome config_dir
 
   if [[ -z "${DOTFILES_CONFIG_DIR:-}" ]]; then
     logger --fatal 'DOTFILES_CONFIG_DIR is not set'
     exit 1
   fi
 
+  # install と同じ集合を見る。プライベートリポジトリが存在すれば
+  # そちらが配置したリンクも解除の対象になる。
   pkg_dirs="$(
-    find "$DOTFILES_CONFIG_DIR" \
-      -mindepth 1 \
-      -maxdepth 1 \
-      -type d
+    while read -r config_dir; do
+      find "$config_dir" -mindepth 1 -maxdepth 1 -type d
+    done < <(dotfiles::config_dirs)
   )"
 
   if [[ -z "$pkg_dirs" ]]; then
@@ -179,69 +180,77 @@ uninstall_configs() {
     return 0
   fi
 
-  while read -r pkg_dir; do
-    if [[ -d "$pkg_dir" ]]; then
-      pkg_name="$(basename "$pkg_dir")"
-      msg "removing <hl>${pkg_name}</hl> configs..."
-    else
-      logger --fatal "directory not found: ${pkg_dir}"
-      exit 1
-    fi
+  # install と同様、同じパッケージ名が複数の探索ルートに存在しうるため、
+  # 見出しはパッケージ名でまとめる。
+  local pkg_names
+  pkg_names="$(while read -r pkg_dir; do basename -- "$pkg_dir"; done <<<"$pkg_dirs" | sort -u)"
 
-    local src_files src_dirs
-    local src_file src_dirs src_dir target
+  while read -r pkg_name; do
+    msg "removing <hl>${pkg_name}</hl> configs..."
 
-    src_files="$(find "$pkg_dir" -mindepth 1 -type f)"
-    src_dirs="$(
-      find "$pkg_dir" -mindepth 1 -type d \
-        | awk '{ print gsub("/", "/"), $0 }' \
-        | sort -nr \
-        | cut -d ' ' -f 2
-    )"
+    while read -r pkg_dir; do
+      [[ "$(basename -- "$pkg_dir")" == "$pkg_name" ]] || continue
 
-    if [[ -z "$src_files" && -z "$src_dirs" ]]; then
-      continue
-    fi
+      if [[ ! -d "$pkg_dir" ]]; then
+        logger --fatal "directory not found: ${pkg_dir}"
+        exit 1
+      fi
 
-    # シンボリックリンクの削除
-    if [[ -n "$src_files" ]]; then
-      while read -r src_file; do
-        config_relpath_fromhome="${src_file#"${pkg_dir}/"}"
-        target="${HOME}/${config_relpath_fromhome}"
-        logger --debug "remove target config file: ${target}"
+      local src_files src_dirs
+      local src_file src_dir target
 
-        _uninstall_target "$src_file" "$target" "$config_relpath_fromhome"
-      done <<<"$src_files"
-    fi
+      src_files="$(find "$pkg_dir" -mindepth 1 -type f)"
+      src_dirs="$(
+        find "$pkg_dir" -mindepth 1 -type d \
+          | awk '{ print gsub("/", "/"), $0 }' \
+          | sort -nr \
+          | cut -d ' ' -f 2
+      )"
 
-    # 空のディレクトリを削除
-    if [[ -n "$src_dirs" ]]; then
-      while read -r src_dir; do
-        target="${HOME}/${src_dir#"${pkg_dir}/"}"
-        logger --debug "remove target dir: ${target}"
+      if [[ -z "$src_files" && -z "$src_dirs" ]]; then
+        continue
+      fi
 
-        if [[ ! -d "$target" ]]; then
-          logger --debug "target dir is not exists: ${target}"
-          continue
-        fi
+      # シンボリックリンクの削除
+      if [[ -n "$src_files" ]]; then
+        while read -r src_file; do
+          config_relpath_fromhome="${src_file#"${pkg_dir}/"}"
+          target="${HOME}/${config_relpath_fromhome}"
+          logger --debug "remove target config file: ${target}"
 
-        if [[ -z "$(ls -A "$target")" ]]; then
-          logger --debug "dir is empty: ${target}"
-          if (( ! DOTFILES_UNINSTALL_DRYRUN )); then
-            # 削除できなくても他のコンフィグの処理は続ける
-            if ! rmdir -- "$target" 2>/dev/null; then
-              msg::warning "failed to remove directory: ${target}"
-              UNINSTALL_WARNED+=( "$target" )
-              continue
-            fi
+          _uninstall_target "$src_file" "$target" "$config_relpath_fromhome"
+        done <<<"$src_files"
+      fi
+
+      # 空のディレクトリを削除
+      if [[ -n "$src_dirs" ]]; then
+        while read -r src_dir; do
+          target="${HOME}/${src_dir#"${pkg_dir}/"}"
+          logger --debug "remove target dir: ${target}"
+
+          if [[ ! -d "$target" ]]; then
+            logger --debug "target dir is not exists: ${target}"
+            continue
           fi
-          msg::rm "directory deleted: $target"
-        else
-          logger --debug "dir is not empty: ${target}"
-        fi
-      done < <(echo "$src_dirs")
-    fi
-  done <<<"$pkg_dirs"
+
+          if [[ -z "$(ls -A "$target")" ]]; then
+            logger --debug "dir is empty: ${target}"
+            if (( ! DOTFILES_UNINSTALL_DRYRUN )); then
+              # 削除できなくても他のコンフィグの処理は続ける
+              if ! rmdir -- "$target" 2>/dev/null; then
+                msg::warning "failed to remove directory: ${target}"
+                UNINSTALL_WARNED+=( "$target" )
+                continue
+              fi
+            fi
+            msg::rm "directory deleted: $target"
+          else
+            logger --debug "dir is not empty: ${target}"
+          fi
+        done < <(echo "$src_dirs")
+      fi
+    done <<<"$pkg_dirs"
+  done <<<"$pkg_names"
 
   # 警告がある場合、boxは完了を言い切らない (COMPLETED を出さない) ため、
   # 結論はこの行で示す。

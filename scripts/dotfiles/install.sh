@@ -46,6 +46,18 @@ EOF
       )"
       msg::box -- "$msg"
       ;;
+    --duplicate-config)
+      msg="$(cat <<EOF
+${header}
+the same destination is provided by more than one config root.
+a private overlay adds configuration files, it does not replace them.
+please do one of the following:
+ -> remove the duplicate from one of the config roots.
+ -> add it to <hl>${DOTFILES_PATH}/.dotignore</hl> to ignore them.
+EOF
+      )"
+      msg::box -- "$msg"
+      ;;
     --config-conflict)
       msg="$(cat <<EOF
 ${header}
@@ -168,9 +180,15 @@ install_configs() {
   # パスと前方一致する場合に、該当パスのコンフィグ配置処理をスキップします。
   # また、空行および # から始まる行は無視されます。
 
-  local pkg_dirs pkg_dir pkg_name
+  local pkg_dirs pkg_dir pkg_name config_dir
   local src_configs src config_relpath_fromhome dst
   local conflict=0
+  local duplicate=0
+
+  # 配置先ごとに、それを提供する探索ルート側のパスを覚えておく。
+  # util::install --check はリンクを作らないため、複数のルートが同じ配置先を
+  # 持っていても衝突として検出できない。ここで自前に突き合わせる。
+  local -A provided_by=()
 
   msg::header 'configuration file installation'
 
@@ -178,7 +196,13 @@ install_configs() {
 
   msg 'checking configuration files to be installed...'
 
-  pkg_dirs="$(find "$DOTFILES_CONFIG_DIR" -mindepth 1 -maxdepth 1 -type d)"
+  # 探索ルートは公開分だけとは限らない。dotfiles::config_dirs が
+  # プライベートリポジトリの configs も含めて返す。
+  pkg_dirs="$(
+    while read -r config_dir; do
+      find "$config_dir" -mindepth 1 -maxdepth 1 -type d
+    done < <(dotfiles::config_dirs)
+  )"
 
   if [[ -z "$pkg_dirs" ]]; then
     msg::warning 'package directories not found:/'
@@ -200,47 +224,87 @@ install_configs() {
 
       if dotfiles::is_ignored "$config_relpath_fromhome"; then
         continue
-      else
-        util::install --check "$src" "$dst" || conflict=1
       fi
+
+      # ディレクトリは各ルートに存在してよい (どのルートも .config などを
+      # 持つ)。重複として扱うのはファイルだけ。
+      if [[ ! -d "$src" ]]; then
+        if [[ -n "${provided_by["$dst"]:-}" ]]; then
+          msg::warning "provided by multiple config roots: ${dst}"
+          msg --no-prompt --indent 5 -- "${provided_by["$dst"]}"
+          msg --no-prompt --indent 5 -- "${src}"
+          duplicate=1
+          continue
+        fi
+        provided_by["$dst"]="$src"
+      fi
+
+      util::install --check "$src" "$dst" || conflict=1
     done <<<"$src_configs"
   done <<<"$pkg_dirs"
 
+  # 原因が異なるため、警告も next step も別々に出す。
+  # duplicate はコンフィグ側の重複、conflict は配置先に既にあるファイルとの衝突。
+  if (( duplicate )); then
+    msg::warning 'duplicate destinations detected:/'
+  fi
+
   if (( conflict )); then
     msg::warning 'conflicting files detected:/'
+  fi
+
+  if (( duplicate || conflict )); then
     msg::newline
-    _nextstep --config-conflict
+
+    if (( duplicate )); then
+      _nextstep --duplicate-config
+    fi
+
+    if (( conflict )); then
+      _nextstep --config-conflict
+    fi
+
     # 何も配置せずに中断するため、失敗として終了する。
     # 0で返すと make install が成功扱いになってしまう。
     exit 1
   fi
 
   # installation
-  while read -r pkg_dir; do
-    pkg_name=$(basename "$pkg_dir")
+  #
+  # 同じパッケージ名が複数の探索ルートに存在しうる (公開分と private overlay)。
+  # 由来ごとに見出しを出すと同じパッケージが分かれて見えるため、パッケージ名で
+  # まとめる。どのルートから来たかは、リンク先のパスとして各行に出る。
+  local pkg_names
+  pkg_names="$(while read -r pkg_dir; do basename -- "$pkg_dir"; done <<<"$pkg_dirs" | sort -u)"
+
+  while read -r pkg_name; do
     msg "installing <hl>${pkg_name}</hl> configs..."
 
-    src_configs="$(find "$pkg_dir" -mindepth 1)"
+    while read -r pkg_dir; do
+      [[ "$(basename -- "$pkg_dir")" == "$pkg_name" ]] || continue
 
-    if [[ -z "$src_configs" ]]; then
-      msg::skipped "package directory is empty: ${pkg_dir}"
-      continue
-    fi
+      src_configs="$(find "$pkg_dir" -mindepth 1)"
 
-    while read -r src; do
-      config_relpath_fromhome="${src#"${pkg_dir}/"}"
-      dst="${HOME}/${config_relpath_fromhome}"
-
-      if [[ "$src" =~ \.swp$ ]]; then
+      if [[ -z "$src_configs" ]]; then
+        msg::skipped "package directory is empty: ${pkg_dir}"
         continue
-      elif dotfiles::is_ignored "$config_relpath_fromhome"; then
-        msg::skipped "skipped: ${HOME}/${config_relpath_fromhome}"
-        continue
-      else
-        util::install "$src" "$dst"
       fi
-    done <<<"$src_configs"
-  done <<<"$pkg_dirs"
+
+      while read -r src; do
+        config_relpath_fromhome="${src#"${pkg_dir}/"}"
+        dst="${HOME}/${config_relpath_fromhome}"
+
+        if [[ "$src" =~ \.swp$ ]]; then
+          continue
+        elif dotfiles::is_ignored "$config_relpath_fromhome"; then
+          msg::skipped "skipped: ${HOME}/${config_relpath_fromhome}"
+          continue
+        else
+          util::install "$src" "$dst"
+        fi
+      done <<<"$src_configs"
+    done <<<"$pkg_dirs"
+  done <<<"$pkg_names"
 
   msg::ok 'configuration files installed:)'
   msg::newline
