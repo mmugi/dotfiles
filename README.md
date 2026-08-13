@@ -22,6 +22,24 @@ cd ~/.dotfiles && make install
 
 Add the same `export` to your shell config as well, since the `make` targets need it at runtime. The one-line install above sets it for you.
 
+### > Configuration Layout
+
+Configuration files live under `configs/`, one directory per package. Within a package, files are laid out exactly as they should appear relative to your home directory:
+
+```plaintext
+configs
+├── git
+│   └── .config
+│       └── git
+│           └── config
+└── vim
+    └── .vimrc
+```
+
+`make install` walks every package and deploys each entry to the matching path under your home directory. Regular files become symlinks back into this repository, so editing a deployed file edits the file here. Missing intermediate directories are created with permission `700`.
+
+Every package is checked before anything is deployed. If a destination is already occupied, the installation reports it and stops without touching your files.
+
 ### > Installation Options
 
 #### Environment Variables
@@ -54,16 +72,7 @@ Blank lines and lines starting with `#` are ignored.
 
 #### Private Overlay
 
-Some configuration is not meant to be published. Keep it in a separate private repository that mirrors the `configs/` layout of this one:
-
-```plaintext
-~/.dotfiles-private
-└── configs
-    └── some-package
-        └── .config
-            └── example
-                └── private.conf
-```
+Some configuration is not meant to be published. Keep it in a separate private repository whose `configs/` follows the same layout described above.
 
 When `DOTFILES_PRIVATE_PATH` points at an existing directory, `make install` and `make uninstall` walk its `configs/` alongside this repository's. This repository never references the overlay contents, so it stays publishable on its own and everything still works when the overlay is absent.
 
