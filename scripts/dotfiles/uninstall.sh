@@ -160,18 +160,19 @@ print_summary() {
 }
 
 uninstall_configs() {
-  local pkg_dirs pkg_dir pkg_name config_relpath_fromhome
+  local pkg_dirs pkg_dir pkg_name config_relpath_fromhome config_dir
 
   if [[ -z "${DOTFILES_CONFIG_DIR:-}" ]]; then
     logger --fatal 'DOTFILES_CONFIG_DIR is not set'
     exit 1
   fi
 
+  # install と同じ集合を見る。プライベートリポジトリが存在すれば
+  # そちらが配置したリンクも解除の対象になる。
   pkg_dirs="$(
-    find "$DOTFILES_CONFIG_DIR" \
-      -mindepth 1 \
-      -maxdepth 1 \
-      -type d
+    while read -r config_dir; do
+      find "$config_dir" -mindepth 1 -maxdepth 1 -type d
+    done < <(dotfiles::config_dirs)
   )"
 
   if [[ -z "$pkg_dirs" ]]; then

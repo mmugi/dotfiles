@@ -168,7 +168,7 @@ install_configs() {
   # パスと前方一致する場合に、該当パスのコンフィグ配置処理をスキップします。
   # また、空行および # から始まる行は無視されます。
 
-  local pkg_dirs pkg_dir pkg_name
+  local pkg_dirs pkg_dir pkg_name config_dir
   local src_configs src config_relpath_fromhome dst
   local conflict=0
 
@@ -178,7 +178,13 @@ install_configs() {
 
   msg 'checking configuration files to be installed...'
 
-  pkg_dirs="$(find "$DOTFILES_CONFIG_DIR" -mindepth 1 -maxdepth 1 -type d)"
+  # 探索ルートは公開分だけとは限らない。dotfiles::config_dirs が
+  # プライベートリポジトリの configs も含めて返す。
+  pkg_dirs="$(
+    while read -r config_dir; do
+      find "$config_dir" -mindepth 1 -maxdepth 1 -type d
+    done < <(dotfiles::config_dirs)
+  )"
 
   if [[ -z "$pkg_dirs" ]]; then
     msg::warning 'package directories not found:/'

@@ -3,7 +3,7 @@
 # import.sh がsource時に読み取る変数
 # shellcheck disable=SC2034
 {
-  LIB_VERSION='1.0.0'
+  LIB_VERSION='1.1.0'
   LIB_DEPS=( core )
 }
 [[ "${1:-}" = '__IMPORT__' ]] && return 0
@@ -30,10 +30,34 @@ LOGO
   )"
 
   declare -g DOTFILES_CONFIG_DIR="${DOTFILES_PATH:?}/configs"
+  declare -g DOTFILES_PRIVATE_PATH="${DOTFILES_PRIVATE_PATH:-${HOME}/.dotfiles-private}"
+  declare -g DOTFILES_PRIVATE_CONFIG_DIR="${DOTFILES_PRIVATE_PATH}/configs"
   declare -g DOTFILES_RUNTIME_DIR="${DOTFILES_PATH:?}/run"
   declare -g DOTFILES_GITHOOKS_DIR="${DOTFILES_PATH:?}/misc/git/hooks/dotfiles"
   declare -g DOTFILES_BREWFILE_DIR="${DOTFILES_PATH:?}/misc/brew"
   declare -g DOTFILES_IGNOREFILE="${DOTFILES_PATH:?}/.dotignore"
+}
+
+dotfiles::config_dirs() {
+  # usage: dotfiles::config_dirs
+  #
+  # コンフィグのパッケージを探索するルートディレクトリを1行ずつ出力する。
+  #
+  # 公開リポジトリの configs に加え、DOTFILES_PRIVATE_PATH が存在すればその
+  # configs も対象にする。公開したくない設定をプライベートリポジトリに置いた
+  # まま、配置の仕組みだけをこちらで持つための拡張点。プライベート側が無い
+  # 環境では黙って公開分だけを返すため、単体でも成立する。
+  #
+  # プライベート側は追加であって上書きではない。両者が同じ配置先を指した場合、
+  # util::install が「dotfiles の管理下にないリンク」として衝突を報告する。
+  #
+  # install と uninstall の両方が同じ集合を見る必要があるため、ここに置いている。
+
+  printf '%s\n' "${DOTFILES_CONFIG_DIR:?}"
+
+  if [[ -d "${DOTFILES_PRIVATE_CONFIG_DIR:-}" ]]; then
+    printf '%s\n' "$DOTFILES_PRIVATE_CONFIG_DIR"
+  fi
 }
 
 dotfiles::is_ignored() {
