@@ -12,13 +12,14 @@
 #   import.sh読み込み後、`import()` の引数に読み込むライブラリ名を指定して実行します。
 #   検索パス(後述)から `<library名>.sh` を検索しsourceします。
 #
-#   `import()` で読み込まれたライブラリは `IMPORT_IMPORTED_LIBS` 連想配列にセットされます。
-#   キーは `<library名>、バリューはメタデータ(後述)で定義されるライブラリバージョンがセットされます。
-#   この連想配列は、ライブラリの再読み込みなどを防ぐためのチェックなどに利用されるため、
-#   意図しない書き換えにご注意ください。
+#   `import()` で読み込まれたライブラリは `IMPORT_IMPORTED_LIBS` 連想配列にセット
+#   されます(key: <library名>, value: 読み込んだファイルパス)。
 #
-#   `IMPORT_IMPORTED_LIBS` を参照することで、読み込み済みのライブラリおよびバージョンを
-#   確認することができます。
+#   この連想配列は、ライブラリの再読み込みなどを防ぐためのチェックなどに利用される
+#   ため、意図しない書き換えにご注意ください。
+#
+#   `IMPORT_IMPORTED_LIBS` を参照することで、読み込み済みのライブラリと、それが
+#   検索パスのどこから読み込まれたかを確認することができます。
 #
 #   コード例:
 #
@@ -41,13 +42,10 @@
 #
 #     ```
 #     # shellcheck disable=SC2034
-#     LIB_VERSION='0.0.0'
 #     LIB_DEPS=()
 #     LIB_REQUIRES_BASH='>=0.0.0'
 #     [[ "${1:-}" = '__IMPORT__' ]] && return 0
 #     ```
-#
-#   `LIB_VERSION` は `x.y.z` 形式で指定します(接頭辞 `v` は不可)。
 #
 #   そのライブラリが依存するライブラリ名を `LIB_DEPS` に配列として保持します。
 #   `LIB_DEPS` が空でない場合、`import()` の引数として再帰的に依存ライブラリの解決を行います。#
@@ -191,7 +189,7 @@ import::_resolving_stack_contains(){
 }
 
 import() {
-  local lib libfile libver
+  local lib libfile
 
   import::_debug \
     "currently imported libraries: $(import::_hl_bold "${!IMPORT_IMPORTED_LIBS[@]}")"
@@ -234,7 +232,6 @@ import() {
 
     # メタ情報取得
     import::_debug "retrieving metadata..."
-    declare LIB_VERSION=
     declare -a LIB_DEPS=()
     declare LIB_REQUIRES_BASH=
 
@@ -242,16 +239,6 @@ import() {
     if ! source "$libfile" "$_IMPORT_MARKER"; then
       import::_abort "failed to retrieve library metadata: ${libfile}"
     else
-      if [[ -z "${LIB_VERSION:-}" ]]; then
-        libver='undefined'
-      elif [[ "${LIB_VERSION,,}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        libver="$LIB_VERSION"
-      else
-        import::_error "invalid version format. expected: x.y.z: ${LIB_VERSION}"
-        libver='???'
-      fi
-
-      import::_debug "library version: $(import::_hl_keyword "$libver")"
       import::_debug "dependent libraries: $(import::_hl_keyword "${LIB_DEPS[*]:-none}")"
       import::_debug "library requires bash version: $(import::_hl_keyword "${LIB_REQUIRES_BASH:-*}")"
     fi
@@ -273,7 +260,7 @@ import() {
     source "$libfile" || import::_abort "failed to source ${libfile}"
     import::_debug 'removing from resolving stack...'
     unset '_IMPORT_RESOLVING_STACK[${#_IMPORT_RESOLVING_STACK[@]}-1]'
-    IMPORT_IMPORTED_LIBS["$lib"]="$libver"
+    IMPORT_IMPORTED_LIBS["$lib"]="$libfile"
     import::_debug "$(import::_hl_lib '<<<') imported $(import::_hl_lib "$lib")"
   done
 

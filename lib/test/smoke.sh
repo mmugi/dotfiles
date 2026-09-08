@@ -55,8 +55,8 @@ check_rc() {
 check 'すべてのライブラリが読み込まれている' \
   '9' "${#IMPORT_IMPORTED_LIBS[@]}"
 
-check 'ライブラリバージョンが記録されている' \
-  '1.0.0' "${IMPORT_IMPORTED_LIBS['core']}"
+check 'ライブラリの読み込み元パスが記録されている' \
+  "${DOTFILES_PATH}/lib/bash/core.sh" "${IMPORT_IMPORTED_LIBS['core']}"
 
 check 'バージョン比較: 1.10.0 > 1.9.0' \
   '1' "$(import::_version_compare '1.10.0' '1.9.0')"
