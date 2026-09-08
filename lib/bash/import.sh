@@ -37,24 +37,30 @@
 #
 # * Metadata *
 #
-#   ライブラリのバージョン、依存関係は各ライブラリのメタ情報で管理します。
-#   import.shで管理するライブラリの先頭には以下を定義してください。
+#   ライブラリの依存関係と要求bashバージョンは、ファイル先頭のコメントに
+#   `@<ディレクティブ> <値>` の形式で記述します。
 #
 #     ```
-#     # shellcheck disable=SC2034
-#     LIB_DEPS=()
-#     LIB_REQUIRES_BASH='>=0.0.0'
-#     [[ "${1:-}" = '__IMPORT__' ]] && return 0
+#     # shellcheck shell=bash
+#
+#     # @deps core theme
+#     # @requires-bash >=4.1
 #     ```
 #
-#   そのライブラリが依存するライブラリ名を `LIB_DEPS` に配列として保持します。
-#   `LIB_DEPS` が空でない場合、`import()` の引数として再帰的に依存ライブラリの解決を行います。#
+#   メタ情報は先頭からコメント行(と空行)を走査することで読み取り、最初のコメント
+#   以外の行に達した時点で終了します。
 #
-#   `LIB_REQUIRES_BASH` には、そのライブラリが要求するbashバージョンを `<version specifier><version>`
-#   の形式の文字列で指定します。
+#   `@deps` には、そのライブラリが依存するライブラリ名を空白区切りで指定します。
+#   `import()` の引数として再帰的に依存ライブラリの解決を行います。
+#   省略した場合は依存なしとして扱います。
+#
+#   `@requires-bash` には、そのライブラリが要求するbashバージョンを
+#   `<version specifier><version>` の形式で指定します。
 #   使用可能な指定子は `==` 、`!=` 、`>=` 、`<=` 、`>` 、`<` です。
-#   この変数は定義しないこともできます。その場合は、`>=0` として判定されます。
+#   省略した場合は `>=0` として判定されます。
 #   条件が満たされない場合は、エラーでimportを停止します。
+#
+#   認識しない `@<ディレクティブ>` は、ただのコメント行として無視します。
 #
 # * Debug *
 #
@@ -180,6 +186,30 @@ import::_find_library_file() {
   return 1
 }
 
+import::_read_metadata() {
+  # ライブラリ先頭のコメントからメタ情報を読み、以下のグローバルにセットする。
+  #   _IMPORT_META_DEPS          : @deps を空白で分割した配列
+  #   _IMPORT_META_REQUIRES_BASH : @requires-bash の値 (未指定なら空)
+  local libfile="$1"
+  local line directive value
+
+  _IMPORT_META_DEPS=()
+  _IMPORT_META_REQUIRES_BASH=
+
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    [[ -z "${line//[[:space:]]/}" ]] && continue
+    [[ "$line" =~ ^#.* ]] || break
+    [[ "$line" =~ ^#[[:space:]]*@([a-z-]+)[[:space:]]+(.+)$ ]] || continue
+    directive="${BASH_REMATCH[1]}"
+    value="${BASH_REMATCH[2]}"
+    case "$directive" in
+      deps) IFS=' ' read -ra _IMPORT_META_DEPS <<< "$value" ;;
+      requires-bash) _IMPORT_META_REQUIRES_BASH="${value%%[[:space:]]*}" ;;
+      *) ;;
+    esac
+  done < "$libfile"
+}
+
 import::_resolving_stack_contains(){
   local item target="$1"
   for item in "${_IMPORT_RESOLVING_STACK[@]}"; do
@@ -189,7 +219,8 @@ import::_resolving_stack_contains(){
 }
 
 import() {
-  local lib libfile
+  local lib libfile requires_bash
+  local -a deps
 
   import::_debug \
     "currently imported libraries: $(import::_hl_bold "${!IMPORT_IMPORTED_LIBS[@]}")"
@@ -226,31 +257,24 @@ import() {
       import::_debug "library file found: $(import::_hl_keyword "$libfile")"
     fi
 
-    if ! grep "$_IMPORT_MARKER" "$libfile" >/dev/null 2>&1; then
-      import::_abort "library marker not found: ${_IMPORT_MARKER}: ${libfile}"
-    fi
-
     # メタ情報取得
-    import::_debug "retrieving metadata..."
-    declare -a LIB_DEPS=()
-    declare LIB_REQUIRES_BASH=
+    #   _IMPORT_META_* は再帰するimportで上書きされるため、ローカルへ退避する。
+    import::_debug "reading metadata..."
+    import::_read_metadata "$libfile"
+    deps=( "${_IMPORT_META_DEPS[@]}" )
+    requires_bash="${_IMPORT_META_REQUIRES_BASH:->=0}"
 
-    # shellcheck source=/dev/null
-    if ! source "$libfile" "$_IMPORT_MARKER"; then
-      import::_abort "failed to retrieve library metadata: ${libfile}"
-    else
-      import::_debug "dependent libraries: $(import::_hl_keyword "${LIB_DEPS[*]:-none}")"
-      import::_debug "library requires bash version: $(import::_hl_keyword "${LIB_REQUIRES_BASH:-*}")"
-    fi
+    import::_debug "dependent libraries: $(import::_hl_keyword "${deps[*]:-none}")"
+    import::_debug "library requires bash version: $(import::_hl_keyword "$requires_bash")"
 
-    if ! import::_version_satisfies "${LIB_REQUIRES_BASH:=">=0"}"; then
-      import::_abort "${lib}: bash ${LIB_REQUIRES_BASH} is required (current: ${BASH_VERSION})"
+    if ! import::_version_satisfies "$requires_bash"; then
+      import::_abort "${lib}: bash ${requires_bash} is required (current: ${BASH_VERSION})"
     fi
 
     # 依存ライブラリ解決
-    if (( "${#LIB_DEPS[@]}" != 0 )); then
+    if (( ${#deps[@]} != 0 )); then
       import::_debug "$(import::_hl_deps "{{{") resolving dependent libraries..."
-      import "${LIB_DEPS[@]}"
+      import "${deps[@]}"
       import::_debug "$(import::_hl_deps "}}}") resolved library dependencies."
     fi
 
@@ -309,7 +333,8 @@ import::_init() {
 
   declare -gA IMPORT_IMPORTED_LIBS=()
   declare -ga _IMPORT_RESOLVING_STACK=()
-  declare -gr _IMPORT_MARKER='__IMPORT__'
+  declare -ga _IMPORT_META_DEPS=()
+  declare -g  _IMPORT_META_REQUIRES_BASH=
 
   import::_debug "import path initializing..."
   local _import_path_default=( "${DOTFILES_PATH}/lib/bash" )

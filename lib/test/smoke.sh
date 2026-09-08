@@ -50,6 +50,9 @@ check_rc() {
   check "$desc" "$expected" "$rc"
 }
 
+_tmp="$(mktemp -d)"
+trap 'rm -rf -- "$_tmp"' EXIT
+
 # --- import -------------------------------------------------------------------
 
 check 'すべてのライブラリが読み込まれている' \
@@ -64,6 +67,34 @@ check 'バージョン比較: 1.10.0 > 1.9.0' \
 check_rc 'bashバージョン要求を満たす' 0 import::_version_satisfies '>=4.0'
 check_rc 'bashバージョン要求を満たさない' 1 import::_version_satisfies '<4.0'
 check_rc '不正なバージョン要求は失敗する' 1 import::_version_satisfies 'x.y.z'
+
+# メタ情報はライブラリをsourceせず、先頭のコメントから読む。
+#   回帰: 以前はメタ情報の取得にもsourceを使っていたため、ガード行を書き忘れた
+#   ライブラリの本体が依存解決の前に実行され、さらに二重に読み込まれていた。
+_metadir="${_tmp}/metalibs"
+mkdir -p "$_metadir"
+
+printf '%s\n' '# @deps core' '' 'echo body' > "${_metadir}/sidefx.sh"
+printf '%s\n' '# @author someone' '# @deps core' '# @totally-unknown xyz' '' \
+  'echo body' > "${_metadir}/unknown.sh"
+printf '%s\n' '# @requires-bash >=9.0' '' 'this is a ((( syntax error )))' \
+  > "${_metadir}/newsyntax.sh"
+
+_import_in_child() {
+  # import の失敗は exit するため、親から切り離して子bashで実行する。
+  DOTFILES_IMPORT_PATH="$_metadir" bash -c \
+    "source '${DOTFILES_PATH}/lib/bash/import.sh'; import ${1}" 2>/dev/null
+}
+
+check 'ライブラリ本体が一度だけ実行される' 'body' "$(_import_in_child sidefx)"
+check '未知のディレクティブを無視する' 'body' "$(_import_in_child unknown)"
+
+# 回帰: @requires-bash の判定はライブラリをparseする前に行う。満たさない場合に
+#   本体の構文エラーが表面化してはならない。
+check '要求bashを満たさないライブラリは本体をparseしない' '1' \
+  "$(DOTFILES_IMPORT_PATH="$_metadir" bash -c \
+      "source '${DOTFILES_PATH}/lib/bash/import.sh'; import newsyntax" 2>&1 \
+      | grep -c 'bash >=9.0 is required')"
 
 # --- escseq -------------------------------------------------------------------
 
@@ -260,9 +291,6 @@ check 'util::chk が usage 関数を漏らさない' '' "$(declare -F usage 2>/d
 
 # 削除済み関数
 check 'util::sysinfo は削除済み' '' "$(type -t util::sysinfo 2>/dev/null || true)"
-
-_tmp="$(mktemp -d)"
-trap 'rm -rf -- "$_tmp"' EXIT
 
 printf 'src\n' > "${_tmp}/src"
 

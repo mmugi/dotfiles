@@ -1,11 +1,6 @@
 # shellcheck shell=bash
 
-# import.sh がsource時に読み取る変数
-# shellcheck disable=SC2034
-{
-  LIB_DEPS=( log msg )
-}
-[[ "${1:-}" = '__IMPORT__' ]] && return 0
+# @deps log msg
 
 # util::chk 結果キャッシュ
 #   値: 0 = 存在する / 1 = 存在しない

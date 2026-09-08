@@ -1,11 +1,6 @@
 # shellcheck shell=bash
 
-# import.sh がsource時に読み取る変数
-# shellcheck disable=SC2034
-{
-  LIB_DEPS=( core )
-}
-[[ "${1:-}" = '__IMPORT__' ]] && return 0
+# @deps core
 
 # shellcheck disable=SC2034
 {

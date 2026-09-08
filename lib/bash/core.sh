@@ -1,12 +1,5 @@
 # shellcheck shell=bash
 
-# import.sh がsource時に読み取る変数
-# shellcheck disable=SC2034
-{
-  LIB_DEPS=()
-}
-[[ "${1:-}" = '__IMPORT__' ]] && return 0
-
 core::_log_header() {
   local line subroutine file type
   type="${1:?}"

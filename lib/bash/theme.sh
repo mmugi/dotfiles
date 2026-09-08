@@ -1,11 +1,6 @@
 # shellcheck shell=bash
 
-# import.sh がsource時に読み取る変数
-# shellcheck disable=SC2034
-{
-  LIB_DEPS=( core escseq termcap )
-}
-[[ "${1:-}" = '__IMPORT__' ]] && return 0
+# @deps core escseq termcap
 
 # Bash Theme Loader <theme.sh>
 #
@@ -160,6 +155,7 @@ theme::_apply_styles() {
   else
     # nameref に対して declare を使うと参照先ではなく `init_map` という名前の
     # 変数が新規に作られてしまうため、nameref 経由の通常代入でクリアする。
+    # shellcheck disable=SC2034
     init_map=()
   fi
 }
