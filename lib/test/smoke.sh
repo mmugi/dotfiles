@@ -68,6 +68,20 @@ check_rc 'bashバージョン要求を満たす' 0 import::_version_satisfies '>
 check_rc 'bashバージョン要求を満たさない' 1 import::_version_satisfies '<4.0'
 check_rc '不正なバージョン要求は失敗する' 1 import::_version_satisfies 'x.y.z'
 
+# 演算子6種。正規表現を書き換えたときの取りこぼしを検出する。
+check_rc 'バージョン要求: >'  0 import::_version_satisfies '>5.2'  '5.3'
+check_rc 'バージョン要求: >=' 0 import::_version_satisfies '>=5.3' '5.3'
+check_rc 'バージョン要求: <'  0 import::_version_satisfies '<5.4'  '5.3'
+check_rc 'バージョン要求: <=' 0 import::_version_satisfies '<=5.3' '5.3'
+check_rc 'バージョン要求: ==' 0 import::_version_satisfies '==5.3' '5.3'
+check_rc 'バージョン要求: !=' 0 import::_version_satisfies '!=5.2' '5.3'
+
+# 回帰: [><=!]=? では `=` や `!` 単独も通り、要求の書き誤りが演算子の未対応として
+#   報告されていた。
+check '演算子が不完全な要求は要求の誤りとして報告する' '1' \
+  "$(import::_version_satisfies '=5.0' 2>&1 | grep -c 'invalid version requirement')"
+check_rc '演算子のない要求は失敗する' 1 import::_version_satisfies '5.0'
+
 # 回帰: バージョン要素の先頭ゼロ。基数を 10# で固定しないと 08 や 09 が8進数として
 #   解釈され、算術エラーになって比較結果が 0 に倒れる。
 check 'バージョン比較: 1.08.0 > 1.0.0' \

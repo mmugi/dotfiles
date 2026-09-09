@@ -27,8 +27,8 @@
 #     for key in "${!IMPORT_IMPORTED_LIBS[@]}"; do
 #       printf '%s: %s\n' "$key" "${IMPORT_IMPORTED_LIBS[${key}]}"
 #     done
-#
 #     ```
+#
 # * Import Path *
 #
 #   デフォルトでは `${DOTFILES_PATH}/lib/bash` から `<library名>.sh` を検索します。
@@ -148,7 +148,9 @@ import::_version_satisfies() {
   local version="${2:-"${BASH_VERSION}"}"
   local op required cmp
 
-  if [[ "$requirement" =~ ^([><=!]=?)([0-9]+(\.[0-9]+)*)$ ]]; then
+  # 演算子は `>` `<` `>=` `<=` `==` `!=` の6種。[><=!]=? だと `=` や `!` 単独も
+  # 通ってしまい、要求の書き誤りが "unsupported operator" として報告される。
+  if [[ "$requirement" =~ ^([><]=?|[=!]=)([0-9]+(\.[0-9]+)*)$ ]]; then
     op="${BASH_REMATCH[1]}"
     required="${BASH_REMATCH[2]}"
   else
