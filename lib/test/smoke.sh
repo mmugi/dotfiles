@@ -96,6 +96,39 @@ check '要求bashを満たさないライブラリは本体をparseしない' '1
       "source '${DOTFILES_PATH}/lib/bash/import.sh'; import newsyntax" 2>&1 \
       | grep -c 'bash >=9.0 is required')"
 
+# メタ情報の走査は最初のコメント以外の行で終わる。走査範囲がファイル全体に広がると、
+# 関数本体のコメント (msg.sh の <@indent> など) をディレクティブと誤認しうる。
+printf '%s\n' '# @deps core' '' 'echo body' '# @deps nonexistent_lib' \
+  > "${_metadir}/latedirective.sh"
+
+check 'コード行より後のディレクティブは読まない' 'body' \
+  "$(_import_in_child latedirective)"
+
+# 依存は再帰的に解決し、依存元より先に読み込む。
+printf '%s\n' '# @deps chain_mid' '' 'echo top' > "${_metadir}/chain_top.sh"
+printf '%s\n' '# @deps chain_leaf' '' 'echo mid' > "${_metadir}/chain_mid.sh"
+printf '%s\n' 'echo leaf' > "${_metadir}/chain_leaf.sh"
+
+check '依存を再帰的に解決し、依存元より先に読み込む' 'leaf mid top' \
+  "$(_import_in_child chain_top | tr '\n' ' ' | sed 's/ $//')"
+
+check '読み込み済みライブラリは再importしない' 'body' \
+  "$(_import_in_child 'sidefx sidefx')"
+
+# 循環依存はローダの安全装置。検出できないと無限再帰になる。
+printf '%s\n' '# @deps circ_b' > "${_metadir}/circ_a.sh"
+printf '%s\n' '# @deps circ_a' > "${_metadir}/circ_b.sh"
+
+check '循環依存を検出して停止する' '1' \
+  "$(DOTFILES_IMPORT_PATH="$_metadir" bash -c \
+      "source '${DOTFILES_PATH}/lib/bash/import.sh'; import circ_a" 2>&1 \
+      | grep -c 'circular library dependency detected: circ_a circ_b -> circ_a')"
+
+check '存在しないライブラリはエラーで停止する' '1' \
+  "$(DOTFILES_IMPORT_PATH="$_metadir" bash -c \
+      "source '${DOTFILES_PATH}/lib/bash/import.sh'; import nonexistent_lib" 2>&1 \
+      | grep -c 'library file not found: nonexistent_lib')"
+
 # --- escseq -------------------------------------------------------------------
 
 check 'escseq::sgr --bold' \
