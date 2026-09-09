@@ -117,23 +117,25 @@ import::_version_compare() {
   local max="${#a_versions[@]}"
   (( ${#b_versions[@]} > max )) && max="${#b_versions[@]}"
 
-   for (( i = 0; i < max; i++ )); do
-     local a="${a_versions[i]:-0}"
-     local b="${b_versions[i]:-0}"
+  # 10# を付けて基数を固定する。付けないと 08 や 09 が8進数として解釈され、
+  # "value too great for base" で比較が失敗する。
+  for (( i = 0; i < max; i++ )); do
+    local a="${a_versions[i]:-0}"
+    local b="${b_versions[i]:-0}"
 
-     if (( a > b )); then
-       printf '%d' 1
-       return 0
-     fi
+    if (( 10#$a > 10#$b )); then
+      printf '%d' 1
+      return 0
+    fi
 
-     if (( a < b )); then
-       printf '%d' -1
-       return 0
-     fi
-   done
+    if (( 10#$a < 10#$b )); then
+      printf '%d' -1
+      return 0
+    fi
+  done
 
-   printf '%d' 0
-   return 0
+  printf '%d' 0
+  return 0
 }
 
 import::_version_satisfies() {

@@ -68,6 +68,17 @@ check_rc 'bashバージョン要求を満たす' 0 import::_version_satisfies '>
 check_rc 'bashバージョン要求を満たさない' 1 import::_version_satisfies '<4.0'
 check_rc '不正なバージョン要求は失敗する' 1 import::_version_satisfies 'x.y.z'
 
+# 回帰: バージョン要素の先頭ゼロ。基数を 10# で固定しないと 08 や 09 が8進数として
+#   解釈され、算術エラーになって比較結果が 0 に倒れる。
+check 'バージョン比較: 1.08.0 > 1.0.0' \
+  '1' "$(import::_version_compare '1.08.0' '1.0.0')"
+check 'バージョン比較: 1.08.0 = 1.8.0' \
+  '0' "$(import::_version_compare '1.08.0' '1.8.0')"
+check 'バージョン比較: 1.09.0 < 1.10.0' \
+  '-1' "$(import::_version_compare '1.09.0' '1.10.0')"
+check_rc '先頭ゼロを含む要求バージョンを判定できる' 0 \
+  import::_version_satisfies '>=1.08.0' '1.9.0'
+
 # メタ情報はライブラリをsourceせず、先頭のコメントから読む。
 #   回帰: 以前はメタ情報の取得にもsourceを使っていたため、ガード行を書き忘れた
 #   ライブラリの本体が依存解決の前に実行され、さらに二重に読み込まれていた。
