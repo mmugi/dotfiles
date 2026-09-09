@@ -33,7 +33,12 @@
 #
 #   デフォルトでは `${DOTFILES_PATH}/lib/bash` から `<library名>.sh` を検索します。
 #   検索パスを追加したい場合は `DOTFILES_IMPORT_PATH` を定義します。
-#   PATH環境変数と同じ形式(:区切り)で指定し、左から優先されます。
+#   PATH環境変数と同じ形式(:区切り)の文字列で指定し、左から優先されます。
+#   既定のパスは常に末尾に加わるため、上書きではなく追加になります。
+#   空の要素は無視します。
+#
+#   探索のたびに `DOTFILES_IMPORT_PATH` は読み直されるため、import.sh読み込み後に
+#   設定してもその時点から反映されます。
 #
 # * Metadata *
 #
@@ -174,9 +179,17 @@ import::_version_satisfies() {
 }
 
 import::_find_library_file() {
+  # usage: import::_find_library_file <library名> <検索パス>
+  # 検索パスは PATH と同じ :区切りの文字列。見つけたファイルのパスを出力する。
   local lib="$1"
   local p filepath
-  for p in "${DOTFILES_IMPORT_PATH[@]}"; do
+  local -a paths=()
+
+  IFS=':' read -ra paths <<< "$2"
+  for p in "${paths[@]}"; do
+    # 空の要素は読み飛ばす。PATHと違い常に "${p}/" を前置するため、空要素は
+    # カレントディレクトリではなくルート直下を指してしまう。
+    [[ -z "$p" ]] && continue
     filepath="${p}/${lib}.sh"
     [[ -r "$filepath" ]] && { printf '%s\n' "$filepath"; return 0; }
   done
@@ -216,7 +229,7 @@ import::_resolving_stack_contains(){
 }
 
 import() {
-  local lib libfile requires_bash
+  local lib libfile requires_bash import_path
   local -a deps
 
   import::_debug "currently imported libraries: ${!IMPORT_IMPORTED_LIBS[*]}"
@@ -247,8 +260,9 @@ import() {
 
     # モジュール探索
     import::_debug "searching library file ${lib}.sh..."
-    if ! libfile=$(import::_find_library_file "$lib"); then
-      import::_abort "library file not found: ${lib} (searched: ${DOTFILES_IMPORT_PATH[*]})"
+    import_path="${DOTFILES_IMPORT_PATH:+${DOTFILES_IMPORT_PATH}:}${DOTFILES_PATH}/lib/bash"
+    if ! libfile=$(import::_find_library_file "$lib" "$import_path"); then
+      import::_abort "library file not found: ${lib} (searched: ${import_path})"
     else
       import::_debug "library file found: ${libfile}"
     fi
@@ -316,16 +330,6 @@ import::_init() {
   declare -ga _IMPORT_RESOLVING_STACK=()
   declare -ga _IMPORT_META_DEPS=()
   declare -g  _IMPORT_META_REQUIRES_BASH=
-
-  import::_debug "import path initializing..."
-  local _import_path_default=( "${DOTFILES_PATH}/lib/bash" )
-  local _import_path_extra
-  if [[ -n "${DOTFILES_IMPORT_PATH:-}" ]]; then
-    IFS=':' read -r -a _import_path_extra <<< "$DOTFILES_IMPORT_PATH"
-    DOTFILES_IMPORT_PATH=( "${_import_path_extra[@]}" "${_import_path_default[@]}" )
-  else
-    DOTFILES_IMPORT_PATH=( "${_import_path_default[@]}" )
-  fi
 
   import::_debug "preloading core libraries..."
   import "${preload_libs[@]}"

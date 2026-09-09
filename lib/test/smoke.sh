@@ -140,6 +140,43 @@ check '存在しないライブラリはエラーで停止する' '1' \
       "source '${DOTFILES_PATH}/lib/bash/import.sh'; import nonexistent_lib" 2>&1 \
       | grep -c 'library file not found: nonexistent_lib')"
 
+# 検索パス。DOTFILES_IMPORT_PATH は :区切りの文字列のまま保つ。配列にすると
+# export できず、子プロセスへ引き継げない。
+_altdir="${_tmp}/altlibs"
+_altdir2="${_tmp}/altlibs2"
+mkdir -p "$_altdir" "$_altdir2"
+printf '%s\n' 'echo alt' > "${_altdir}/altlib.sh"
+printf '%s\n' 'echo first' > "${_altdir}/dup.sh"
+printf '%s\n' 'echo second' > "${_altdir2}/dup.sh"
+
+check '検索パスは左から優先される' "${_altdir}/dup.sh" \
+  "$(import::_find_library_file dup "${_altdir}:${_altdir2}")"
+check_rc '検索パスに無いライブラリは見つからない' 1 \
+  import::_find_library_file dup "$_altdir2/nowhere"
+
+# 回帰: 初期化時に配列へ固定していた頃は、読み込み後に設定し直した値が効かず、
+#   既定のパスも失われていた。
+check '初期化後に設定した検索パスが反映される' 'alt' \
+  "$(bash -c "source '${DOTFILES_PATH}/lib/bash/import.sh'
+              DOTFILES_IMPORT_PATH='${_altdir}'
+              import altlib" 2>/dev/null)"
+
+check '検索パスを足しても既定のパスは残る' 'ok' \
+  "$(DOTFILES_IMPORT_PATH="$_altdir" bash -c \
+      "source '${DOTFILES_PATH}/lib/bash/import.sh'; import util && echo ok" 2>/dev/null)"
+
+# 回帰: 配列は export できないため、子プロセスで追加パスが失われていた。
+check '検索パスが子プロセスに引き継がれる' 'alt' \
+  "$(DOTFILES_IMPORT_PATH="$_altdir" bash -c \
+      "source '${DOTFILES_PATH}/lib/bash/import.sh' >/dev/null 2>&1
+       bash -c \"source '${DOTFILES_PATH}/lib/bash/import.sh'; import altlib\"" 2>/dev/null)"
+
+# 既定のパスが末尾に加わることは、未検出時のエラーが示す検索パスで確かめる。
+check '未検出のエラーが検索パスを示す' '1' \
+  "$(DOTFILES_IMPORT_PATH="$_altdir" bash -c \
+      "source '${DOTFILES_PATH}/lib/bash/import.sh'; import nonexistent_lib" 2>&1 \
+      | grep -c "searched: ${_altdir}:${DOTFILES_PATH}/lib/bash")"
+
 # --- escseq -------------------------------------------------------------------
 
 check 'escseq::sgr --bold' \
