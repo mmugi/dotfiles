@@ -79,10 +79,11 @@ import::_depth() {
 }
 
 import::_debug() {
+  (( IMPORT_DEBUG )) || return 0
+
   local tab=2
   local spaces=''
   local depth
-  (( IMPORT_DEBUG )) || return 0
   depth="$(import::_depth)"
   depth="$(( depth < 0 ? 0 : depth ))"
   (( depth > 0 )) && spaces="$(printf '%*s' "$(( depth * tab ))" '')"
@@ -90,19 +91,13 @@ import::_debug() {
 }
 
 import::_error() {
-  printf '[IMPORT ERROR] %b%s%b\n' "$_IMPORT_RED" "$*" "$_IMPORT_RESET" >&2
+  printf '[IMPORT ERROR] %s\n' "$*" >&2
 }
 
 import::_abort() {
   import::_error "$@"
   exit 1
 }
-
-import::_hl() { printf '%b%s%b' "${_IMPORT_BOLD}${_IMPORT_GREEN}" "$*" "$_IMPORT_RESET"; }
-import::_hl_lib() { printf '%b%s%b' "$_IMPORT_GREEN" "$*" "$_IMPORT_RESET"; }
-import::_hl_deps() { printf '%b%s%b' "$_IMPORT_BLUE" "$*" "$_IMPORT_RESET"; }
-import::_hl_bold() { printf '%b%s%b' "$_IMPORT_BOLD" "$*" "$_IMPORT_RESET"; }
-import::_hl_keyword() { printf '%b%s%b' "$_IMPORT_CYAN" "$*" "$_IMPORT_RESET"; }
 
 import::_version_compare() {
   # usage: import::_version_compare "a_version" "b_version"
@@ -222,39 +217,38 @@ import() {
   local lib libfile requires_bash
   local -a deps
 
-  import::_debug \
-    "currently imported libraries: $(import::_hl_bold "${!IMPORT_IMPORTED_LIBS[@]}")"
-  import::_debug "importing libraries: $(import::_hl_bold "$*")"
+  import::_debug "currently imported libraries: ${!IMPORT_IMPORTED_LIBS[*]}"
+  import::_debug "importing libraries: $*"
 
   for lib in "$@"; do
-    import::_debug "$(import::_hl_lib '>>>') importing $(import::_hl_lib "$lib")"
+    import::_debug ">>> importing ${lib}"
 
     # 読み込み済みチェック
     if [[ -n "${IMPORT_IMPORTED_LIBS[${lib}]:-}" ]]; then
       import::_debug 'already imported.'
-      import::_debug "$(import::_hl_lib '<<<') continue"
+      import::_debug '<<< continue'
       continue
     fi
 
     # 循環検出
-    import::_debug "checking if $(import::_hl_bold "$lib") is in the resolving stack..."
+    import::_debug "checking if ${lib} is in the resolving stack..."
     if import::_resolving_stack_contains "$lib"; then
       import::_abort \
         "circular library dependency detected: ${_IMPORT_RESOLVING_STACK[*]} -> ${lib}"
     else
-      import::_debug "$(import::_hl_bold "$lib") is not in the resolving stack."
+      import::_debug "${lib} is not in the resolving stack."
       import::_debug 'pushing to resolving stack...'
       _IMPORT_RESOLVING_STACK+=( "$lib" )
     fi
 
-    import::_debug "resolving stack: $(import::_hl_bold "${_IMPORT_RESOLVING_STACK[*]}")"
+    import::_debug "resolving stack: ${_IMPORT_RESOLVING_STACK[*]}"
 
     # モジュール探索
-    import::_debug "searching library file $(import::_hl_bold "${lib}.sh")..."
+    import::_debug "searching library file ${lib}.sh..."
     if ! libfile=$(import::_find_library_file "$lib"); then
       import::_abort "library file not found: ${lib} (searched: ${DOTFILES_IMPORT_PATH[*]})"
     else
-      import::_debug "library file found: $(import::_hl_keyword "$libfile")"
+      import::_debug "library file found: ${libfile}"
     fi
 
     # メタ情報取得
@@ -264,8 +258,8 @@ import() {
     deps=( "${_IMPORT_META_DEPS[@]}" )
     requires_bash="${_IMPORT_META_REQUIRES_BASH:->=0}"
 
-    import::_debug "dependent libraries: $(import::_hl_keyword "${deps[*]:-none}")"
-    import::_debug "library requires bash version: $(import::_hl_keyword "$requires_bash")"
+    import::_debug "dependent libraries: ${deps[*]:-none}"
+    import::_debug "library requires bash version: ${requires_bash}"
 
     if ! import::_version_satisfies "$requires_bash"; then
       import::_abort "${lib}: bash ${requires_bash} is required (current: ${BASH_VERSION})"
@@ -273,23 +267,24 @@ import() {
 
     # 依存ライブラリ解決
     if (( ${#deps[@]} != 0 )); then
-      import::_debug "$(import::_hl_deps "{{{") resolving dependent libraries..."
+      import::_debug '{{{ resolving dependent libraries...'
       import "${deps[@]}"
-      import::_debug "$(import::_hl_deps "}}}") resolved library dependencies."
+      import::_debug '}}} resolved library dependencies.'
     fi
 
     # ライブラリ読み込み
-    import::_debug "loading $(import::_hl_bold "$lib")..."
+    import::_debug "loading ${lib}..."
     # shellcheck source=/dev/null
     source "$libfile" || import::_abort "failed to source ${libfile}"
     import::_debug 'removing from resolving stack...'
     unset '_IMPORT_RESOLVING_STACK[${#_IMPORT_RESOLVING_STACK[@]}-1]'
     IMPORT_IMPORTED_LIBS["$lib"]="$libfile"
-    import::_debug "$(import::_hl_lib '<<<') imported $(import::_hl_lib "$lib")"
+    import::_debug "<<< imported ${lib}"
   done
 
-  if (( $(import::_depth) == 0 )); then
-    import::_debug "$(import::_hl 'import completed!')"
+  # import::_depth はコマンド置換で fork するため、デバッグ無効時は評価しない。
+  if (( IMPORT_DEBUG )) && (( $(import::_depth) == 0 )); then
+    import::_debug 'import completed!'
   fi
 }
 
@@ -303,22 +298,6 @@ import::_init() {
   fi
 
   (( IMPORT_INITIALIZED )) && return 0
-
-  declare -g _IMPORT_RESET=
-  declare -g _IMPORT_BOLD=
-  declare -g _IMPORT_RED=
-  declare -g _IMPORT_GREEN=
-  declare -g _IMPORT_BLUE=
-  declare -g _IMPORT_CYAN=
-
-  if [[ -t 2  && -z "${NO_COLOR:-}" ]]; then
-    _IMPORT_RESET="$(printf '\033[m')"
-    _IMPORT_BOLD="$(printf '\033[1m')"
-    _IMPORT_RED="$(printf '\033[31m')"
-    _IMPORT_GREEN="$(printf '\033[32m')"
-    _IMPORT_BLUE="$(printf '\033[34m')"
-    _IMPORT_CYAN="$(printf '\033[36m')"
-  fi
 
   import::_debug "bash version ${BASH_VERSION}"
   import::_debug "initializing..."
