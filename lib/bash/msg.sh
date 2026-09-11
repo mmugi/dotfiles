@@ -1,7 +1,6 @@
 # shellcheck shell=bash
 
 # @deps trap log theme
-# @requires-bash >=4.1
 
 : "${MSG_DELAY:=0.1}"
 : "${MSG_INDENT:=0}"

@@ -307,7 +307,10 @@ import() {
 }
 
 import::_init() {
-  local requires_bash='>=4.0'
+  # 4.4 未満では `set -u` のもとで空配列の `"${arr[@]}"` 展開が unbound variable に
+  # なる。この挙動は 4.4 で修正された。スクリプト側は `set -ueo pipefail` を敷いて
+  # いるため、4.3 以下ではライブラリの読み込み自体が失敗する。
+  local requires_bash='>=4.4'
   local preload_libs=( core )
 
   if [ -z "${BASH_VERSION:-}" ]; then
