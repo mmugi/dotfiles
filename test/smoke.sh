@@ -2,14 +2,14 @@
 #
 # lib/bash のスモークテスト
 #
-#   bash lib/test/smoke.sh
+#   bash test/smoke.sh
 #
 # 網羅を狙ったものではなく、「import できて主要関数が壊れていない」ことと、
 # 過去に踏んだ不具合を再発させないことを確認する。
 
 set -ueo pipefail
 
-DOTFILES_PATH="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
+DOTFILES_PATH="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 export DOTFILES_PATH
 
 # 出力を安定させる

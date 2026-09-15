@@ -2,8 +2,8 @@
 #
 # install.sh / uninstall.sh のスモークテスト
 #
-#   sh lib/test/deploy.sh
-#   TEST_SH=/bin/dash sh lib/test/deploy.sh
+#   sh test/deploy.sh
+#   TEST_SH=/bin/dash sh test/deploy.sh
 #
 # スクリプトを外から叩いて確かめる。HOME と DOTFILES_PATH を一時ディレクトリへ
 # 向けるので、本物のホームには触れない。TEST_SH で被験スクリプトを走らせる
@@ -14,7 +14,7 @@
 
 set -u
 
-DOTFILES_ROOT=$(cd -- "$(dirname -- "$0")/../.." && pwd)
+DOTFILES_ROOT=$(cd -- "$(dirname -- "$0")/.." && pwd)
 INSTALL="${DOTFILES_ROOT}/install.sh"
 UNINSTALL="${DOTFILES_ROOT}/uninstall.sh"
 LIB="${DOTFILES_ROOT}/lib/shell/deploy.sh"
