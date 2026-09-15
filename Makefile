@@ -5,6 +5,9 @@ LIB_DIR       := $(DOTFILES_ROOT)/lib
 CONFIG_DIR    := $(DOTFILES_ROOT)/configs
 SHELL         := /usr/bin/env bash
 
+# sh 版の配置スクリプトを検証するシェル。存在しないものは飛ばす。
+SH_TEST_SHELLS ?= /bin/sh /bin/dash /opt/homebrew/bin/bash
+
 .DEFAULT_GOAL := help
 
 ## Makefile
@@ -41,10 +44,18 @@ brew-dump: ## Write all installed packages into a Brewfile in dotfiles.
 	@$(SCRIPT_DIR)/brew/brew-dump.sh
 
 ## Development
-.PHONY: test lint
+.PHONY: test test-sh lint
 test: ## Run the bash library smoke tests.
 	@bash $(LIB_DIR)/test/smoke.sh
-lint: ## Run shellcheck over the bash library, scripts and distributed hooks.
+test-sh: ## Run the sh deployment smoke tests on every available shell.
+	@for s in $(SH_TEST_SHELLS); do \
+		[ -x "$$s" ] || continue; \
+		echo "--- $$s ---"; \
+		TEST_SH="$$s" "$$s" $(LIB_DIR)/test/deploy.sh || exit 1; \
+	done
+lint: ## Run shellcheck over the libraries, scripts and distributed hooks.
 	@shellcheck -s bash $(LIB_DIR)/bash/*.sh $(LIB_DIR)/bash/themes/*.sh \
-		$(LIB_DIR)/test/*.sh $(SCRIPT_DIR)/*/*.sh $(DOTFILES_ROOT)/bootstrap.sh \
+		$(LIB_DIR)/test/smoke.sh $(SCRIPT_DIR)/*/*.sh $(DOTFILES_ROOT)/bootstrap.sh \
 		$(CONFIG_DIR)/claude/.claude/hooks/*.sh
+	@shellcheck -s dash $(DOTFILES_ROOT)/install.sh $(DOTFILES_ROOT)/uninstall.sh \
+		$(LIB_DIR)/shell/*.sh $(LIB_DIR)/test/deploy.sh
