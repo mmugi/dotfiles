@@ -19,9 +19,10 @@ fi
 
 usage() {
   cat >&2 <<'USAGE'
-usage: uninstall.sh [-n|--dry-run] [-h|--help]
+usage: uninstall.sh [-n|--dry-run] [-v|--verbose] [-h|--help]
 
   -n, --dry-run   削除せず、何が起きるかだけを表示する
+  -v, --verbose   触らなかったものも表示する
   -h, --help      この使い方を表示する
 
 environment:
@@ -32,7 +33,7 @@ USAGE
 }
 
 remove_paths() {
-  # usage: remove_paths <manifest> <dry-run>
+  # usage: remove_paths <manifest> <dry-run> <verbose>
   #
   # 自分が張ったリンクを外し、空になったディレクトリを片付ける。それ以外は
   # 理由を出して残す。残したものがあれば件数を出して 1 を返す。
@@ -40,9 +41,10 @@ remove_paths() {
   # manifest は配置先の降順で渡ってくる前提。あるパスの配下にあるものが必ず先に
   # 来るので、空になったディレクトリをその場で片付けられる。
 
-  local manifest dry links dirs left pkg type src dst state
+  local manifest dry verbose links dirs left pkg type src dst state
   manifest="$1"
   dry="$2"
+  verbose="$3"
   links=0
   dirs=0
   left=0
@@ -54,7 +56,13 @@ remove_paths() {
     case "$type" in
       d)
         case "$state" in
-          0) continue ;;
+          0)
+            if [ "$verbose" -eq 1 ]; then
+              deploy_announce removing "$pkg"
+              deploy_skipped "not placed: $(deploy_tilde "$dst")"
+            fi
+            continue
+            ;;
           2) ;;
           *)
             deploy_announce removing "$pkg"
@@ -65,6 +73,10 @@ remove_paths() {
         esac
 
         if [ -n "$(ls -A "$dst" 2>/dev/null)" ]; then
+          if [ "$verbose" -eq 1 ]; then
+            deploy_announce removing "$pkg"
+            deploy_skipped "not empty: $(deploy_tilde "$dst")"
+          fi
           continue
         fi
 
@@ -81,7 +93,12 @@ remove_paths() {
         ;;
       f)
         case "$state" in
-          0) ;;
+          0)
+            if [ "$verbose" -eq 1 ]; then
+              deploy_announce removing "$pkg"
+              deploy_skipped "not placed: $(deploy_tilde "$dst")"
+            fi
+            ;;
           1)
             deploy_announce removing "$pkg"
             if [ "$dry" -eq 0 ]; then
@@ -124,12 +141,14 @@ remove_paths() {
 }
 
 main() {
-  local dry lib manifest
+  local dry verbose lib manifest
   dry=0
+  verbose=0
 
   while [ $# -gt 0 ]; do
     case "$1" in
       -n | --dry-run) dry=1 ;;
+      -v | --verbose) verbose=1 ;;
       -h | --help) usage; return 0 ;;
       *) usage; return 1 ;;
     esac
@@ -159,14 +178,14 @@ main() {
   # 環境で source された場合、未設定の DEPLOY_TMPDIR は空に展開され、書き出し先が
   # /manifest になる。
   deploy_require_tmpfile "$manifest"
-  deploy_build_manifest | sort -r -t"$DEPLOY_TAB" -k5 > "$manifest"
+  deploy_build_manifest "$verbose" | sort -r -t"$DEPLOY_TAB" -k5 > "$manifest"
 
   if [ ! -s "$manifest" ]; then
     deploy_warn 'nothing to uninstall'
     return 0
   fi
 
-  remove_paths "$manifest" "$dry" || return 2
+  remove_paths "$manifest" "$dry" "$verbose" || return 2
 
   return 0
 }

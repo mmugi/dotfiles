@@ -239,7 +239,8 @@ deploy_build_manifest() {
   # usage: deploy_build_manifest
   # manifest を標準出力へ書き出す。.dotignore の除外の報告は標準エラーに出力。
 
-  local src entry pkg rel type
+  local verbose src entry pkg rel type
+  verbose="$1"
 
   # find に sort を通すのは除外の報告を毎回同じ順で出すため。manifest の並びは
   # 後段の sort が決めるので、こちらには依存しない。
@@ -264,7 +265,7 @@ deploy_build_manifest() {
     if deploy_is_ignored "$rel"; then
       # ディレクトリは入れ物でしかないので報告しない。中身が全部除外されたなら
       # そのディレクトリはそもそも作らないし、残るなら中のファイルが個別に出る。
-      if [ "$type" = f ]; then
+      if [ "$type" = f ] && [ "$verbose" -eq 1 ]; then
         deploy_skipped "ignored: $(deploy_tilde "${HOME}/${rel}")"
       fi
 

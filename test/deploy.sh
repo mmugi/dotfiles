@@ -146,6 +146,40 @@ check '2回目で増減しない' "$_before" "$(entries)"
 check_match '2回目は unchanged として数える' '0 linked, 0 created, 4 unchanged' "$OUT"
 check_nomatch '変化が無いパッケージの見出しは出さない' 'installing vim...' "$OUT"
 
+# ---- verbose ---------------------------------------------------------------
+
+# 触らなかったものは既定では出さない。冪等な2回目に全件並ぶのを避けるため。
+new_case verbose
+add_file vim .vimrc
+add_file git .config/git/config
+run "$INSTALL"
+run "$INSTALL"
+check_nomatch '既定では unchanged を列挙しない' 'unchanged:' "$OUT"
+check_match '要約には件数が出る' '0 linked, 0 created, 4 unchanged' "$OUT"
+
+run "$INSTALL" --verbose
+check '-v でも成功する' '0' "$RC"
+check_match '-v なら unchanged を列挙する' 'unchanged: ~/.vimrc' "$OUT"
+check '-v の列挙は件数と一致する' '4' \
+  "$(printf '%s\n' "$OUT" | grep -c 'unchanged: ~')"
+
+run "$UNINSTALL"
+run "$UNINSTALL"
+check_nomatch '既定では not placed を列挙しない' 'not placed:' "$OUT"
+run "$UNINSTALL" --verbose
+check_match '-v なら not placed を列挙する' 'not placed: ~/.vimrc' "$OUT"
+
+# 中身が残ってディレクトリを消せなかったことも -v でだけ知らせる。
+new_case verbose_notempty
+add_file vim .vim/conf
+run "$INSTALL"
+printf 'mine\n' > "${HOMEDIR}/.vim/mynote"
+run "$UNINSTALL"
+check_nomatch '既定では not empty を出さない' 'not empty:' "$OUT"
+run "$INSTALL"
+run "$UNINSTALL" --verbose
+check_match '-v なら not empty を出す' 'not empty: ~/.vim' "$OUT"
+
 # ---- install: dry-run ------------------------------------------------------
 
 new_case dryrun
@@ -229,7 +263,7 @@ add_file vim .vimrc
 add_file vim .vim/secret
 add_file vim .vim/keep
 printf '# コメント\n\n.vim/secret\n' > "${REPO}/.dotignore"
-run "$INSTALL"
+run "$INSTALL" --verbose
 check '除外があっても成功する' '0' "$RC"
 check_match '除外が報告される' 'ignored: ~/.vim/secret' "$OUT"
 check '除外されたものは配置されない' '' \
@@ -243,7 +277,7 @@ new_case ignore_prefix
 add_file vim .vimrc
 add_file vim .vim/colors/x
 printf '.vim/\n' > "${REPO}/.dotignore"
-run "$INSTALL"
+run "$INSTALL" --verbose
 check '末尾 / で配下ごと除外される' '' \
   "$([ -e "${HOMEDIR}/.vim/colors/x" ] && echo exists)"
 check '中身が全部除外されたディレクトリは作らない' '' \
@@ -262,7 +296,7 @@ new_case ignore_noslash
 add_file vim .vimrc
 add_file vim .vim/colors/x
 printf '.vim\n' > "${REPO}/.dotignore"
-run "$INSTALL"
+run "$INSTALL" --verbose
 check '末尾 / が無いと .vimrc まで除外される' '' \
   "$([ -e "${HOMEDIR}/.vimrc" ] && echo exists)"
 check_match '除外されたことは報告される' 'ignored: ~/.vimrc' "$OUT"
@@ -283,7 +317,8 @@ add_file vim .vimrc
 : > "${REPO}/configs/vim/backup~"
 run "$INSTALL"
 check '常に除外するものは配置されない' '1' "$(links)"
-check_nomatch '常に除外するものは報告もしない' 'ignored:' "$OUT"
+run "$INSTALL" --verbose
+check_nomatch '常に除外するものは -v でも報告しない' 'ignored:' "$OUT"
 
 # ---- uninstall -------------------------------------------------------------
 
@@ -352,7 +387,7 @@ add_file vim .vim/secret
 printf '.vim/secret\n' > "${REPO}/.dotignore"
 run "$INSTALL"
 printf 'mine\n' > "${HOMEDIR}/.vim/secret"
-run "$UNINSTALL"
+run "$UNINSTALL" --verbose
 check_match 'uninstall でも除外が報告される' 'ignored: ~/.vim/secret' "$OUT"
 check '除外したものは削除対象にならない' 'exists' \
   "$([ -f "${HOMEDIR}/.vim/secret" ] && echo exists)"

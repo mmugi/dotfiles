@@ -28,9 +28,10 @@ fi
 
 usage() {
   cat >&2 <<'USAGE'
-usage: install.sh [-n|--dry-run] [-h|--help]
+usage: install.sh [-n|--dry-run] [-v|--verbose] [-h|--help]
 
   -n, --dry-run   配置せず、何が起きるかだけを表示する
+  -v, --verbose   触らなかったものも表示する
   -h, --help      この使い方を表示する
 
 environment:
@@ -208,7 +209,7 @@ verify_no_conflicts() {
 }
 
 apply_manifest() {
-  # usage: apply_manifest <manifest> <dry-run>
+  # usage: apply_manifest <manifest> <dry-run> <verbose>
   #
   # 配置の直前にもう一度分類する。検査から適用までの間に状態が変わっていても、
   # 既存のものを上書きする経路が生まれない。
@@ -217,9 +218,10 @@ apply_manifest() {
   # 検査を通ったのに適用時には衝突していたものを数える。件数を終了コードに
   # 載せないのは、256 件で 0 に化けてやり残しが消えるため。
 
-  local manifest dry created linked unchanged failed pkg type src dst state
+  local manifest dry verbose created linked unchanged failed pkg type src dst state
   manifest="$1"
   dry="$2"
+  verbose="$3"
   created=0
   linked=0
   unchanged=0
@@ -261,6 +263,10 @@ apply_manifest() {
         esac
         ;;
       1 | 2)
+        if [ "$verbose" -eq 1 ]; then
+          deploy_announce installing "$pkg"
+          deploy_skipped "unchanged: $(deploy_tilde "$dst")"
+        fi
         unchanged=$(( unchanged + 1 ))
         ;;
       *)
@@ -286,12 +292,14 @@ apply_manifest() {
 }
 
 main() {
-  local dry lib manifest
+  local dry verbose lib manifest
   dry=0
+  verbose=0
 
   while [ $# -gt 0 ]; do
     case "$1" in
       -n | --dry-run) dry=1 ;;
+      -v | --verbose) verbose=1 ;;
       -h | --help) usage; return 0 ;;
       *) usage; return 1 ;;
     esac
@@ -323,7 +331,7 @@ main() {
   # 環境で source された場合、未設定の DEPLOY_TMPDIR は空に展開され、書き出し先が
   # /manifest になる。
   deploy_require_tmpfile "$manifest"
-  deploy_build_manifest > "$manifest"
+  deploy_build_manifest "$verbose" > "$manifest"
 
   if [ ! -s "$manifest" ]; then
     deploy_warn 'nothing to install'
@@ -333,7 +341,7 @@ main() {
   verify_no_duplicates "$manifest" || return 1
   verify_no_conflicts  "$manifest" || return 1
 
-  apply_manifest "$manifest" "$dry" || return 2
+  apply_manifest "$manifest" "$dry" "$verbose" || return 2
 
   return 0
 }
