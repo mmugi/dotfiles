@@ -223,73 +223,77 @@ deploy_is_ignored() {
 deploy_build_manifest() {
   # usage: deploy_build_manifest <manifest の出力先>
 
-  local out ign_out pkg src rel type
+  local out src entry pkg rel type
   out="$1"
-  # 除外したものは捨てずに控えておき報告する。
-  # 生成はパイプラインで書くので、除外の判定はサブシェルの中にあり件数が親に残らない。
-  # そのため一時ファイルに書き出してから数える。
-  ign_out="${DEPLOY_TMPDIR}/ignored"
 
   deploy_require_tmpfile "$out"
-  deploy_require_tmpfile "$ign_out"
-
-  : > "$ign_out"
 
   # タブを含むパスがあると manifest の列がずれる。構築前に検出する。
   if [ -n "$(find "$DEPLOY_CONFIG_DIR" -mindepth 1 -name "*${DEPLOY_TAB}*" | head -n 1)" ]; then
     deploy_die 'a path under configs contains a tab, which is not supported'
   fi
 
-  # 生成はパイプラインで書いてよい。集計はリダイレクトで回すこと。
-  # パイプラインの各段は別プロセスになり、シェル変数が呼び出し元に残らない。
-  #
-  # 末尾の awk は配置先が同じディレクトリ行を1件に畳む。複数のパッケージが同じ
-  # 中間ディレクトリ (.config など) を必要とするのは正常で、作るのは1回でよい。
-  # 畳まないと dry-run が重複して数え、実行時の件数と食い違う。
-  find "$DEPLOY_CONFIG_DIR" -mindepth 1 -maxdepth 1 -type d | sort | while IFS= read -r pkg; do
-    find "$pkg" -mindepth 1 | sort | while IFS= read -r src; do
-      if deploy_is_junk "${src##*/}"; then
-        continue
+  # find に sort を通すのは除外の報告を毎回同じ順で出すため。manifest の並びは
+  # 後段の sort が決めるので、こちらには依存しない。
+  find "$DEPLOY_CONFIG_DIR" -mindepth 2 | sort | while IFS= read -r src; do
+    if deploy_is_junk "${src##*/}"; then
+      continue
+    fi
+
+    # configs/<パッケージ>/<HOMEからの相対パス> から pkg, rel を切り出す。
+    entry="${src#"${DEPLOY_CONFIG_DIR}"/}"
+    pkg="${entry%%/*}"
+    rel="${entry#*/}"
+
+    # ディレクトリへのシンボリックリンクを d と数えない。d にすると中身の
+    # 無いディレクトリが配置先に作られる。
+    if [ -d "$src" ] && [ ! -L "$src" ]; then
+      type=d
+    else
+      type=f
+    fi
+
+    if deploy_is_ignored "$rel"; then
+      # ディレクトリは入れ物でしかないので報告しない。中身が全部除外されたなら
+      # そのディレクトリはそもそも作らないし、残るなら中のファイルが個別に出る。
+      if [ "$type" = f ]; then
+        deploy_skipped "ignored: $(deploy_tilde "${HOME}/${rel}")"
       fi
 
-      rel="${src#"$pkg"/}"
-      if deploy_is_ignored "$rel"; then
-        printf '%s\n' "${HOME}/${rel}" >> "$ign_out"
-        continue
-      fi
+      continue
+    fi
 
-      # ディレクトリへのシンボリックリンクを d と数えない。d にすると中身の
-      # 無いディレクトリが配置先に作られる。
-      if [ -d "$src" ] && [ ! -L "$src" ]; then
-        type=d
-      else
-        type=f
-      fi
+    printf '%s\t%s\t%s\t%s\t%s\n' "$pkg" "$type" "$rel" "$src" "${HOME}/${rel}"
+  done | sort | awk -F'\t' '
+    # ファイルを持たないディレクトリ行と、配置先が重複したディレクトリ行を落とす。
 
-      printf '%s\t%s\t%s\t%s\t%s\n' \
-        "${pkg##*/}" "$type" "$rel" "$src" "${HOME}/${rel}"
-    done
-  done | sort | awk -F'\t' '$2 == "d" && seen[$5]++ { next } { print }' > "$out"
+    # 判定に全行が要るので END でまとめて出す。
+    { lines[NR] = $0 }
 
-  deploy_report_ignored "$ign_out"
+    # ファイルの属する親ディレクトリを記録
+    $2 == "f" {
+      d = $5
+      while (sub(/\/[^\/]*$/, "", d)) {
+        if (d in needed_dirs) break
+        needed_dirs[d] = 1
+      }
+    }
+
+    END {
+      for (line_no = 1; line_no <= NR; line_no++) {
+        split(lines[line_no], fields, "\t")
+        if (fields[2] == "d") {
+          dst = fields[5]
+          if (!(dst in needed_dirs)) continue
+          if (dst in printed_dirs) continue
+          printed_dirs[dst] = 1
+        }
+        print lines[line_no]
+      }
+    }
+  ' > "$out"
 }
 
-deploy_report_ignored() {
-  # usage: deploy_report_ignored <除外分>
-
-  local ign_count ign_dst
-  if [ ! -s "$1" ]; then
-    return 0
-  fi
-
-  ign_count=0
-  while IFS= read -r ign_dst; do
-    deploy_skipped "ignored: $(deploy_tilde "$ign_dst")"
-    ign_count=$(( ign_count + 1 ))
-  done < "$1"
-  deploy_skipped "${ign_count} path(s) ignored by .dotignore"
-  return 0
-}
 
 # ---- classification --------------------------------------------------------
 
