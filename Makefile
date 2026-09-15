@@ -19,11 +19,11 @@ help: ## Show this help message.
 ## Dotfiles
 .PHONY: install uninstall uninstall-dryrun
 install: ## Install dotfiles.
-	@$(SCRIPT_DIR)/dotfiles/install.sh
+	@DOTFILES_PATH="$(DOTFILES_ROOT)" $(DOTFILES_ROOT)/install.sh
 uninstall: ## Uninstall dotfiles.
-	@$(SCRIPT_DIR)/dotfiles/uninstall.sh
+	@DOTFILES_PATH="$(DOTFILES_ROOT)" $(DOTFILES_ROOT)/uninstall.sh
 uninstall-dryrun: ## Show what would be uninstalled without making any changes.
-	@$(SCRIPT_DIR)/dotfiles/uninstall.sh --dryrun
+	@DOTFILES_PATH="$(DOTFILES_ROOT)" $(DOTFILES_ROOT)/uninstall.sh --dry-run
 
 ## Git
 .PHONY: git-sign git-completion-conf
@@ -56,7 +56,7 @@ test-sh: ## Run the sh deployment smoke tests on every available shell.
 	done
 lint: ## Run shellcheck over the libraries, scripts and distributed hooks.
 	@shellcheck -s bash $(LIB_DIR)/bash/*.sh $(LIB_DIR)/bash/themes/*.sh \
-		$(TEST_DIR)/smoke.sh $(SCRIPT_DIR)/*/*.sh $(DOTFILES_ROOT)/bootstrap.sh \
+		$(TEST_DIR)/smoke.sh $(SCRIPT_DIR)/*/*.sh \
 		$(CONFIG_DIR)/claude/.claude/hooks/*.sh
 	@shellcheck -s dash $(DOTFILES_ROOT)/install.sh $(DOTFILES_ROOT)/uninstall.sh \
 		$(LIB_DIR)/shell/*.sh $(TEST_DIR)/deploy.sh
