@@ -108,6 +108,13 @@ deploy_init() {
   if [ ! -d "$DEPLOY_CONFIG_DIR" ]; then
     deploy_die "configs directory not found: ${DEPLOY_CONFIG_DIR}"
   fi
+
+  # タブを含むパスがあると manifest の列がずれる。configs が満たすべき前提なので
+  # ここで確かめる。deploy_build_manifest は値を標準出力へ返す関数なので、
+  # そちらに置くとパイプの段に置かれたときに die が効かない。
+  if [ -n "$(find "$DEPLOY_CONFIG_DIR" -mindepth 1 -name "*${DEPLOY_TAB}*" | head -n 1)" ]; then
+    deploy_die 'a path under configs contains a tab, which is not supported'
+  fi
 }
 
 deploy_tmpdir_init() {
@@ -225,11 +232,6 @@ deploy_build_manifest() {
   # manifest を標準出力へ書き出す。.dotignore の除外の報告は標準エラーに出力。
 
   local src entry pkg rel type
-
-  # タブを含むパスがあると manifest の列がずれる。構築前に検出する。
-  if [ -n "$(find "$DEPLOY_CONFIG_DIR" -mindepth 1 -name "*${DEPLOY_TAB}*" | head -n 1)" ]; then
-    deploy_die 'a path under configs contains a tab, which is not supported'
-  fi
 
   # find に sort を通すのは除外の報告を毎回同じ順で出すため。manifest の並びは
   # 後段の sort が決めるので、こちらには依存しない。

@@ -57,13 +57,21 @@ git_usable() {
 }
 
 pick_downloader() {
+  # usage: pick_downloader
+  # 使えるダウンローダ名を標準出力へ出す。見つからなければ 1 を返す。
+
   if [ -n "${DOTFILES_DOWNLOADER:-}" ]; then
     case "$DOTFILES_DOWNLOADER" in
       git | curl | wget) ;;
-      *) die "invalid DOTFILES_DOWNLOADER: ${DOTFILES_DOWNLOADER}" ;;
+      *)
+        warn "invalid DOTFILES_DOWNLOADER: ${DOTFILES_DOWNLOADER}"
+        return 1
+        ;;
     esac
-    command -v "$DOTFILES_DOWNLOADER" >/dev/null 2>&1 \
-      || die "command not found: ${DOTFILES_DOWNLOADER}"
+    if ! command -v "$DOTFILES_DOWNLOADER" >/dev/null 2>&1; then
+      warn "command not found: ${DOTFILES_DOWNLOADER}"
+      return 1
+    fi
     printf '%s\n' "$DOTFILES_DOWNLOADER"
     return 0
   fi
@@ -87,7 +95,8 @@ pick_downloader() {
     fi
   done
 
-  die 'no downloader found; install git, curl or wget'
+  warn 'no downloader found; install git, curl or wget'
+  return 1
 }
 
 ensure_repo() {
@@ -110,7 +119,7 @@ ensure_repo() {
   branch="${DOTFILES_BRANCH:-trunk}"
   tarball="${DOTFILES_REPO_HTTPS}/archive/${branch}.tar.gz"
 
-  downloader=$(pick_downloader) || exit 1
+  downloader=$(pick_downloader) || die 'cannot download the repository'
 
   progress "downloading dotfiles into ${DOTFILES_PATH}..."
 
