@@ -159,7 +159,7 @@ main() {
 
   manifest="${DEPLOY_TMPDIR}/manifest"
 
-  deploy_build_manifest "$manifest"
+  deploy_build_manifest > "$manifest"
 
   if [ ! -s "$manifest" ]; then
     deploy_warn 'nothing to uninstall'

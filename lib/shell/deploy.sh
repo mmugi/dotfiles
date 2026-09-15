@@ -20,7 +20,7 @@
 #
 # * Output *
 #
-#   配置対象はタブ区切り5列の manifest として一時ファイルに書き出す。
+#   配置対象はタブ区切り5列の manifest として標準出力へ書き出す。
 #
 #     <pkg>\t<type>\t<relpath>\t<src>\t<dst>
 #
@@ -221,12 +221,10 @@ deploy_is_ignored() {
 # ---- manifest --------------------------------------------------------------
 
 deploy_build_manifest() {
-  # usage: deploy_build_manifest <manifest の出力先>
+  # usage: deploy_build_manifest
+  # manifest を標準出力へ書き出す。.dotignore の除外の報告は標準エラーに出力。
 
-  local out src entry pkg rel type
-  out="$1"
-
-  deploy_require_tmpfile "$out"
+  local src entry pkg rel type
 
   # タブを含むパスがあると manifest の列がずれる。構築前に検出する。
   if [ -n "$(find "$DEPLOY_CONFIG_DIR" -mindepth 1 -name "*${DEPLOY_TAB}*" | head -n 1)" ]; then
@@ -291,7 +289,7 @@ deploy_build_manifest() {
         print lines[line_no]
       }
     }
-  ' > "$out"
+  '
 }
 
 
