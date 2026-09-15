@@ -33,8 +33,12 @@ USAGE
 
 remove_paths() {
   # usage: remove_paths <manifest> <dry-run>
+  #
   # 自分が張ったリンクを外し、空になったディレクトリを片付ける。それ以外は
   # 理由を出して残す。残したものがあれば件数を出して 1 を返す。
+  #
+  # manifest は配置先の降順で渡ってくる前提。あるパスの配下にあるものが必ず先に
+  # 来るので、空になったディレクトリをその場で片付けられる。
 
   local manifest dry links dirs left pkg type src dst state
   manifest="$1"
@@ -42,13 +46,6 @@ remove_paths() {
   links=0
   dirs=0
   left=0
-
-  # manifest を配置順の逆順に並べ替えてから回す。降順にすると、あるパスの
-  # 配下にあるものは必ずそのパスより先に来る (親は子の真の接頭辞になるため)。
-  # 並べ替えた結果は manifest に書き戻す。この後これを元の順序で読む処理はない。
-  deploy_require_tmpfile "$manifest"
-  sort -r -t"$DEPLOY_TAB" -k5 "$manifest" -o "$manifest" \
-    || deploy_die 'failed to sort the manifest'
 
   while IFS="$DEPLOY_TAB" read -r pkg type _ src dst; do
     deploy_classify "$type" "$src" "$dst"
@@ -155,11 +152,14 @@ main() {
   . "$lib"
 
   deploy_init
-  deploy_tmpdir_init
 
   manifest="${DEPLOY_TMPDIR}/manifest"
 
-  deploy_build_manifest > "$manifest"
+  # 書き出す前に、一時ディレクトリが用意できていることを確かめる。set -u が無い
+  # 環境で source された場合、未設定の DEPLOY_TMPDIR は空に展開され、書き出し先が
+  # /manifest になる。
+  deploy_require_tmpfile "$manifest"
+  deploy_build_manifest | sort -r -t"$DEPLOY_TAB" -k5 > "$manifest"
 
   if [ ! -s "$manifest" ]; then
     deploy_warn 'nothing to uninstall'

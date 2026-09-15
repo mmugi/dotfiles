@@ -95,6 +95,12 @@ deploy_tilde() {
 # ---- environment -----------------------------------------------------------
 
 deploy_init() {
+  # usage: deploy_init
+  #  - 環境の検証
+  #  - ライブラリで利用する変数を構成
+  #  - 一時ディレクトリ作成
+  #  - 一時ディレクトリ削除用シグナルトラップを登録
+
   if [ -z "${DOTFILES_PATH:-}" ]; then
     deploy_die 'DOTFILES_PATH is not set'
   fi
@@ -104,6 +110,9 @@ deploy_init() {
 
   DEPLOY_CONFIG_DIR="${DOTFILES_PATH}/configs"
   DEPLOY_IGNOREFILE="${DOTFILES_IGNOREFILE:-${DOTFILES_PATH}/.dotignore}"
+
+  readonly DEPLOY_CONFIG_DIR
+  readonly DEPLOY_IGNOREFILE
 
   if [ ! -d "$DEPLOY_CONFIG_DIR" ]; then
     deploy_die "configs directory not found: ${DEPLOY_CONFIG_DIR}"
@@ -115,22 +124,17 @@ deploy_init() {
   if [ -n "$(find "$DEPLOY_CONFIG_DIR" -mindepth 1 -name "*${DEPLOY_TAB}*" | head -n 1)" ]; then
     deploy_die 'a path under configs contains a tab, which is not supported'
   fi
-}
 
-deploy_tmpdir_init() {
-  # 一時ディレクトリを作り、後始末を登録する。
-  #
-  # 登録を mktemp より先に行う。逆にすると、一時ディレクトリが存在するのに
+  # 後始末の登録を mktemp より先に行う。逆にすると、一時ディレクトリが存在するのに
   # 後始末が登録されていない一瞬ができる。
   #
-  # EXIT だけでは足りない。dash はシグナルで終了するとき EXIT トラップを
-  # 実行せず、一時ディレクトリが残る (実測: dash に TERM を送ると残る。
-  # bash は実行するのでこの差は dash でしか出ない)。INT/TERM/HUP も登録する。
+  # EXIT だけでは足りない。dash はシグナルで終了するとき EXIT トラップを実行せず、
+  # 一時ディレクトリが残る (実測: dash に TERM を送ると残る。bash は実行するので
+  # この差は dash でしか出ない)。INT/TERM/HUP も登録する。
   #
-  # ハンドラは trap を解除してから自分へ投げ直す。後始末だけして戻ると終了
-  # コードが 0 になり、中断されたのに呼び出し元からは成功に見える。投げ直す
-  # ことで 128+signo が戻る (実測: 再送なし 0 / 再送あり TERM 143, INT 130)。
-
+  # ハンドラは trap を解除してから自分へ投げ直す。後始末だけして戻ると終了コードが
+  # 0 になり、中断されたのに呼び出し元からは成功に見える。投げ直すことで 128+signo
+  # が戻る (実測: 再送なし 0 / 再送あり TERM 143, INT 130)。
   DEPLOY_TMPDIR=''
   trap 'deploy_cleanup' EXIT
   trap 'deploy_cleanup; trap - INT;  kill -INT  $$' INT
@@ -158,10 +162,10 @@ deploy_cleanup() {
 
 deploy_require_tmpfile() {
   # usage: deploy_require_tmpfile <出力先>
+  #
   # 書き出し先が自分の一時ディレクトリの直下であることを確かめる。
-  # 出力先はすべて引数で渡ってくるため、変数の綴り違いや呼ぶ順序の誤りが
-  # そのまま「無関係なファイルを切り詰める」に化ける。実際に DEPLOY_TMPDIR が
-  # 空だと出力先は /manifest になる (実測)。切り詰める前に止める。
+  # 中身のあるファイルは受け付けない。これから埋める空の作業ファイルだけを通す。
+  # 万一パスを取り違えても、既にあるものを消さずに済む。
 
   case "${DEPLOY_TMPDIR:-}" in
     */dotfiles-?*) ;;
@@ -178,6 +182,10 @@ deploy_require_tmpfile() {
   case "$1" in
     */../* | */..) deploy_die "internal error: invalid output path: $1" ;;
   esac
+
+  if [ -s "$1" ]; then
+    deploy_die "internal error: refusing to overwrite a non-empty file: $1"
+  fi
 }
 
 # ---- ignore ----------------------------------------------------------------

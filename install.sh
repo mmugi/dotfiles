@@ -316,10 +316,13 @@ main() {
   . "$lib"
 
   deploy_init
-  deploy_tmpdir_init
 
   manifest="${DEPLOY_TMPDIR}/manifest"
 
+  # 書き出す前に、一時ディレクトリが用意できていることを確かめる。set -u が無い
+  # 環境で source された場合、未設定の DEPLOY_TMPDIR は空に展開され、書き出し先が
+  # /manifest になる。
+  deploy_require_tmpfile "$manifest"
   deploy_build_manifest > "$manifest"
 
   if [ ! -s "$manifest" ]; then
