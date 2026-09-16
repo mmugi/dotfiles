@@ -262,10 +262,17 @@ apply_manifest() {
             ;;
         esac
         ;;
-      1 | 2)
+      1)
         if [ "$verbose" -eq 1 ]; then
           deploy_announce installing "$pkg"
-          deploy_skipped "unchanged: $(deploy_tilde "$dst")"
+          deploy_skipped "already linked: $(deploy_tilde "$dst")"
+        fi
+        unchanged=$(( unchanged + 1 ))
+        ;;
+      2)
+        if [ "$verbose" -eq 1 ]; then
+          deploy_announce installing "$pkg"
+          deploy_skipped "directory exists: $(deploy_tilde "$dst")"
         fi
         unchanged=$(( unchanged + 1 ))
         ;;
@@ -280,7 +287,7 @@ apply_manifest() {
   if [ "$dry" -eq 0 ]; then
     deploy_progress "${linked} linked, ${created} created, ${unchanged} unchanged"
   else
-    deploy_progress "would link ${linked}, create ${created}; ${unchanged} already in place"
+    deploy_progress "would link ${linked}, create ${created}, leave ${unchanged} unchanged"
   fi
 
   if [ "$failed" -eq 0 ]; then

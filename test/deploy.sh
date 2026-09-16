@@ -154,14 +154,16 @@ add_file vim .vimrc
 add_file git .config/git/config
 run "$INSTALL"
 run "$INSTALL"
-check_nomatch '既定では unchanged を列挙しない' 'unchanged:' "$OUT"
+check_nomatch '既定では触らなかったものを列挙しない' 'already linked:' "$OUT"
 check_match '要約には件数が出る' '0 linked, 0 created, 4 unchanged' "$OUT"
 
 run "$INSTALL" --verbose
 check '-v でも成功する' '0' "$RC"
-check_match '-v なら unchanged を列挙する' 'unchanged: ~/.vimrc' "$OUT"
+# [=] は触っていないことを示すので、文言は触らなかった理由を担う。
+check_match '-v なら既存のリンクを理由つきで出す' 'already linked: ~/.vimrc' "$OUT"
+check_match '-v なら既存のディレクトリを理由つきで出す' 'directory exists: ~/.config' "$OUT"
 check '-v の列挙は件数と一致する' '4' \
-  "$(printf '%s\n' "$OUT" | grep -c 'unchanged: ~')"
+  "$(printf '%s\n' "$OUT" | grep -c 'already linked: ~\|directory exists: ~')"
 
 run "$UNINSTALL"
 run "$UNINSTALL"
@@ -187,7 +189,7 @@ add_file vim .vimrc
 run "$INSTALL" --dry-run
 check 'dry-run が成功する' '0' "$RC"
 check 'dry-run は何も作らない' '0' "$(entries)"
-check_match 'dry-run の要約は would で始まる' 'would link 1, create 0' "$OUT"
+check_match 'dry-run の要約は would で始まる' 'would link 1, create 0, leave 0 unchanged' "$OUT"
 check_match 'dry-run でも行の書式は変えない' 'link: ~/.vimrc' "$OUT"
 
 # ---- install: 衝突 ---------------------------------------------------------
