@@ -204,6 +204,13 @@ deploy_is_junk() {
   return 1
 }
 
+deploy_is_dir() {
+  # usage: deploy_is_dir <パス>
+  # 実体のディレクトリなら 0。ディレクトリへのシンボリックリンクは含めない。
+  # d と数えると、中身の無いディレクトリが配置先に作られてしまう。
+  [ -d "$1" ] && [ ! -L "$1" ]
+}
+
 deploy_is_ignored() {
   # usage: deploy_is_ignored <HOMEからの相対パス>
   #
@@ -239,12 +246,9 @@ deploy_build_manifest() {
   # usage: deploy_build_manifest
   # manifest を標準出力へ書き出す。.dotignore の除外の報告は標準エラーに出力。
 
-  local verbose src entry pkg rel type
-  verbose="$1"
+  local src entry pkg rel type
 
-  # find に sort を通すのは除外の報告を毎回同じ順で出すため。manifest の並びは
-  # 後段の sort が決めるので、こちらには依存しない。
-  find "$DEPLOY_CONFIG_DIR" -mindepth 2 | sort | while IFS= read -r src; do
+  find "$DEPLOY_CONFIG_DIR" -mindepth 2 | while IFS= read -r src; do
     if deploy_is_junk "${src##*/}"; then
       continue
     fi
@@ -254,21 +258,13 @@ deploy_build_manifest() {
     pkg="${entry%%/*}"
     rel="${entry#*/}"
 
-    # ディレクトリへのシンボリックリンクを d と数えない。d にすると中身の
-    # 無いディレクトリが配置先に作られる。
-    if [ -d "$src" ] && [ ! -L "$src" ]; then
+    if deploy_is_dir "$src"; then
       type=d
     else
       type=f
     fi
 
     if deploy_is_ignored "$rel"; then
-      # ディレクトリは入れ物でしかないので報告しない。中身が全部除外されたなら
-      # そのディレクトリはそもそも作らないし、残るなら中のファイルが個別に出る。
-      if [ "$type" = f ] && [ "$verbose" -eq 1 ]; then
-        deploy_skipped "ignored: $(deploy_tilde "${HOME}/${rel}")"
-      fi
-
       continue
     fi
 
@@ -305,6 +301,45 @@ deploy_build_manifest() {
 
 
 # ---- classification --------------------------------------------------------
+
+deploy_report_ignored() {
+  # usage: deploy_report_ignored
+  # .dotignore が何を除外しているかを報告する。
+
+  local ignored ign_count ign_dst src entry rel
+
+  ignored=$(
+    find "$DEPLOY_CONFIG_DIR" -mindepth 2 | while IFS= read -r src; do
+      if deploy_is_junk "${src##*/}"; then
+        continue
+      fi
+
+      # ディレクトリは入れ物でしかないので数えない。中身が全部除外されたならその
+      # ディレクトリはそもそも作られないし、残るなら中のファイルが個別に出る。
+      if deploy_is_dir "$src"; then
+        continue
+      fi
+
+      entry="${src#"${DEPLOY_CONFIG_DIR}"/}"
+      rel="${entry#*/}"
+      if deploy_is_ignored "$rel"; then
+        printf '%s\n' "${HOME}/${rel}"
+      fi
+    done | sort
+  )
+
+  if [ -z "$ignored" ]; then
+    return 0
+  fi
+
+  ign_count=$(printf '%s\n' "$ignored" | wc -l | tr -d ' ')
+
+  printf '%s\n' "$ignored" | while IFS= read -r ign_dst; do
+    deploy_skipped "ignored: $(deploy_tilde "$ign_dst")"
+  done
+  deploy_skipped "${ign_count} path(s) ignored by .dotignore"
+  return 0
+}
 
 deploy_classify() {
   # usage: deploy_classify <type> <src> <dst>

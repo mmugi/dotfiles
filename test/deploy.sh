@@ -268,6 +268,7 @@ printf '# コメント\n\n.vim/secret\n' > "${REPO}/.dotignore"
 run "$INSTALL" --verbose
 check '除外があっても成功する' '0' "$RC"
 check_match '除外が報告される' 'ignored: ~/.vim/secret' "$OUT"
+check_match '除外の件数が出る' '1 path(s) ignored by .dotignore' "$OUT"
 check '除外されたものは配置されない' '' \
   "$([ -e "${HOMEDIR}/.vim/secret" ] && echo exists)"
 check '除外されていないものは配置される' 'symlink' \
@@ -291,6 +292,7 @@ check '末尾 / なら同じ名前で始まる別のパスを巻き込まない'
 check_match '除外されたファイルが報告される' 'ignored: ~/.vim/colors/x' "$OUT"
 check '除外の報告にディレクトリを混ぜない' '1' \
   "$(printf '%s\n' "$OUT" | grep -c 'ignored: ~')"
+check_match '件数はファイルの数' '1 path(s) ignored by .dotignore' "$OUT"
 
 # 末尾に / を付けないと、名前がその文字列で始まるものは何でも当たる。
 # 前方一致である以上こうなるので、仕様として固定しておく。

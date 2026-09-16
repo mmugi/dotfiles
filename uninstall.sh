@@ -178,7 +178,11 @@ main() {
   # 環境で source された場合、未設定の DEPLOY_TMPDIR は空に展開され、書き出し先が
   # /manifest になる。
   deploy_require_tmpfile "$manifest"
-  deploy_build_manifest "$verbose" | sort -r -t"$DEPLOY_TAB" -k5 > "$manifest"
+  deploy_build_manifest | sort -r -t"$DEPLOY_TAB" -k5 > "$manifest"
+
+  if [ "$verbose" -eq 1 ]; then
+    deploy_report_ignored
+  fi
 
   if [ ! -s "$manifest" ]; then
     deploy_warn 'nothing to uninstall'
