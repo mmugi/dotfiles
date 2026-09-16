@@ -16,15 +16,6 @@ SH_TEST_SHELLS ?= /bin/sh /bin/dash /opt/homebrew/bin/bash
 help: ## Show this help message.
 	@$(SCRIPT_DIR)/make/help.sh "$(MAKEFILE)"
 
-## Dotfiles
-.PHONY: install uninstall uninstall-dryrun
-install: ## Install dotfiles.
-	@DOTFILES_PATH="$(DOTFILES_ROOT)" $(DOTFILES_ROOT)/install.sh
-uninstall: ## Uninstall dotfiles.
-	@DOTFILES_PATH="$(DOTFILES_ROOT)" $(DOTFILES_ROOT)/uninstall.sh
-uninstall-dryrun: ## Show what would be uninstalled without making any changes.
-	@DOTFILES_PATH="$(DOTFILES_ROOT)" $(DOTFILES_ROOT)/uninstall.sh --dry-run
-
 ## Git
 .PHONY: git-sign git-completion-conf
 git-sign: ## Configure git commit signing settings.
