@@ -1,13 +1,6 @@
 # shellcheck shell=bash
 
-# import.sh がsource時に読み取る変数
-# shellcheck disable=SC2034
-{
-  LIB_VERSION='1.0.0';
-  LIB_DEPS=( trap log theme )
-  LIB_REQUIRES_BASH='>=4.1'
-}
-[[ "${1:-}" = '__IMPORT__' ]] && return 0;
+# @deps trap log theme
 
 : "${MSG_DELAY:=0.1}"
 : "${MSG_INDENT:=0}"

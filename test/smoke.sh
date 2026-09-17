@@ -2,14 +2,14 @@
 #
 # lib/bash のスモークテスト
 #
-#   bash lib/test/smoke.sh
+#   bash test/smoke.sh
 #
 # 網羅を狙ったものではなく、「import できて主要関数が壊れていない」ことと、
 # 過去に踏んだ不具合を再発させないことを確認する。
 
 set -ueo pipefail
 
-DOTFILES_PATH="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
+DOTFILES_PATH="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 export DOTFILES_PATH
 
 # 出力を安定させる
@@ -50,13 +50,16 @@ check_rc() {
   check "$desc" "$expected" "$rc"
 }
 
+_tmp="$(mktemp -d)"
+trap 'rm -rf -- "$_tmp"' EXIT
+
 # --- import -------------------------------------------------------------------
 
 check 'すべてのライブラリが読み込まれている' \
   '9' "${#IMPORT_IMPORTED_LIBS[@]}"
 
-check 'ライブラリバージョンが記録されている' \
-  '1.0.0' "${IMPORT_IMPORTED_LIBS['core']}"
+check 'ライブラリの読み込み元パスが記録されている' \
+  "${DOTFILES_PATH}/lib/bash/core.sh" "${IMPORT_IMPORTED_LIBS['core']}"
 
 check 'バージョン比較: 1.10.0 > 1.9.0' \
   '1' "$(import::_version_compare '1.10.0' '1.9.0')"
@@ -64,6 +67,129 @@ check 'バージョン比較: 1.10.0 > 1.9.0' \
 check_rc 'bashバージョン要求を満たす' 0 import::_version_satisfies '>=4.0'
 check_rc 'bashバージョン要求を満たさない' 1 import::_version_satisfies '<4.0'
 check_rc '不正なバージョン要求は失敗する' 1 import::_version_satisfies 'x.y.z'
+
+# 演算子6種。正規表現を書き換えたときの取りこぼしを検出する。
+check_rc 'バージョン要求: >'  0 import::_version_satisfies '>5.2'  '5.3'
+check_rc 'バージョン要求: >=' 0 import::_version_satisfies '>=5.3' '5.3'
+check_rc 'バージョン要求: <'  0 import::_version_satisfies '<5.4'  '5.3'
+check_rc 'バージョン要求: <=' 0 import::_version_satisfies '<=5.3' '5.3'
+check_rc 'バージョン要求: ==' 0 import::_version_satisfies '==5.3' '5.3'
+check_rc 'バージョン要求: !=' 0 import::_version_satisfies '!=5.2' '5.3'
+
+# 回帰: [><=!]=? では `=` や `!` 単独も通り、要求の書き誤りが演算子の未対応として
+#   報告されていた。
+check '演算子が不完全な要求は要求の誤りとして報告する' '1' \
+  "$(import::_version_satisfies '=5.0' 2>&1 | grep -c 'invalid version requirement')"
+check_rc '演算子のない要求は失敗する' 1 import::_version_satisfies '5.0'
+
+# 回帰: バージョン要素の先頭ゼロ。基数を 10# で固定しないと 08 や 09 が8進数として
+#   解釈され、算術エラーになって比較結果が 0 に倒れる。
+check 'バージョン比較: 1.08.0 > 1.0.0' \
+  '1' "$(import::_version_compare '1.08.0' '1.0.0')"
+check 'バージョン比較: 1.08.0 = 1.8.0' \
+  '0' "$(import::_version_compare '1.08.0' '1.8.0')"
+check 'バージョン比較: 1.09.0 < 1.10.0' \
+  '-1' "$(import::_version_compare '1.09.0' '1.10.0')"
+check_rc '先頭ゼロを含む要求バージョンを判定できる' 0 \
+  import::_version_satisfies '>=1.08.0' '1.9.0'
+
+# メタ情報はライブラリをsourceせず、先頭のコメントから読む。
+#   回帰: 以前はメタ情報の取得にもsourceを使っていたため、ガード行を書き忘れた
+#   ライブラリの本体が依存解決の前に実行され、さらに二重に読み込まれていた。
+_metadir="${_tmp}/metalibs"
+mkdir -p "$_metadir"
+
+printf '%s\n' '# @deps core' '' 'echo body' > "${_metadir}/sidefx.sh"
+printf '%s\n' '# @author someone' '# @deps core' '# @totally-unknown xyz' '' \
+  'echo body' > "${_metadir}/unknown.sh"
+printf '%s\n' '# @requires-bash >=9.0' '' 'this is a ((( syntax error )))' \
+  > "${_metadir}/newsyntax.sh"
+
+_import_in_child() {
+  # import の失敗は exit するため、親から切り離して子bashで実行する。
+  DOTFILES_IMPORT_PATH="$_metadir" bash -c \
+    "source '${DOTFILES_PATH}/lib/bash/import.sh'; import ${1}" 2>/dev/null
+}
+
+check 'ライブラリ本体が一度だけ実行される' 'body' "$(_import_in_child sidefx)"
+check '未知のディレクティブを無視する' 'body' "$(_import_in_child unknown)"
+
+# 回帰: @requires-bash の判定はライブラリをparseする前に行う。満たさない場合に
+#   本体の構文エラーが表面化してはならない。
+check '要求bashを満たさないライブラリは本体をparseしない' '1' \
+  "$(DOTFILES_IMPORT_PATH="$_metadir" bash -c \
+      "source '${DOTFILES_PATH}/lib/bash/import.sh'; import newsyntax" 2>&1 \
+      | grep -c 'bash >=9.0 is required')"
+
+# メタ情報の走査は最初のコメント以外の行で終わる。走査範囲がファイル全体に広がると、
+# 関数本体のコメント (msg.sh の <@indent> など) をディレクティブと誤認しうる。
+printf '%s\n' '# @deps core' '' 'echo body' '# @deps nonexistent_lib' \
+  > "${_metadir}/latedirective.sh"
+
+check 'コード行より後のディレクティブは読まない' 'body' \
+  "$(_import_in_child latedirective)"
+
+# 依存は再帰的に解決し、依存元より先に読み込む。
+printf '%s\n' '# @deps chain_mid' '' 'echo top' > "${_metadir}/chain_top.sh"
+printf '%s\n' '# @deps chain_leaf' '' 'echo mid' > "${_metadir}/chain_mid.sh"
+printf '%s\n' 'echo leaf' > "${_metadir}/chain_leaf.sh"
+
+check '依存を再帰的に解決し、依存元より先に読み込む' 'leaf mid top' \
+  "$(_import_in_child chain_top | tr '\n' ' ' | sed 's/ $//')"
+
+check '読み込み済みライブラリは再importしない' 'body' \
+  "$(_import_in_child 'sidefx sidefx')"
+
+# 循環依存はローダの安全装置。検出できないと無限再帰になる。
+printf '%s\n' '# @deps circ_b' > "${_metadir}/circ_a.sh"
+printf '%s\n' '# @deps circ_a' > "${_metadir}/circ_b.sh"
+
+check '循環依存を検出して停止する' '1' \
+  "$(DOTFILES_IMPORT_PATH="$_metadir" bash -c \
+      "source '${DOTFILES_PATH}/lib/bash/import.sh'; import circ_a" 2>&1 \
+      | grep -c 'circular library dependency detected: circ_a circ_b -> circ_a')"
+
+check '存在しないライブラリはエラーで停止する' '1' \
+  "$(DOTFILES_IMPORT_PATH="$_metadir" bash -c \
+      "source '${DOTFILES_PATH}/lib/bash/import.sh'; import nonexistent_lib" 2>&1 \
+      | grep -c 'library file not found: nonexistent_lib')"
+
+# 検索パス。DOTFILES_IMPORT_PATH は :区切りの文字列のまま保つ。配列にすると
+# export できず、子プロセスへ引き継げない。
+_altdir="${_tmp}/altlibs"
+_altdir2="${_tmp}/altlibs2"
+mkdir -p "$_altdir" "$_altdir2"
+printf '%s\n' 'echo alt' > "${_altdir}/altlib.sh"
+printf '%s\n' 'echo first' > "${_altdir}/dup.sh"
+printf '%s\n' 'echo second' > "${_altdir2}/dup.sh"
+
+check '検索パスは左から優先される' "${_altdir}/dup.sh" \
+  "$(import::_find_library_file dup "${_altdir}:${_altdir2}")"
+check_rc '検索パスに無いライブラリは見つからない' 1 \
+  import::_find_library_file dup "$_altdir2/nowhere"
+
+# 回帰: 初期化時に配列へ固定していた頃は、読み込み後に設定し直した値が効かず、
+#   既定のパスも失われていた。
+check '初期化後に設定した検索パスが反映される' 'alt' \
+  "$(bash -c "source '${DOTFILES_PATH}/lib/bash/import.sh'
+              DOTFILES_IMPORT_PATH='${_altdir}'
+              import altlib" 2>/dev/null)"
+
+check '検索パスを足しても既定のパスは残る' 'ok' \
+  "$(DOTFILES_IMPORT_PATH="$_altdir" bash -c \
+      "source '${DOTFILES_PATH}/lib/bash/import.sh'; import util && echo ok" 2>/dev/null)"
+
+# 回帰: 配列は export できないため、子プロセスで追加パスが失われていた。
+check '検索パスが子プロセスに引き継がれる' 'alt' \
+  "$(DOTFILES_IMPORT_PATH="$_altdir" bash -c \
+      "source '${DOTFILES_PATH}/lib/bash/import.sh' >/dev/null 2>&1
+       bash -c \"source '${DOTFILES_PATH}/lib/bash/import.sh'; import altlib\"" 2>/dev/null)"
+
+# 既定のパスが末尾に加わることは、未検出時のエラーが示す検索パスで確かめる。
+check '未検出のエラーが検索パスを示す' '1' \
+  "$(DOTFILES_IMPORT_PATH="$_altdir" bash -c \
+      "source '${DOTFILES_PATH}/lib/bash/import.sh'; import nonexistent_lib" 2>&1 \
+      | grep -c "searched: ${_altdir}:${DOTFILES_PATH}/lib/bash")"
 
 # --- escseq -------------------------------------------------------------------
 
@@ -260,9 +386,6 @@ check 'util::chk が usage 関数を漏らさない' '' "$(declare -F usage 2>/d
 
 # 削除済み関数
 check 'util::sysinfo は削除済み' '' "$(type -t util::sysinfo 2>/dev/null || true)"
-
-_tmp="$(mktemp -d)"
-trap 'rm -rf -- "$_tmp"' EXIT
 
 printf 'src\n' > "${_tmp}/src"
 
