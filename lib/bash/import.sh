@@ -49,7 +49,7 @@
 #     # shellcheck shell=bash
 #
 #     # @deps core theme
-#     # @requires-bash >=4.1
+#     # @requires-bash 4.1
 #     ```
 #
 #   メタ情報は先頭からコメント行(と空行)を走査することで読み取り、最初のコメント
@@ -59,11 +59,9 @@
 #   `import()` の引数として再帰的に依存ライブラリの解決を行います。
 #   省略した場合は依存なしとして扱います。
 #
-#   `@requires-bash` には、そのライブラリが要求するbashバージョンを
-#   `<version specifier><version>` の形式で指定します。
-#   使用可能な指定子は `==` 、`!=` 、`>=` 、`<=` 、`>` 、`<` です。
-#   省略した場合は `>=0` として判定されます。
-#   条件が満たされない場合は、エラーでimportを停止します。
+#   `@requires-bash` には、そのライブラリが要求するbashの最小バージョンを
+#   `<major>[.<minor>]` の形式で指定します。省略した場合は `0` として扱われ、
+#   条件は常に満たされます。満たされない場合は、エラーでimportを停止します。
 #
 #   認識しない `@<ディレクティブ>` は、ただのコメント行として無視します。
 #
@@ -78,126 +76,33 @@
 #
 #   読み込めるかどうかで処理を分けたい場合は、サブシェルで試してから本読み込み
 #   します。
-#
-#     ```
-#     import::available() { ( import "$1" ) >/dev/null 2>&1; }
-#
-#     if import::available optional_lib; then
-#       import optional_lib
-#     fi
-#     ```
-#
-# * Debug *
-#
-#   IMPORT_DEBUG=1 を設定することで、詳細なdebug情報を出力します。
 
 : "${IMPORT_INITIALIZED=0}"
-: "${IMPORT_DEBUG:=0}"
-: "${DOTFILES_IMPORT_PATH:=}"
 
-import::_depth() {
-  local func depth=0
-  for func in "${FUNCNAME[@]}"; do
-    [[ "$func" == 'import' ]] && (( depth++ ))
-  done
-  printf '%d\n' "$(( depth - 1 ))"
-}
-
-import::_debug() {
-  (( IMPORT_DEBUG )) || return 0
-
-  local tab=2
-  local spaces=''
-  local depth
-  depth="$(import::_depth)"
-  depth="$(( depth < 0 ? 0 : depth ))"
-  (( depth > 0 )) && spaces="$(printf '%*s' "$(( depth * tab ))" '')"
-  printf '[IMPORT DEBUG] depth[%02d]: %s%s\n' "$depth" "$spaces" "$*" >&2
-}
-
-import::_error() {
+import::_die() {
   printf '[IMPORT ERROR] %s\n' "$*" >&2
-}
-
-import::_abort() {
-  import::_error "$@"
   exit 1
 }
 
-import::_version_compare() {
-  # usage: import::_version_compare "a_version" "b_version"
-  # a = b: 0
-  # a > b: 1
-  # a < b: -1
+import::_version_satisfies() {
+  # usage: import::_version_satisfies <最小バージョン> [<比較対象バージョン>]
+  # 比較対象を省略すると実行中のbashを見る。<major>[.<minor>] までを比較する。
+  local -a required=() current=()
 
-  local a_version="$1"
-  local b_version="$2"
-  local a_versions=()
-  local b_versions=()
+  # 比較は major.minor まで。書き誤りと未実装の桁を黙って通さないよう、形式が
+  # 違えば停止する。
+  [[ "$1" =~ ^[0-9]+(\.[0-9]+)?$ ]] \
+    || import::_die "invalid version requirement: ${1}"
 
-  IFS='.' read -ra a_versions <<< "$a_version"
-  IFS='.' read -ra b_versions <<< "$b_version"
-
-  local i
-  local max="${#a_versions[@]}"
-  (( ${#b_versions[@]} > max )) && max="${#b_versions[@]}"
+  IFS='.' read -ra required <<< "$1"
+  IFS='.' read -ra current <<< "${2:-"${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}"}"
 
   # 10# を付けて基数を固定する。付けないと 08 や 09 が8進数として解釈され、
   # "value too great for base" で比較が失敗する。
-  for (( i = 0; i < max; i++ )); do
-    local a="${a_versions[i]:-0}"
-    local b="${b_versions[i]:-0}"
+  local -i req_major="10#${required[0]}" req_minor="10#${required[1]:-0}"
+  local -i cur_major="10#${current[0]}"  cur_minor="10#${current[1]:-0}"
 
-    if (( 10#$a > 10#$b )); then
-      printf '%d' 1
-      return 0
-    fi
-
-    if (( 10#$a < 10#$b )); then
-      printf '%d' -1
-      return 0
-    fi
-  done
-
-  printf '%d' 0
-  return 0
-}
-
-import::_version_satisfies() {
-  local requirement="$1"
-  local version="${2:-"${BASH_VERSION}"}"
-  local op required cmp
-
-  # 演算子は `>` `<` `>=` `<=` `==` `!=` の6種。[><=!]=? だと `=` や `!` 単独も
-  # 通ってしまい、要求の書き誤りが "unsupported operator" として報告される。
-  if [[ "$requirement" =~ ^([><]=?|[=!]=)([0-9]+(\.[0-9]+)*)$ ]]; then
-    op="${BASH_REMATCH[1]}"
-    required="${BASH_REMATCH[2]}"
-  else
-    import::_error "invalid version requirement: ${requirement}"
-    return 1
-  fi
-
-  if [[ "$version" =~ ^([0-9]+(\.[0-9]+)*).*$ ]]; then
-    version="${BASH_REMATCH[1]}"
-  else
-    import::_error "invalid version: ${version}"
-    return 1
-  fi
-
-  cmp="$(import::_version_compare "$version" "$required")"
-  case "$op" in
-    '==') (( cmp == 0 )) ;;
-    '!=') (( cmp != 0 )) ;;
-    '>')  (( cmp > 0 )) ;;
-    '>=') (( cmp >= 0 )) ;;
-    '<')  (( cmp < 0 )) ;;
-    '<=') (( cmp <= 0 )) ;;
-    *)
-      import::_error "unsupported operator: ${op}"
-      return 1
-      ;;
-  esac
+  (( cur_major > req_major || (cur_major == req_major && cur_minor >= req_minor) ))
 }
 
 import::_find_library_file() {
@@ -242,95 +147,59 @@ import::_read_metadata() {
   done < "$libfile"
 }
 
-import::_resolving_stack_contains(){
-  local item target="$1"
-  for item in "${_IMPORT_RESOLVING_STACK[@]}"; do
-    [[ "$item" == "$target" ]] && return 0
-  done
-  return 1
-}
-
 import() {
   local lib libfile requires_bash import_path
   local -a deps
 
-  import::_debug "currently imported libraries: ${!IMPORT_IMPORTED_LIBS[*]}"
-  import::_debug "importing libraries: $*"
-
   for lib in "$@"; do
-    import::_debug ">>> importing ${lib}"
-
     # 読み込み済みチェック
     if [[ -n "${IMPORT_IMPORTED_LIBS[${lib}]:-}" ]]; then
-      import::_debug 'already imported.'
-      import::_debug '<<< continue'
       continue
     fi
 
     # 循環検出
-    import::_debug "checking if ${lib} is in the resolving stack..."
-    if import::_resolving_stack_contains "$lib"; then
-      import::_abort \
-        "circular library dependency detected: ${_IMPORT_RESOLVING_STACK[*]} -> ${lib}"
-    else
-      import::_debug "${lib} is not in the resolving stack."
-      import::_debug 'pushing to resolving stack...'
-      _IMPORT_RESOLVING_STACK+=( "$lib" )
+    #   解決中のスタックは空白区切りの文字列。前後を空白で挟んで部分一致させる
+    #   ことで、ライブラリ名の完全一致を見る。
+    if [[ " ${_IMPORT_RESOLVING_STACK} " == *" ${lib} "* ]]; then
+      import::_die \
+        "circular library dependency detected: ${_IMPORT_RESOLVING_STACK# } -> ${lib}"
     fi
-
-    import::_debug "resolving stack: ${_IMPORT_RESOLVING_STACK[*]}"
+    _IMPORT_RESOLVING_STACK+=" ${lib}"
 
     # モジュール探索
-    import::_debug "searching library file ${lib}.sh..."
     import_path="${DOTFILES_IMPORT_PATH:+${DOTFILES_IMPORT_PATH}:}${DOTFILES_PATH}/lib/bash"
     if ! libfile=$(import::_find_library_file "$lib" "$import_path"); then
-      import::_abort "library file not found: ${lib} (searched: ${import_path})"
-    else
-      import::_debug "library file found: ${libfile}"
+      import::_die "library file not found: ${lib} (searched: ${import_path})"
     fi
 
     # メタ情報取得
     #   _IMPORT_META_* は再帰するimportで上書きされるため、ローカルへ退避する。
-    import::_debug "reading metadata..."
     import::_read_metadata "$libfile"
     deps=( "${_IMPORT_META_DEPS[@]}" )
-    requires_bash="${_IMPORT_META_REQUIRES_BASH:->=0}"
-
-    import::_debug "dependent libraries: ${deps[*]:-none}"
-    import::_debug "library requires bash version: ${requires_bash}"
+    requires_bash="${_IMPORT_META_REQUIRES_BASH:-0}"
 
     if ! import::_version_satisfies "$requires_bash"; then
-      import::_abort "${lib}: bash ${requires_bash} is required (current: ${BASH_VERSION})"
+      import::_die "${lib}: bash ${requires_bash} is required (current: ${BASH_VERSION})"
     fi
 
     # 依存ライブラリ解決
     if (( ${#deps[@]} != 0 )); then
-      import::_debug '{{{ resolving dependent libraries...'
       import "${deps[@]}"
-      import::_debug '}}} resolved library dependencies.'
     fi
 
     # ライブラリ読み込み
-    import::_debug "loading ${lib}..."
     # shellcheck source=/dev/null
-    source "$libfile" || import::_abort "failed to source ${libfile}"
-    import::_debug 'removing from resolving stack...'
-    unset '_IMPORT_RESOLVING_STACK[${#_IMPORT_RESOLVING_STACK[@]}-1]'
+    source "$libfile" || import::_die "failed to source ${libfile}"
+    _IMPORT_RESOLVING_STACK="${_IMPORT_RESOLVING_STACK% *}"
     IMPORT_IMPORTED_LIBS["$lib"]="$libfile"
-    import::_debug "<<< imported ${lib}"
   done
-
-  # import::_depth はコマンド置換で fork するため、デバッグ無効時は評価しない。
-  if (( IMPORT_DEBUG )) && (( $(import::_depth) == 0 )); then
-    import::_debug 'import completed!'
-  fi
 }
 
 import::_init() {
   # 4.4 未満では `set -u` のもとで空配列の `"${arr[@]}"` 展開が unbound variable に
   # なる。この挙動は 4.4 で修正された。スクリプト側は `set -ueo pipefail` を敷いて
   # いるため、4.3 以下ではライブラリの読み込み自体が失敗する。
-  local requires_bash='>=4.4'
+  local requires_bash='4.4'
   local preload_libs=( core )
 
   if [ -z "${BASH_VERSION:-}" ]; then
@@ -340,23 +209,19 @@ import::_init() {
 
   (( IMPORT_INITIALIZED )) && return 0
 
-  import::_debug "bash version ${BASH_VERSION}"
-  import::_debug "initializing..."
-
   if ! import::_version_satisfies "$requires_bash"; then
-    import::_abort "bash ${requires_bash} is required (current: ${BASH_VERSION})"
+    import::_die "bash ${requires_bash} is required (current: ${BASH_VERSION})"
   fi
 
   if [[ -z "${DOTFILES_PATH:-}" ]]; then
-    import::_abort 'DOTFILES_PATH is not defined.' >&2
+    import::_die 'DOTFILES_PATH is not set'
   fi
 
   declare -gA IMPORT_IMPORTED_LIBS=()
-  declare -ga _IMPORT_RESOLVING_STACK=()
+  declare -g  _IMPORT_RESOLVING_STACK=
   declare -ga _IMPORT_META_DEPS=()
   declare -g  _IMPORT_META_REQUIRES_BASH=
 
-  import::_debug "preloading core libraries..."
   import "${preload_libs[@]}"
 
   IMPORT_INITIALIZED=1

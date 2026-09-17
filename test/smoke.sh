@@ -61,37 +61,27 @@ check 'すべてのライブラリが読み込まれている' \
 check 'ライブラリの読み込み元パスが記録されている' \
   "${DOTFILES_PATH}/lib/bash/core.sh" "${IMPORT_IMPORTED_LIBS['core']}"
 
-check 'バージョン比較: 1.10.0 > 1.9.0' \
-  '1' "$(import::_version_compare '1.10.0' '1.9.0')"
+check_rc 'bashバージョン要求を満たす' 0 import::_version_satisfies '4.0'
+check_rc 'bashバージョン要求を満たさない' 1 import::_version_satisfies '99.0'
 
-check_rc 'bashバージョン要求を満たす' 0 import::_version_satisfies '>=4.0'
-check_rc 'bashバージョン要求を満たさない' 1 import::_version_satisfies '<4.0'
-check_rc '不正なバージョン要求は失敗する' 1 import::_version_satisfies 'x.y.z'
+# 境界。major と minor の優先順を取り違えると通ってしまう。
+check_rc 'バージョン比較: 5.3 は 5.3 以上' 0 import::_version_satisfies '5.3' '5.3'
+check_rc 'バージョン比較: 5.3 は 5.4 未満' 1 import::_version_satisfies '5.4' '5.3'
+check_rc 'バージョン比較: 5.3 は 4.9 以上' 0 import::_version_satisfies '4.9' '5.3'
+check_rc 'バージョン比較: 4.9 は 5.0 未満' 1 import::_version_satisfies '5.0' '4.9'
+check_rc 'minorを省略した要求を判定できる' 0 import::_version_satisfies '5' '5.0'
 
-# 演算子6種。正規表現を書き換えたときの取りこぼしを検出する。
-check_rc 'バージョン要求: >'  0 import::_version_satisfies '>5.2'  '5.3'
-check_rc 'バージョン要求: >=' 0 import::_version_satisfies '>=5.3' '5.3'
-check_rc 'バージョン要求: <'  0 import::_version_satisfies '<5.4'  '5.3'
-check_rc 'バージョン要求: <=' 0 import::_version_satisfies '<=5.3' '5.3'
-check_rc 'バージョン要求: ==' 0 import::_version_satisfies '==5.3' '5.3'
-check_rc 'バージョン要求: !=' 0 import::_version_satisfies '!=5.2' '5.3'
-
-# 回帰: [><=!]=? では `=` や `!` 単独も通り、要求の書き誤りが演算子の未対応として
-#   報告されていた。
-check '演算子が不完全な要求は要求の誤りとして報告する' '1' \
-  "$(import::_version_satisfies '=5.0' 2>&1 | grep -c 'invalid version requirement')"
-check_rc '演算子のない要求は失敗する' 1 import::_version_satisfies '5.0'
+# 要求の形式チェック。満たさないのではなく書き誤りとして停止するため、判定は
+# 子シェルで行う。
+check '不正なバージョン要求は停止する' '1' \
+  "$(import::_version_satisfies 'x.y.z' 2>&1 | grep -c 'invalid version requirement')"
+check '未実装の桁を含む要求は停止する' '1' \
+  "$(import::_version_satisfies '5.3.1' 2>&1 | grep -c 'invalid version requirement')"
 
 # 回帰: バージョン要素の先頭ゼロ。基数を 10# で固定しないと 08 や 09 が8進数として
-#   解釈され、算術エラーになって比較結果が 0 に倒れる。
-check 'バージョン比較: 1.08.0 > 1.0.0' \
-  '1' "$(import::_version_compare '1.08.0' '1.0.0')"
-check 'バージョン比較: 1.08.0 = 1.8.0' \
-  '0' "$(import::_version_compare '1.08.0' '1.8.0')"
-check 'バージョン比較: 1.09.0 < 1.10.0' \
-  '-1' "$(import::_version_compare '1.09.0' '1.10.0')"
-check_rc '先頭ゼロを含む要求バージョンを判定できる' 0 \
-  import::_version_satisfies '>=1.08.0' '1.9.0'
+#   解釈され、算術エラーで比較が失敗する。
+check_rc '先頭ゼロを含むバージョンを判定できる' 0 \
+  import::_version_satisfies '1.08' '1.9'
 
 # メタ情報はライブラリをsourceせず、先頭のコメントから読む。
 #   回帰: 以前はメタ情報の取得にもsourceを使っていたため、ガード行を書き忘れた
@@ -102,7 +92,7 @@ mkdir -p "$_metadir"
 printf '%s\n' '# @deps core' '' 'echo body' > "${_metadir}/sidefx.sh"
 printf '%s\n' '# @author someone' '# @deps core' '# @totally-unknown xyz' '' \
   'echo body' > "${_metadir}/unknown.sh"
-printf '%s\n' '# @requires-bash >=9.0' '' 'this is a ((( syntax error )))' \
+printf '%s\n' '# @requires-bash 9.0' '' 'this is a ((( syntax error )))' \
   > "${_metadir}/newsyntax.sh"
 
 _import_in_child() {
@@ -119,7 +109,7 @@ check '未知のディレクティブを無視する' 'body' "$(_import_in_child
 check '要求bashを満たさないライブラリは本体をparseしない' '1' \
   "$(DOTFILES_IMPORT_PATH="$_metadir" bash -c \
       "source '${DOTFILES_PATH}/lib/bash/import.sh'; import newsyntax" 2>&1 \
-      | grep -c 'bash >=9.0 is required')"
+      | grep -c 'bash 9.0 is required')"
 
 # メタ情報の走査は最初のコメント以外の行で終わる。走査範囲がファイル全体に広がると、
 # 関数本体のコメント (msg.sh の <@indent> など) をディレクティブと誤認しうる。
