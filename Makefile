@@ -39,6 +39,7 @@ brew-dump: ## Write all installed packages into a Brewfile in dotfiles.
 .PHONY: test test-sh lint
 test: ## Run the bash library smoke tests.
 	@bash $(TEST_DIR)/smoke.sh
+	@bash $(TEST_DIR)/statusline.sh
 test-sh: ## Run the sh deployment smoke tests on every available shell.
 	@for s in $(SH_TEST_SHELLS); do \
 		[ -x "$$s" ] || continue; \
@@ -47,7 +48,8 @@ test-sh: ## Run the sh deployment smoke tests on every available shell.
 	done
 lint: ## Run shellcheck over the libraries, scripts and distributed hooks.
 	@shellcheck -s bash $(LIB_DIR)/bash/*.sh $(LIB_DIR)/bash/themes/*.sh \
-		$(TEST_DIR)/smoke.sh $(SCRIPT_DIR)/*/*.sh \
+		$(TEST_DIR)/smoke.sh $(TEST_DIR)/statusline.sh $(SCRIPT_DIR)/*/*.sh \
+		$(CONFIG_DIR)/claude/.claude/*.sh \
 		$(CONFIG_DIR)/claude/.claude/hooks/*.sh
 	@shellcheck -s dash $(DOTFILES_ROOT)/install.sh $(DOTFILES_ROOT)/uninstall.sh \
 		$(LIB_DIR)/shell/*.sh $(TEST_DIR)/deploy.sh

@@ -1,4 +1,7 @@
 {
+  "permissions": {
+    "defaultMode": "auto"
+  },
   "model": "opus",
   "hooks": {
     "Notification": [
@@ -24,8 +27,22 @@
       }
     ]
   },
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.sh",
+    "padding": 0,
+    "refreshInterval": 10
+  },
+  "extraKnownMarketplaces": {
+    "ponytail": {
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail"
+      }
+    }
+  },
   "theme": "auto",
-  "permissions": {
-    "defaultMode": "auto"
+  "enabledPlugins": {
+    "ponytail@ponytail": true
   }
 }
