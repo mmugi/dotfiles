@@ -61,7 +61,6 @@ You can customize the installation behavior by setting the following environment
 | --- | --- |
 | `DOTFILES_PATH` | Where the dotfiles live. **Required**; there is no default. |
 | `DOTFILES_BRANCH` | Which branch to download (e.g. `dev`). Defaults to `trunk`. Only used when the repository is not there yet. |
-| `DOTFILES_DOWNLOADER` | Which downloader to use (`git`, `curl`, or `wget`). If unset, they are tried in that order. |
 | `DOTFILES_IGNOREFILE` | Where the ignore list lives. Defaults to `${DOTFILES_PATH}/.dotignore`. |
 
 #### Ignoring Configuration Files

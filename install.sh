@@ -38,7 +38,6 @@ environment:
 
   DOTFILES_PATH        dotfiles の置き場所 (必須)
   DOTFILES_BRANCH      取得するブランチ (既定: trunk)
-  DOTFILES_DOWNLOADER  git / curl / wget のいずれかを指定して取得方法を固定する
   DOTFILES_IGNOREFILE  除外リスト (既定: ${DOTFILES_PATH}/.dotignore)
   NO_COLOR             設定されていれば色を付けない
 USAGE
@@ -60,22 +59,6 @@ git_usable() {
 pick_downloader() {
   # usage: pick_downloader
   # 使えるダウンローダ名を標準出力へ出す。見つからなければ 1 を返す。
-
-  if [ -n "${DOTFILES_DOWNLOADER:-}" ]; then
-    case "$DOTFILES_DOWNLOADER" in
-      git | curl | wget) ;;
-      *)
-        warn "invalid DOTFILES_DOWNLOADER: ${DOTFILES_DOWNLOADER}"
-        return 1
-        ;;
-    esac
-    if ! command -v "$DOTFILES_DOWNLOADER" >/dev/null 2>&1; then
-      warn "command not found: ${DOTFILES_DOWNLOADER}"
-      return 1
-    fi
-    printf '%s\n' "$DOTFILES_DOWNLOADER"
-    return 0
-  fi
 
   if git_usable; then
     printf 'git\n'
@@ -262,17 +245,14 @@ apply_manifest() {
             ;;
         esac
         ;;
-      1)
+      1 | 2)
         if [ "$verbose" -eq 1 ]; then
           deploy_announce installing "$pkg"
-          deploy_skipped "already linked: $(deploy_tilde "$dst")"
-        fi
-        unchanged=$(( unchanged + 1 ))
-        ;;
-      2)
-        if [ "$verbose" -eq 1 ]; then
-          deploy_announce installing "$pkg"
-          deploy_skipped "directory exists: $(deploy_tilde "$dst")"
+          if [ "$state" -eq 1 ]; then
+            deploy_skipped "already linked: $(deploy_tilde "$dst")"
+          else
+            deploy_skipped "directory exists: $(deploy_tilde "$dst")"
+          fi
         fi
         unchanged=$(( unchanged + 1 ))
         ;;
