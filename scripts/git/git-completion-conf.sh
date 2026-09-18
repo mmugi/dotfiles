@@ -3,7 +3,7 @@
 set -ueo pipefail
 
 # shellcheck source=/dev/null
-source "${DOTFILES_PATH}/lib/bash/import.sh"
+source "${DOTFILES_PATH:?}/lib/bash/import.sh"
 import util msg theme
 
 if [[ -t 2 ]]; then

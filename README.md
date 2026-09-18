@@ -13,6 +13,8 @@ curl https://raw.githubusercontent.com/mmugi/dotfiles/HEAD/install.sh | sh
 
 The script downloads this repository into that directory when it is not there yet, then deploys everything.
 
+Keep `DOTFILES_PATH` exported in your shell configuration. It names the installation to operate on rather than the location of any one checkout, so `uninstall.sh` and the scripts under `scripts/` read it instead of deriving a path, and fail when it is not set.
+
 ### > Configuration Layout
 
 Configuration files live under `configs/`, one directory per package. Within a package, files are laid out exactly as they should appear relative to your home directory:

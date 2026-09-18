@@ -5,7 +5,7 @@ set -ueo pipefail
 trap 'echo; echo "Interrupted."; exit 130' INT
 
 # shellcheck source=/dev/null
-source "${DOTFILES_PATH}/lib/bash/import.sh"
+source "${DOTFILES_PATH:?}/lib/bash/import.sh"
 import util msg theme log
 
 theme::load
