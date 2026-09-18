@@ -70,7 +70,7 @@ _validation_signingkey() {
   fi
 
   if result="$(ssh-keygen -vlf /dev/stdin <<<"$content" 2>/dev/null)"; then
-    msg::box --no-prompt -- "$result"
+    msg --no-prompt -- "$result"
     SIGNING_KEY_TYPE="$type"
     return 0
   else
@@ -278,4 +278,4 @@ configure_signing_format
 configure_signing_key
 configure_allowed_signers
 configure_commit_signing
-msg::box --prompt='🐈️' --base-style='success' -- 'GIT SIGNING CONFIGURED'
+msg --prompt='🐈️' --base-style='success' -- 'GIT SIGNING CONFIGURED'

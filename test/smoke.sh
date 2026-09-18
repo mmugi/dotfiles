@@ -302,67 +302,6 @@ check '<@br> で改行できる' "$(printf 'a\nb')" "$(msg --no-prompt -- 'a<@br
 check_rc 'msg::_push_token_stack 引数0は失敗する' 1 msg::_push_token_stack
 check_rc 'msg::_push_token_stack 引数4は失敗する' 1 msg::_push_token_stack a b c d
 
-# --- msg::box -----------------------------------------------------------------
-
-if (( _MSG_PYTHON3_UNAVAILABLE )); then
-  # python3 が無い環境では msg::box は枠を描かず msg にフォールバックする。
-  printf 'skip - msg::box の幅計算 (python3 なし。フォールバックのみ確認)\n'
-  check 'python3なしでは枠を描かない' '0' \
-    "$(msg::box -- 'x' | grep -c '[┌└]')"
-  check 'python3なしでもメッセージは出る' '[>] x' "$(msg::box -- 'x')"
-else
-  check 'msg::box が枠を描く' '1' \
-    "$(( $(msg::box -- 'x' | grep -c '[┌└]') == 2 ? 1 : 0 ))"
-
-  # awk の length はロケール次第でバイト数を数えるため、表示幅の比較には
-  # ライブラリ自身の幅計算を使う。全行が同じ表示幅になれば枠が揃っている。
-  check 'msg::box 全角文字の幅が揃う' '1' \
-    "$(msg::_calc_line_widths "$(msg::box -- '日本語' 'ab')" | sort -u | wc -l | tr -d ' ')"
-
-  check 'msg::_calc_line_widths は入力と同じ行数を返す' \
-    '3' "$(msg::_calc_line_widths "$(printf 'a\n\nbb')" | wc -l | tr -d ' ')"
-
-  check 'msg::_calc_line_widths が全角を2幅で数える' \
-    '6' "$(msg::_calc_line_widths '日本語')"
-
-  # 回帰: box経由でもバックスラッシュが壊れない
-  # (以前は msg と msg::box で %b が二重にかかり、幅計算が非印字文字で失敗していた)
-  check 'msg::box がバックスラッシュを保つ' '1' \
-    "$(msg::box -- 'a\bc' | grep -c 'a\\bc')"
-
-  # --box-rendered: 整形済みの行をそのまま枠で囲む
-  check 'msg::box --box-rendered が枠を描く' '1' \
-    "$(( $(msg::box --box-rendered -- "$(msg::rm 'x')" | grep -c '[┌└]') == 2 ? 1 : 0 ))"
-
-  # rm と skipped がそれぞれのプロンプトで1行ずつ出ること
-  check '--box-rendered が行ごとのプロンプトを保つ' '2' \
-    "$(msg::box --box-rendered -- "$(msg::rm 'a'; msg::skipped 'b')" \
-       | grep -cE '\[/\] a|\[-\] b' | tr -d ' ')"
-
-  # 色付きでも枠が揃う(幅計算がエスケープシーケンスを除去できている)
-  check '--box-rendered 色付きでも幅が揃う' '1' \
-    "$(msg::_calc_line_widths \
-        "$(msg::_strip_escseq \
-            "$(TERMCAP_COLOR_MODE=always msg::box --box-rendered -- \
-                "$(TERMCAP_COLOR_MODE=always msg::rm 'removed')")")" \
-       | sort -u | wc -l | tr -d ' ')"
-fi
-
-check 'msg::_strip_escseq がCSIを除去する' 'bold' \
-  "$(msg::_strip_escseq "$(printf '\033[1mbold\033[0m')")"
-
-check 'msg::_strip_escseq がSOH/STXを除去する' 'x' \
-  "$(msg::_strip_escseq "$(printf '\001x\002')")"
-
-check 'MSG_BOX=0 でboxを描かない' '0' \
-  "$(MSG_BOX=0 msg::box -- 'x' | grep -c '[┌└]')"
-
-check 'msg::_repeat_char' '-----' "$(msg::_repeat_char '-' 5)"
-check 'msg::_repeat_char 負数は0扱い' '' "$(msg::_repeat_char '-' -3)"
-
-# 回帰: 非端末では msg::line が sum(1..n) 文字を吐かない
-check 'msg::line 非端末では1行ぶんだけ' '20' "$(msg::line 20 | tr -d '\n' | wc -c | tr -d ' ')"
-
 # --- util ---------------------------------------------------------------------
 
 check_rc 'util::chk 存在するコマンド' 0 util::chk -cq bash
