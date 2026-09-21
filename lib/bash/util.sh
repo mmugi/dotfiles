@@ -59,7 +59,8 @@ util::chk() {
       fi
 
       if (( ! quiet )); then
-        msg "checking <hl>${target}</hl> command..."
+        # 強調の終わりは base を出し直して閉じる (rst だと地の色に落ちる)。
+        msg "checking ${STYLE_STDOUT['msg_highlight']:-}${target}${STYLE_STDOUT['normal']:-} command..."
       fi
 
       if type "$target" >/dev/null 2>&1; then
@@ -141,17 +142,17 @@ util::install() {
     # カレントディレクトリ基準で解決されてしまうため、dst 自体を解決する。
     if ! link_path="$(realpath "$dst" 2>/dev/null)"; then
       link_target="$(readlink "$dst")"
-      msg::warning "broken symbolic link already exists: ${dst} -> ${link_target}"
+      msg::warn "broken symbolic link already exists: ${dst} -> ${link_target}"
       return 1
     fi
     src_path="$(realpath "$src")"
     if [[ "$src_path" != "$link_path" ]]; then
-      msg::warning "symbolic link already exists, not owned by dotfiles: ${dst} -> ${link_path}"
+      msg::warn "symbolic link already exists, not owned by dotfiles: ${dst} -> ${link_path}"
       return 1
     fi
   else
     if [[ ! -d "$dst" ]]; then
-      msg::warning "file already exists: ${dst}"
+      msg::warn "file already exists: ${dst}"
       return 1
     fi
   fi
@@ -203,9 +204,9 @@ util::uninstall() {
 
   if [[ ! -L "$dst" ]]; then
     if [[ -d "$dst" ]]; then
-      msg::warning "directory is not a symbolic link: ${dst}"
+      msg::warn "directory is not a symbolic link: ${dst}"
     else
-      msg::warning "file is not a symbolic link: ${dst}"
+      msg::warn "file is not a symbolic link: ${dst}"
     fi
     return 1
   fi
@@ -215,13 +216,13 @@ util::uninstall() {
   local link_target link_path src_path
   if ! link_path="$(realpath "$dst" 2>/dev/null)"; then
     link_target="$(readlink "$dst")"
-    msg::warning "broken symbolic link: ${dst} -> ${link_target}"
+    msg::warn "broken symbolic link: ${dst} -> ${link_target}"
     return 1
   fi
   src_path="$(realpath "$src")"
 
   if [[ "$link_path" != "$src_path" ]]; then
-    msg::warning "symbolic link is not owned by dotfiles: ${dst} -> ${link_path}"
+    msg::warn "symbolic link is not owned by dotfiles: ${dst} -> ${link_path}"
     return 1
   fi
 

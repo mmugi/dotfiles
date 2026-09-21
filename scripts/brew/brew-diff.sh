@@ -7,7 +7,6 @@ source "${DOTFILES_PATH:?}/lib/bash/import.sh"
 import msg theme util log dotfiles
 
 theme::load
-msg::init
 
 util::chk -c brew
 
@@ -22,7 +21,7 @@ done < <(find "$DOTFILES_BREWFILE_DIR" -type f -print0 | sort -z)
 
 msg 'searching for brewfiles...'
 if (( ${#files[@]} == 0 )); then
-  msg::warning "no files found in ${DOTFILES_BREWFILE_DIR}"
+  msg::warn "no files found in ${DOTFILES_BREWFILE_DIR}"
   exit 1
 fi
 

@@ -13,7 +13,11 @@ if [[ -t 2 ]]; then
 fi
 
 theme::load
-msg::init
+
+# メッセージ中の強調。色が無効なときは空文字列になり、平文がそのまま出る。
+# 強調を終えるところは base を出し直して閉じる (rst だと地の色に落ちる)。
+hl="${STYLE_STDOUT['msg_highlight']:-}"
+base="${STYLE_STDOUT['normal']:-}"
 
 # gitに内包される git-completion をsourceするシェル設定を生成し、標準出力に
 # そのままコピー&ペーストできる形式で出力します。
@@ -198,12 +202,12 @@ config=
   filename="${GIT_COMPLETION_CONF_FILENAME[$shell]}"
 
   if util::chk -c git; then
-    msg "searching for <hl>${filename}</hl>..."
+    msg "searching for ${hl}${filename}${base}..."
     if _git_completion_conf_locate "$filename"; then
-      msg "generating git-completion configuration for <hl>${shell}</hl>..."
+      msg "generating git-completion configuration for ${hl}${shell}${base}..."
       config="$(_git_completion_conf_render_bash "$GIT_COMPLETION_CONF_RESULT")"
     else
-      msg::warning "${filename} not found."
+      msg::warn "${filename} not found."
     fi
   fi
 
@@ -211,9 +215,9 @@ config=
     rc_hint="${GIT_COMPLETION_CONF_RC_HINT[$shell]}"
 
     if (( stdout_is_tty )); then
-      msg::notice "add the following lines to your <hl>${rc_hint}</hl> (or equivalent)."
+      msg::notice "add the following lines to your ${hl}${rc_hint}${base} (or equivalent)."
     elif [[ -n "$stdout_target" ]]; then
-      msg::notice "stdout is redirected to <hl>${stdout_target}</hl>. writing the generated configuration directly to it."
+      msg::notice "stdout is redirected to ${hl}${stdout_target}${base}. writing the generated configuration directly to it."
     else
       msg::notice 'stdout is redirected. writing the generated configuration directly to it.'
     fi

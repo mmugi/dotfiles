@@ -13,7 +13,11 @@ if [[ -t 2 ]]; then
 fi
 
 theme::load
-msg::init
+
+# メッセージ中の強調。色が無効なときは空文字列になり、平文がそのまま出る。
+# 強調を終えるところは base を出し直して閉じる (rst だと地の色に落ちる)。
+hl="${STYLE_STDOUT['msg_highlight']:-}"
+base="${STYLE_STDOUT['normal']:-}"
 
 # シェル用のプロンプト設定を生成し、標準出力にそのままコピー&ペーストできる形式で出力します。
 # (git-completionのシェル設定生成は scripts/git/git-completion-conf.sh を参照)
@@ -229,25 +233,25 @@ fi
 # (そのまま `>> ~/.bashrc` のようにリダイレクトして利用できるようにするため)
 {
   if util::chk -c starship; then
-    msg "generating starship-based prompt configuration for <hl>${shell}</hl>..."
+    msg "generating starship-based prompt configuration for ${hl}${shell}${base}..."
     config="$(_generate_prompt_conf_render_bash 'starship')"
   else
     prompt_path=
 
     if util::chk -c git; then
-      msg 'searching for <hl>git-prompt.sh</hl>...'
+      msg "searching for ${hl}git-prompt.sh${base}..."
       if _generate_prompt_conf_locate 'git-prompt.sh'; then
         prompt_path="$GENERATE_PROMPT_CONF_RESULT"
       else
-        msg::warning 'git-prompt.sh not found.'
+        msg::warn 'git-prompt.sh not found.'
       fi
     fi
 
     if [[ -n "$prompt_path" ]]; then
-      msg "generating git-aware prompt configuration for <hl>${shell}</hl>..."
+      msg "generating git-aware prompt configuration for ${hl}${shell}${base}..."
       config="$(_generate_prompt_conf_render_bash 'git' "$prompt_path")"
     else
-      msg "generating default prompt configuration for <hl>${shell}</hl>..."
+      msg "generating default prompt configuration for ${hl}${shell}${base}..."
       config="$(_generate_prompt_conf_render_bash 'default')"
     fi
   fi
@@ -255,9 +259,9 @@ fi
   rc_hint="${GENERATE_PROMPT_CONF_RC_HINT[$shell]}"
 
   if (( stdout_is_tty )); then
-    msg::notice "add the following lines to your <hl>${rc_hint}</hl> (or equivalent)."
+    msg::notice "add the following lines to your ${hl}${rc_hint}${base} (or equivalent)."
   elif [[ -n "$stdout_target" ]]; then
-    msg::notice "stdout is redirected to <hl>${stdout_target}</hl>. writing the generated configuration directly to it."
+    msg::notice "stdout is redirected to ${hl}${stdout_target}${base}. writing the generated configuration directly to it."
   else
     msg::notice 'stdout is redirected. writing the generated configuration directly to it.'
   fi

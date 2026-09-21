@@ -7,7 +7,11 @@ source "${DOTFILES_PATH:?}/lib/bash/import.sh"
 import msg theme util log dotfiles
 
 theme::load
-msg::init
+
+# メッセージ中の強調。色が無効なときは空文字列になり、平文がそのまま出る。
+# 強調を終えるところは base を出し直して閉じる (rst だと地の色に落ちる)。
+hl="${STYLE_STDOUT['msg_highlight']:-}"
+base="${STYLE_STDOUT['normal']:-}"
 
 util::chk -c brew
 
@@ -65,7 +69,7 @@ if [[ "$brewfile" == 'newfile' ]]; then
   fi
 fi
 
-msg "dumping all installed packages into <hl>${brewfile}</hl>..."
+msg "dumping all installed packages into ${hl}${brewfile}${base}..."
 HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_ENV_HINTS=1 \
   brew bundle dump --file "$brewfile" --no-describe --force
 msg::ok 'successfully dumped all packages:)'

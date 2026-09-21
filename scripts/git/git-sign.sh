@@ -9,7 +9,11 @@ source "${DOTFILES_PATH:?}/lib/bash/import.sh"
 import util msg theme log
 
 theme::load
-msg::init
+
+# メッセージ中の強調。色が無効なときは空文字列になり、平文がそのまま出る。
+# 強調を終えるところは base を出し直して閉じる (rst だと地の色に落ちる)。
+hl="${STYLE_STDOUT['msg_highlight']:-}"
+base="${STYLE_STDOUT['normal']:-}"
 
 _git_config_chk() {
   local key="$1"
@@ -35,7 +39,7 @@ configure_signing_format() {
   local config signing_format
 
   if config="$(_git_config_chk gpg.format)"; then
-    msg "gpg.format is already configured: <hl>${config}</hl>"
+    msg "gpg.format is already configured: ${hl}${config}${base}"
     msg::skipped 'signing format configuration skipped.'
     msg::newline
     return 0
@@ -70,11 +74,11 @@ _validation_signingkey() {
   fi
 
   if result="$(ssh-keygen -vlf /dev/stdin <<<"$content" 2>/dev/null)"; then
-    msg --no-prompt -- "$result"
+    msg --no-prefix -- "$result"
     SIGNING_KEY_TYPE="$type"
     return 0
   else
-    msg::warning 'invalid signing key:('
+    msg::warn 'invalid signing key:('
     return 1
   fi
 }
@@ -87,7 +91,7 @@ configure_signing_key() {
   local config content pubkey
 
   if config="$(_git_config_chk user.signingkey)"; then
-    msg "user.signingkey is already configured: <hl>${config}</hl>"
+    msg "user.signingkey is already configured: ${hl}${config}${base}"
 
     if _validation_signingkey "$config"; then
       SIGNING_KEY="$config"
@@ -119,7 +123,7 @@ configure_signing_key() {
         local keys lines
 
         if ! keys="$(ssh-add -L 2>&1)"; then
-          msg::warning "$keys"
+          msg::warn "$keys"
           continue
         fi
 
@@ -144,7 +148,7 @@ configure_signing_key() {
           if [[ -z "$SIGNING_KEY" ]]; then
             continue
           elif [[ ! -f "$SIGNING_KEY" ]]; then
-            msg::warning "public key file not found: ${SIGNING_KEY}"
+            msg::warn "public key file not found: ${SIGNING_KEY}"
             continue
           elif ! _validation_signingkey "$SIGNING_KEY"; then
             continue
@@ -186,12 +190,12 @@ configure_allowed_signers() {
   local config allowed_signers_file
 
   if config="$(_git_config_chk gpg.ssh.allowedSignersFile)"; then
-    msg "gpg.ssh.allowedSignersFile is already configured: <hl>${config}</hl>"
+    msg "gpg.ssh.allowedSignersFile is already configured: ${hl}${config}${base}"
 
     if [[ -f "$config" ]]; then
       allowed_signers_file="$config"
     else
-      msg::warning "allowed signers file not found: ${config:-}"
+      msg::warn "allowed signers file not found: ${config:-}"
     fi
   fi
 
@@ -212,7 +216,7 @@ configure_allowed_signers() {
       _git_config_set 'gpg.ssh.allowedSignersFile' "$allowed_signers_file"
       break
     else
-      msg::warning "allowed signers file not found: ${allowed_signers_file}"
+      msg::warn "allowed signers file not found: ${allowed_signers_file}"
       allowed_signers_file=
       continue
     fi
@@ -234,7 +238,7 @@ configure_allowed_signers() {
   line="$(printf '%s %s %s' "$principal" "$key_type" "$base64_key")"
 
   if grep "$line" "$allowed_signers_file" >/dev/null 2>&1; then
-    msg "already registered in the allowed signers file: <hl>${line}</hl>"
+    msg "already registered in the allowed signers file: ${hl}${line}${base}"
     msg::skipped 'allowed signers configuration skipped.'
     msg::newline
     return 0
@@ -278,4 +282,4 @@ configure_signing_format
 configure_signing_key
 configure_allowed_signers
 configure_commit_signing
-msg --prompt='🐈️' --base-style='success' -- 'GIT SIGNING CONFIGURED'
+msg --prefix='🐈️' -- "${STYLE_STDOUT['success']:-}GIT SIGNING CONFIGURED"

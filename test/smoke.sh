@@ -13,7 +13,6 @@ DOTFILES_PATH="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 export DOTFILES_PATH
 
 # 出力を安定させる
-export MSG_DELAY=0
 export TERMCAP_COLOR_MODE=never
 
 # 色の有無はテスト内で TERMCAP_COLOR_MODE で切り替える。NO_COLOR は
@@ -24,7 +23,6 @@ unset NO_COLOR
 source "${DOTFILES_PATH}/lib/bash/import.sh"
 import core escseq termcap trap theme log msg util dotfiles
 theme::load
-msg::init
 
 declare -i _tests=0
 declare -i _failed=0
@@ -258,49 +256,77 @@ check_rc 'logger はレベル指定なしで失敗する' 1 logger 'no level'
 # --- msg ----------------------------------------------------------------------
 
 check 'msg 基本出力' '[>] hello' "$(msg 'hello')"
-check 'msg インラインタグが除去される' '[>] a b c' "$(msg 'a <hl>b</hl> c')"
-check 'msg --no-prompt' 'hello' "$(msg --no-prompt 'hello')"
+check 'msg --no-prefix' 'hello' "$(msg --no-prefix 'hello')"
 check 'msg -n は改行しない' '1' "$(( $(msg -n 'x' | wc -l) == 0 ? 1 : 0 ))"
-check 'msg --raw はそのまま出す' '<hl>raw</hl>' "$(msg -r --no-prompt '<hl>raw</hl>')"
-check 'msg::ok のプロンプト' '[^] done' "$(msg::ok 'done')"
-check 'msg::error のプロンプト' '[;] oops' "$(msg::error 'oops')"
+check 'msg::ok のプレフィックス' '[^] done' "$(msg::ok 'done')"
+check 'msg::error のプレフィックス' '[x] oops' "$(msg::error 'oops')"
+check 'msg 空文字でもプロンプトは出る' '[>] ' "$(msg -- '')"
 
 check 'msg::newline は改行だけ出す' '1' "$(msg::newline | wc -l | tr -d ' ')"
 check '名前空間なしの newline は定義しない' '' "$(type -t newline 2>/dev/null || true)"
 
-# 回帰: width属性なしの <@indent> が set -u で落ちない
-check '<@indent> 属性なし' '[>] x' "$(msg '<@indent>x</@indent>')"
+check_rc 'msg 不正オプションは失敗する' 1 msg --nosuchoption -- 'x'
+check_rc 'msg --prefix の値が無ければ失敗する' 1 msg --prefix
 
-# <@indent> はブロックタグで、行頭のインデント描画は BEGIN_LINE 時点で
-# 行われる。そのため開始タグと同じ行には効かず、次の行から適用される。
-check '<@indent width> は次の行から効く' \
-  "$(printf '    [>] x\n[>] y')" \
-  "$(msg "$(printf '<@indent width="4">\nx\n</@indent>\ny')")"
-
-# 回帰: 1行内のブロック閉じタグが set -e でスクリプトを落とさない
-check '<@b> を1行で開閉' '[>] x' "$(msg '<@b>x</@b>')"
-check_rc '対応漏れの閉じタグでも継続する' 0 msg 'text </@b> more'
-
-# 回帰: 閉じ忘れ inline タグの後もスタイルが正しく復帰する
-_ctl="$(TERMCAP_COLOR_MODE=always msg '<b>B<it>I</it>C</b>' | od -c | grep -c '1  m' || true)"
-_aft="$(TERMCAP_COLOR_MODE=always msg "$(printf 'l1 <hl>x\nl2 <b>B<it>I</it>C</b>')" \
-        | tail -1 | od -c | grep -c '1  m' || true)"
-check '閉じ忘れタグの後もstyleが復帰する' "$_ctl" "$_aft"
-
-# 回帰: 属性値にglob文字があってもトークナイザが止まらない
-check 'glob文字を含む属性値' '[>] x' "$(msg '<hl style="a[b*">x</hl>')"
+# 本文は解釈しない。タグに見える文字列もそのまま出る。
+check 'msg はタグを解釈しない' '[>] a <hl>b</hl> c' "$(msg 'a <hl>b</hl> c')"
 
 # 回帰: 本文のバックスラッシュを解釈しない (printf %b をやめた)
 check 'msg がバックスラッシュを保つ' \
-  'path\with\backslash' "$(msg --no-prompt -- 'path\with\backslash')"
-check 'msg が \n を改行にしない' 'a\nb' "$(msg --no-prompt -- 'a\nb')"
-check 'msg が \\ を畳まない' 'a\\b' "$(msg --no-prompt -- 'a\\b')"
+  'path\with\backslash' "$(msg --no-prefix -- 'path\with\backslash')"
+check 'msg が \n を改行にしない' 'a\nb' "$(msg --no-prefix -- 'a\nb')"
+check 'msg が \\ を畳まない' 'a\\b' "$(msg --no-prefix -- 'a\\b')"
 
-# 改行したい場合の代替手段が使えること
-check '<@br> で改行できる' "$(printf 'a\nb')" "$(msg --no-prompt -- 'a<@br>b')"
+# 実際の改行は行ごとにプロンプトを添える
+check 'msg は行ごとにプロンプトを添える' "$(printf '[>] a\n[>] b')" \
+  "$(msg -- "$(printf 'a\nb')")"
 
-check_rc 'msg::_push_token_stack 引数0は失敗する' 1 msg::_push_token_stack
-check_rc 'msg::_push_token_stack 引数4は失敗する' 1 msg::_push_token_stack a b c d
+# 色は呼び出し側が STYLE_STDOUT を埋めて組み立てる。色ありでしか確認できない
+#   ため、ここだけテーマを読み直す。
+TERMCAP_COLOR_MODE=always theme::load
+
+_msg_rst="${STYLE_STDOUT['rst']}"
+_msg_hl="${STYLE_STDOUT['msg_highlight']}"
+_msg_normal="${STYLE_STDOUT['normal']}"
+_msg_bold="${STYLE_STDOUT['bold']}"
+
+# base style は行の頭に置く。本文は書き換えない。
+check '行頭に base style を置く' "${_msg_normal}x${_msg_rst}" \
+  "$(msg --no-prefix -- 'x')"
+
+# 呼び出し側が埋めたスタイルはそのまま出る。rst は素直にリセットする
+# (base style に戻す、といった書き換えはしない)。
+check '呼び出し側のスタイルをそのまま通す' \
+  "${_msg_normal}a ${_msg_hl}b${_msg_rst} c${_msg_rst}" \
+  "$(msg --no-prefix -- "a ${_msg_hl}b${_msg_rst} c")"
+
+# --base-style は行の頭に置くだけ。本文は書き換えない。
+check '--base-style は行頭に置く' \
+  "${STYLE_STDOUT['msg_ok']}x${_msg_rst}" \
+  "$(msg --no-prefix --base-style='msg_ok' -- 'x')"
+
+# 回帰: 強調を base のスタイルで閉じるとリセットを通らないため、呼び出し側が
+#   重ねた属性 (bold など) が残る。rst で閉じると一緒に落ちてしまう。
+_msg_out="$(msg --no-prefix -- "${_msg_bold}a ${_msg_hl}b${_msg_normal} c")"
+_msg_less="${_msg_out//${_msg_bold}/}"
+
+check 'base で閉じれば重ねた属性が残る' '1' \
+  "$(( (${#_msg_out} - ${#_msg_less}) / ${#_msg_bold} ))"
+check 'base で閉じればリセットは行末だけ' '1' \
+  "$(( $(printf '%s' "$_msg_out" | grep -oF "$_msg_rst" | wc -l | tr -d ' ') ))"
+
+# 複数行でも行ごとに base style を置く。
+check '行ごとに base style を置く' \
+  "$(printf '%sa%s\n%sb%s' "$_msg_normal" "$_msg_rst" "$_msg_normal" "$_msg_rst")" \
+  "$(msg --no-prefix -- "$(printf 'a\nb')")"
+
+# msg::notice などが色を付けるのはプレフィックスだけ。本文は既定の base に
+#   なるため、呼び出し側は戻り先 (normal) を知ったうえで組み立てられる。
+check 'msg::notice が色を付けるのはプレフィックスだけ' \
+  "${STYLE_STDOUT['msg_notice']}[~]${_msg_rst} ${_msg_normal}hello${_msg_rst}" \
+  "$(msg::notice 'hello')"
+
+theme::load
 
 # --- util ---------------------------------------------------------------------
 

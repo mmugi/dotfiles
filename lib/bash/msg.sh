@@ -2,1039 +2,196 @@
 
 # @deps trap log theme
 
-: "${MSG_DELAY:=0.1}"
-: "${MSG_INDENT:=0}"
-
-: "${MSG_PROMPT:=[>]}"
-: "${MSG_PROMPT_HEADER:=###}"
-: "${MSG_PROMPT_NOTICE:=[~]}"
-: "${MSG_PROMPT_CHANGED:=[*]}"
-: "${MSG_PROMPT_RM:=[/]}"
-: "${MSG_PROMPT_SKIPPED:=[-]}"
-: "${MSG_PROMPT_OK:=[^]}"
-: "${MSG_PROMPT_WARNING:=[!]}"
-: "${MSG_PROMPT_ERROR:=[;]}"
-: "${MSG_PROMPT_CONFIRM:=[?]}"
-
-msg::init() {
-  (( ${MSG_INITIALIZED:-0} )) && return 0
-
-  declare -g _MSG_LOG_CH_TOKENIZER='tokenizer'
-  declare -g _MSG_LOG_CH_RENDERER='renderer'
-
-  declare -gi MSG_INITIALIZED=1
-}
-
-msg::_isinit() {
-  if (( ${MSG_INITIALIZED:-0} )); then
-    return 0
-  else
-    core::error 'not initialized'
-    return 1
-  fi
-}
+: "${MSG_PREFIX:=[>]}"
+: "${MSG_PREFIX_HEADER:=###}"
+: "${MSG_PREFIX_NOTICE:=[~]}"
+: "${MSG_PREFIX_CHANGED:=[*]}"
+: "${MSG_PREFIX_RM:=[-]}"
+: "${MSG_PREFIX_SKIPPED:=[=]}"
+: "${MSG_PREFIX_OK:=[^]}"
+: "${MSG_PREFIX_WARN:=[!]}"
+: "${MSG_PREFIX_ERROR:=[x]}"
+: "${MSG_PREFIX_CONFIRM:=[?]}"
 
 msg::newline() { printf '\n'; }
 
-msg::_tokenizer_init() {
-  declare -ga _MSG_TOKENIZER_OUTPUT_TYPE=()
-  declare -ga _MSG_TOKENIZER_OUTPUT_VALUE=()
-  declare -gA _MSG_TOKENIZER_OUTPUT_ATTR=()
-  declare -gi _MSG_TOKENIZER_INITIALIZED=1
-  logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" 'MSG TOKENIZER INITIALIZED!'
-}
-
-msg::_tokenizer_isinit() {
-  if (( ${_MSG_TOKENIZER_INITIALIZED:-0} )); then
-    return 0
-  else
-    logger --error 'tokenizer is not initialized'
-    return 1
-  fi
-}
-
-msg::_peek_token_type_stack() {
-  msg::_tokenizer_isinit || return 1
-
-  local last_idx
-
-  last_idx=$(( ${#_MSG_TOKENIZER_OUTPUT_TYPE[@]} - 1 ))
-  if (( last_idx >= 0 )); then
-    printf '%s' "${_MSG_TOKENIZER_OUTPUT_TYPE[last_idx]}"
-  else
-    printf ''
-  fi
-}
-
-msg::_drop_token_stack() {
-  msg::_tokenizer_isinit || return 1
-
-  local last_idx type value key
-
-  last_idx=$(( ${#_MSG_TOKENIZER_OUTPUT_TYPE[@]} - 1 ))
-  if (( last_idx >= 0 )); then
-    type="${_MSG_TOKENIZER_OUTPUT_TYPE[last_idx]}"
-    value="${_MSG_TOKENIZER_OUTPUT_VALUE[last_idx]}"
-
-    logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "type=\"${type}\" value=\"${value}\""
-
-    unset '_MSG_TOKENIZER_OUTPUT_TYPE[last_idx]'
-    unset '_MSG_TOKENIZER_OUTPUT_VALUE[last_idx]'
-    for key in "${!_MSG_TOKENIZER_OUTPUT_ATTR[@]}"; do
-      [[ $key == "${last_idx}:"* ]] || continue
-      logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "index=\"${last_idx}\" key=\"${key}\""
-      unset '_MSG_TOKENIZER_OUTPUT_ATTR[$key]'
-    done
-  fi
-
-  #logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "$(declare -p _MSG_TOKENIZER_OUTPUT_TYPE)"
-  #logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "$(declare -p _MSG_TOKENIZER_OUTPUT_VALUE)"
-  #logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "$(declare -p _MSG_TOKENIZER_OUTPUT_ATTR)"
-}
-
-msg::_push_token_stack() {
-  msg::_tokenizer_isinit || return 1
-  # C形式の連鎖比較 `1 <= $# <= 3` は (1 <= $#) <= 3 と評価され常に真になるため、
-  # 条件を分けて書く。
-  (( $# >= 1 && $# <= 3 )) || { logger --error 'invalid options'; return 1; }
-
-  local type="$1"
-  local value="${2:-_}"
-  local attrs="${3:-}"
-  local re_attr='([a-zA-Z0-9_-]+)="([^"]+)"'
-
-  logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "type=\"${type}\" value=\"${value}\""
-
-  _MSG_TOKENIZER_OUTPUT_TYPE+=( "$type" )
-  _MSG_TOKENIZER_OUTPUT_VALUE+=( "$value" )
-
-  if [[ -n "$attrs" ]]; then
-    local idx matched attr attr_value
-    idx=$(( ${#_MSG_TOKENIZER_OUTPUT_TYPE[@]} - 1 ))
-    while [[ "$attrs" =~ $re_attr ]]; do
-      matched="${BASH_REMATCH[0]}"
-      attr="${BASH_REMATCH[1]}"
-      attr_value="${BASH_REMATCH[2]}"
-
-      logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "index=\"${idx}\" attr=\"${attr}\" attr_value=\"${attr_value}\""
-
-      _MSG_TOKENIZER_OUTPUT_ATTR["${idx}:${attr}"]="$attr_value"
-      # matched をクォートしないとパターンとして解釈され、属性値に * や [ が
-      # 含まれる場合に切り落としに失敗してこのループが終わらなくなる。
-      attrs="${attrs#*"${matched}"}"
-    done
-  fi
-
-  #logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "$(declare -p _MSG_TOKENIZER_OUTPUT_TYPE)"
-  #logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "$(declare -p _MSG_TOKENIZER_OUTPUT_VALUE)"
-  #logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "$(declare -p _MSG_TOKENIZER_OUTPUT_ATTR)"
-}
-
-msg::_tokenize_tag() {
-  msg::_tokenizer_isinit || return 1
-  (( $# != 1 )) && { logger --error 'invalid option'; return 1; }
-
-  local re_tag='^<(/?@?[a-zA-Z0-9_-]+)( +.*)? *>$'
-  local re_inline_tag='(b|it|hl)'
-  local re_block_tag='@(noprompt|indent|b|it|hl|br)'
-  local restore_newline=0
-  local tag attrs top
-
-  if [[ "$1" =~ $re_tag ]]; then
-    tag="${BASH_REMATCH[1]}"
-    attrs="${BASH_REMATCH[2]## }"
-  else
-    logger --error "invalid tag: $1"
-    return 1
-  fi
-
-  logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "tag=\"${tag}\""
-
-  if [[ ! "$tag" =~ ^/?(${re_inline_tag}|${re_block_tag})$ ]]; then
-    logger --warning "unsupported tag: ${tag}"
-    return 0
-  fi
-
-  case "$tag" in
-    @*)
-      case "$tag" in
-        @noprompt) msg::_push_token_stack 'BLOCK_OPEN' 'noprompt' ;;
-        @indent) msg::_push_token_stack 'BLOCK_OPEN' 'indent' "$attrs" ;;
-        @b) msg::_push_token_stack 'BLOCK_OPEN' 'b' ;;
-        @it) msg::_push_token_stack 'BLOCK_OPEN' 'it' ;;
-        @hl) msg::_push_token_stack 'BLOCK_OPEN' 'hl' "$attrs" ;;
-        @br) msg::_push_token_stack 'NEWLINE' ;;
-      esac
-      ;;
-    /@*)
-      top="$(msg::_peek_token_type_stack)"
-      if [[ "$top" == 'NEWLINE' ]]; then
-        restore_newline=1
-        msg::_drop_token_stack
-      fi
-
-      case "$tag" in
-        /@noprompt) msg::_push_token_stack 'BLOCK_CLOSE' 'noprompt' ;;
-        /@indent) msg::_push_token_stack 'BLOCK_CLOSE' 'indent' ;;
-        /@b) msg::_push_token_stack 'BLOCK_CLOSE' 'b' ;;
-        /@it) msg::_push_token_stack 'BLOCK_CLOSE' 'it' ;;
-        /@hl) msg::_push_token_stack 'BLOCK_CLOSE' 'hl' ;;
-      esac
-
-      if (( restore_newline )); then
-        msg::_push_token_stack 'NEWLINE'
-      fi
-      ;;
-    /*)
-      case "$tag" in
-        /hl|/b|/it) msg::_push_token_stack 'TAG_CLOSE' "${tag#/}" ;;
-      esac
-      ;;
-    *)
-      case "$tag" in
-        hl|b|it) msg::_push_token_stack 'TAG_OPEN' "$tag" "$attrs" ;;
-      esac
-      ;;
-  esac
-
-  # 上のcaseが偽の条件で終わった場合に1を返さないようにする。
-  # 呼び出し元 msg::_tokenize_line は set -e 下でこの戻り値を受けるため、
-  # ここで1を返すとスクリプト全体が停止してしまう。
-  return 0
-}
-
-msg::_tokenize_line() {
-  msg::_tokenizer_isinit || return 1
-  (( $# != 1 )) && { logger --error 'invalid option'; return 1; }
-
-  local -a types=()
-  local -a values=()
-  local line="$1"
-  local mode='TEXT'
-  local text=
-  local tag=
-  local quote=
-  local i c
-
-  logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "input[${line}]"
-
-  for (( i = 0; i < ${#line}; i++ )); do
-    c="${line:i:1}"
-
-    case "$mode" in
-      TEXT)
-        if [[ "$c" == '<' ]]; then
-          if [[ -n "$text" ]]; then
-            logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "│ TEXT=\"${text}\""
-            types+=( 'TEXT' )
-            values+=( "$text" )
-          fi
-          text=
-          tag='<'
-          mode='TAG'
-        else
-          text+="$c"
-        fi
-        ;;
-      TAG)
-        tag+="$c"
-        if [[ "$c" == '"' ]]; then
-          if [[ -z "$quote" ]]; then
-            quote='"'
-          else
-            quote=
-          fi
-        elif [[ "$c" == '>' && -z "$quote" ]]; then
-          logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "│ TAG=\"${tag}\""
-          types+=( 'TAG' )
-          values+=( "$tag" )
-          tag=
-          mode='TEXT'
-        fi
-        ;;
-    esac
-  done
-
-  # タグが閉じられていない場合
-  if [[ "$mode" == 'TAG' ]]; then
-    text+="$tag"
-  fi
-
-  if [[ -n "$text" ]]; then
-    logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" "│ TEXT=\"${text}\""
-    types+=( 'TEXT' )
-    values+=( "$text" )
-  fi
-
-  logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" '└'
-
-  # 入力が空行かどうか
-  local empty_line=0
-  [[ -z "$line" ]] && empty_line=1
-
-  # block tagのみの行かどうか
-  local block_tag_only=1
-  local re_space_only='^ *$'
-  local re_block_tag='^</?@'
-  if (( empty_line )); then
-    block_tag_only=0
-  else
-    for i in "${!types[@]}"; do
-      case "${types[i]}" in
-        TEXT) [[ "${values[i]}" =~ $re_space_only ]] || block_tag_only=0 ;;
-        TAG)  [[ "${values[i]}" =~ $re_block_tag ]]  || block_tag_only=0 ;;
-        *)
-          logger --error "invalid type: ${types[i]}"
-          return 1
-          ;;
-      esac
-    done
-  fi
-
-  logger --debug --ch="$_MSG_LOG_CH_TOKENIZER" \
-    "empty_line=\"${empty_line}\" block_tag_only=\"${block_tag_only}\""
-
-  (( block_tag_only )) || msg::_push_token_stack 'BEGIN_LINE'
-
-  for i in "${!types[@]}"; do
-    case "${types[i]}" in
-      TAG) msg::_tokenize_tag "${values[i]}" ;;
-      *) (( block_tag_only )) || msg::_push_token_stack "${types[i]}" "${values[i]}" ;;
-    esac
-  done
-
-  (( block_tag_only )) || msg::_push_token_stack 'END_LINE'
-  (( block_tag_only )) || msg::_push_token_stack 'NEWLINE'
-}
-
-msg::_tokenize() {
-  msg::_tokenizer_isinit || return 1
-
-  local raw="$1"
-  local -a lines=()
-  local line i
-
-  while IFS= read -r line; do
-    lines+=( "$line" )
-  done <<<"$raw"
-
-  if (( _MSG_RENDERER_CONTEXT['raw'] )); then
-    msg::_push_token_stack 'BEGIN'
-    msg::_push_token_stack 'TEXT' "$raw"
-    msg::_push_token_stack 'NEWLINE'
-    msg::_push_token_stack 'END'
-    return 0
-  fi
-
-  msg::_push_token_stack 'BEGIN'
-
-  for i in "${!lines[@]}"; do
-    msg::_tokenize_line "${lines[i]}"
-  done
-
-  msg::_push_token_stack 'END'
-
-  return 0
-}
-
-msg::_renderer_init() {
-  declare -gA _MSG_RENDERER_CONTEXT=(
-    ['prompt_symbol']="$MSG_PROMPT"
-    ['prompt_style']='msg_prefix'
-    ['indent_width']="$MSG_INDENT"
-    ['plain']=0
-    ['plain_prompt']=0
-    ['raw']=0
-    ['bold']=0
-    ['base_style']='normal'
-    ['highlight_style']='msg_highlight'
-    ['newline']=1
-    ['readline']=0
-  )
-  declare -ga _MSG_RENDERER_INLINE_STYLE_TAG_STACK=()
-  declare -ga _MSG_RENDERER_INLINE_STYLE_STACK=()
-  declare -ga _MSG_RENDERER_BLOCK_STYLE_TAG_STACK=()
-  declare -ga _MSG_RENDERER_BLOCK_STYLE_STACK=()
-  declare -ga _MSG_RENDERER_INDENT_STACK=()
-  declare -g _MSG_RENDERER_PROMPT_STACK=()
-  declare -g _MSG_RENDER_OUTPUT=
-  declare -gi _MSG_RENDERER_INITIALIZED=1
-  logger --debug --ch="$_MSG_LOG_CH_RENDERER" 'MSG RENDERER INITIALIZED!'
-}
-
-msg::_renderer_isinit() {
-  if (( ${_MSG_RENDERER_INITIALIZED:-0} )); then
-    return 0
-  else
-    logger --error 'renderer is not initialized'
-    return 1
-  fi
-}
-
-msg::_render_indent() {
-  msg::_renderer_isinit || return 1
-
-  local width="${_MSG_RENDERER_CONTEXT['indent_width']}"
-  local item indent
-
-  if [[ ! "$width" =~ ^[0-9]+$ ]]; then
-    logger --error "invalid width. expected numeric value: ${width}"
-    return 1
-  fi
-
-  for item in "${_MSG_RENDERER_INDENT_STACK[@]}"; do
-    if (( item == 0 )); then
-      width="${_MSG_RENDERER_CONTEXT['indent_width']}"
-      break;
-    fi
-    (( width += item ))
-  done
-
-  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "rendering indent: width=\"${width}\""
-
-  indent="$(printf '%*s' "$width" '')"
-  _MSG_RENDER_OUTPUT+="$indent"
-}
-
-msg::_render_append_escseq() {
-  msg::_renderer_isinit || return 1
-
-  if (( $# != 1 )); then
-    logger --error "invalid option: ${1:-null}"
-    return 1
-  fi
-
-  if (( _MSG_RENDERER_CONTEXT['readline'] )); then
-    # 出力時に printf %b で変換すると本文中のバックスラッシュまで
-    # 解釈されてしまうため、実際の制御文字をそのまま埋める。
-    _MSG_RENDER_OUTPUT+=$'\x01'"${1}"$'\x02'
-  else
-    _MSG_RENDER_OUTPUT+="$1"
-  fi
-}
-
-msg::_render_prompt() {
-  msg::_renderer_isinit || return 1
-
-  local last_idx=$(( ${#_MSG_RENDERER_PROMPT_STACK[@]} - 1 ))
-  local prompt_style="${_MSG_RENDERER_CONTEXT['prompt_style']}"
-  local prompt
-
-  if (( last_idx < 0 )); then
-    prompt="${_MSG_RENDERER_CONTEXT['prompt_symbol']}"
-    logger --debug --ch="$_MSG_LOG_CH_RENDERER" "use default prompt: symbol=\"${prompt}\""
-  else
-    prompt="${_MSG_RENDERER_PROMPT_STACK[last_idx]}"
-    logger --debug --ch="$_MSG_LOG_CH_RENDERER" "use prompt stack: index=\"${last_idx}\" symbol=\"${prompt}\""
-  fi
-
-  [[ -z "$prompt" ]] && return 0
-
-  if (( ! _MSG_RENDERER_CONTEXT['plain_prompt'] )); then
-    msg::_render_append_escseq "${STYLE_STDOUT[${prompt_style}]:-}"
-  fi
-
-  _MSG_RENDER_OUTPUT+="${prompt} "
-
-  if (( ! _MSG_RENDERER_CONTEXT['plain_prompt'] )); then
-    msg::_render_append_escseq "${STYLE_STDOUT['rst']:-}"
-  fi
-}
-
-msg::_render_style() {
-  msg::_renderer_isinit || return 1
-  (( _MSG_RENDERER_CONTEXT['plain'] )) && return 0
-
-  local base_style="${_MSG_RENDERER_CONTEXT['base_style']}"
-  local style output i
-
-  output+="${STYLE_STDOUT['rst']:-}${STYLE_STDOUT[${base_style}]:-}"
-
-  if (( _MSG_RENDERER_CONTEXT['bold'] )); then
-    output+="${STYLE_STDOUT['bold']:-}"
-  fi
-
-  # block tag stackを遡ってstyleを再描写
-  for (( i = ${#_MSG_RENDERER_BLOCK_STYLE_TAG_STACK[@]} - 1; i >= 0; i-- )); do
-    style="${_MSG_RENDERER_BLOCK_STYLE_STACK[i]}"
-    output+="${STYLE_STDOUT[${style}]:-}"
-  done
-
-  # inline tag stackを遡ってstyleを再描写
-  for (( i = ${#_MSG_RENDERER_INLINE_STYLE_TAG_STACK[@]} - 1; i >= 0; i-- )); do
-    style="${_MSG_RENDERER_INLINE_STYLE_STACK[i]}"
-    output+="${STYLE_STDOUT[${style}]:-}"
-  done
-
-  msg::_render_append_escseq "$output"
-}
-
-msg::_push_prompt_stack() {
-  msg::_renderer_isinit || return 1
-  (( $# != 1 )) && { logger --error 'invalid option'; return 1; }
-
-  local symbol="$1"
-  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "symbol=\"${symbol}\""
-  _MSG_RENDERER_PROMPT_STACK+=( "$symbol" )
-}
-
-msg::_drop_prompt_stack() {
-  msg::_renderer_isinit || return 1
-  (( ${#_MSG_RENDERER_PROMPT_STACK[@]} == 0 )) && return 0
-
-  local last_idx=$(( ${#_MSG_RENDERER_PROMPT_STACK[@]} - 1 ))
-  unset "_MSG_RENDERER_PROMPT_STACK[${last_idx}]"
-}
-
-msg::_push_indent_stack() {
-  msg::_renderer_isinit || return 1
-  (( $# != 1 )) && { logger --error 'invalid option'; return 1; }
-
-  local width="$1"
-  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "width=\"${width}\""
-  _MSG_RENDERER_INDENT_STACK+=( "$width" )
-}
-
-msg::_drop_indent_stack() {
-  msg::_renderer_isinit || return 1
-  (( ${#_MSG_RENDERER_INDENT_STACK[@]} == 0 )) && return 0
-
-  local last_idx=$(( ${#_MSG_RENDERER_INDENT_STACK[@]} - 1 ))
-  unset "_MSG_RENDERER_INDENT_STACK[${last_idx}]"
-}
-
-msg::_push_inline_style() {
-  msg::_renderer_isinit || return 1
-  (( $# != 2 )) && { logger --error 'invalid options'; return 1; }
-
-  local tag="$1"
-  local style="$2"
-
-  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "tag=\"${tag}\" style=\"${style}\""
-
-  _MSG_RENDERER_INLINE_STYLE_TAG_STACK+=( "$tag" )
-  _MSG_RENDERER_INLINE_STYLE_STACK+=( "$style" )
-
-}
-
-msg::_drop_inline_style() {
-  msg::_renderer_isinit || return 1
-  (( $# != 1 )) && { logger --error 'invalid option'; return 1; }
-
-  local tag="$1"
-  local i
-
-  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "tag=\"${tag}\""
-
-  for (( i = ${#_MSG_RENDERER_INLINE_STYLE_TAG_STACK[@]} - 1; i >= 0; i-- )); do
-    if [[ "${_MSG_RENDERER_INLINE_STYLE_TAG_STACK[i]}" == "$tag" ]]; then
-      unset '_MSG_RENDERER_INLINE_STYLE_TAG_STACK[i]'
-      unset '_MSG_RENDERER_INLINE_STYLE_STACK[i]'
-      _MSG_RENDERER_INLINE_STYLE_TAG_STACK=( "${_MSG_RENDERER_INLINE_STYLE_TAG_STACK[@]}" )
-      _MSG_RENDERER_INLINE_STYLE_STACK=( "${_MSG_RENDERER_INLINE_STYLE_STACK[@]}" )
-
-
-      return 0
-    fi
-  done
-
-  return 1
-}
-
-msg::_push_block_style() {
-  msg::_renderer_isinit || return 1
-  (( $# != 2 )) && { logger --error 'invalid options'; return 1; }
-
-  local tag="$1"
-  local style="$2"
-
-  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "tag=\"${tag}\" style=\"${style}\""
-
-  _MSG_RENDERER_BLOCK_STYLE_TAG_STACK+=( "$tag" )
-  _MSG_RENDERER_BLOCK_STYLE_STACK+=( "$style" )
-
-}
-
-msg::_drop_block_style() {
-  msg::_renderer_isinit || return 1
-  (( $# != 1 )) && { logger --error 'invalid option'; return 1; }
-
-  local tag="$1"
-  local i
-
-  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "tag=\"${tag}\""
-
-  for (( i = ${#_MSG_RENDERER_BLOCK_STYLE_TAG_STACK[@]} - 1; i >= 0; i-- )); do
-    if [[ "${_MSG_RENDERER_BLOCK_STYLE_TAG_STACK[i]}" == "$tag" ]]; then
-      unset '_MSG_RENDERER_BLOCK_STYLE_TAG_STACK[i]'
-      unset '_MSG_RENDERER_BLOCK_STYLE_STACK[i]'
-      _MSG_RENDERER_BLOCK_STYLE_TAG_STACK=( "${_MSG_RENDERER_BLOCK_STYLE_TAG_STACK[@]}" )
-      _MSG_RENDERER_BLOCK_STYLE_STACK=( "${_MSG_RENDERER_BLOCK_STYLE_STACK[@]}" )
-
-
-      return 0
-    fi
-  done
-
-  return 1
-}
-
-msg::_render_block_tag_open() {
-  msg::_renderer_isinit || return 1
-  (( $# != 1 )) && { logger --error 'invalid option'; return 1; }
-
-  local idx="$1"
-  local tag="${_MSG_TOKENIZER_OUTPUT_VALUE[idx]}"
-
-  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "token_index=\"${idx}\" tag=\"${tag}\""
-
-  case "$tag" in
-    noprompt)
-      msg::_push_prompt_stack ''
-      ;;
-    indent)
-      msg::_push_indent_stack "${_MSG_TOKENIZER_OUTPUT_ATTR[${idx}:width]:-0}"
-      ;;
-    b|it|hl) # style tags
-      (( _MSG_RENDERER_CONTEXT['plain'] )) && return 0
-
-      local ctx_style="${_MSG_RENDERER_CONTEXT['highlight_style']}"
-      local style
-
-      case "$tag" in
-        b) style='bold' ;;
-        it) style='italic' ;;
-        hl) style="${_MSG_TOKENIZER_OUTPUT_ATTR[${idx}:style]:-${ctx_style}}" ;;
-      esac
-
-      msg::_push_block_style "$tag" "$style"
-      ;;
-    *)
-      logger --error "invalid tag: ${tag}"
-      ;;
-  esac
-}
-
-msg::_render_block_tag_close() {
-  msg::_renderer_isinit || return 1
-  (( $# != 1 )) && { logger --error 'invalid options'; return 1; }
-
-  local tag="$1"
-
-  case "$tag" in
-    noprompt)
-      msg::_drop_prompt_stack
-      ;;
-    indent)
-      msg::_drop_indent_stack
-      ;;
-    b|it|hl) # style tags
-      # plain時は_render_block_tag_openがpushをスキップするため、
-      # closeも同様にスキップする。ここを揃えないと、対応漏れとして
-      # 検出されてしまう。(msg::_render_tag_close と同じ扱い)
-      (( _MSG_RENDERER_CONTEXT['plain'] )) && return 0
-
-      # 対応する開始タグがない場合、_drop_block_styleは1を返す。
-      # タグの対応漏れでスクリプトを止めないよう、警告にとどめる。
-      msg::_drop_block_style "$tag" \
-        || logger --warning "unmatched block close tag: ${tag}"
-      ;;
-    *)
-      logger --error "invalid tag: ${tag}"
-      return 1
-      ;;
-  esac
-
-  return 0
-}
-
-msg::_render_tag_open() {
-  msg::_renderer_isinit || return 1
-  (( $# != 1 )) && { logger --error 'invalid option'; return 1; }
-
-  local idx="$1"
-  local tag="${_MSG_TOKENIZER_OUTPUT_VALUE[idx]}"
-
-  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "token_index=\"${idx}\" tag=\"${tag}\""
-
-  case "$tag" in
-    b|hl|it) # style tags
-      (( _MSG_RENDERER_CONTEXT['plain'] )) && return 0
-
-      local ctx_style="${_MSG_RENDERER_CONTEXT['highlight_style']}"
-      local style
-
-      case "$tag" in
-        b)  style='bold' ;;
-        hl) style="${_MSG_TOKENIZER_OUTPUT_ATTR[${idx}:style]:-${ctx_style}}" ;;
-        it) style='italic' ;;
-      esac
-
-      msg::_push_inline_style "$tag" "$style"
-      msg::_render_append_escseq "${STYLE_STDOUT[${style}]:-}"
-      ;;
-    *)
-      logger --error "invalid tag: ${tag}"
-      ;;
-  esac
-}
-
-msg::_render_tag_close() {
-  msg::_renderer_isinit || return 1
-  (( $# != 1 )) && { logger --error 'invalid options'; return 1; }
-
-  local tag="$1"
-
-  case "$tag" in
-    b|hl|it) # style tags
-      (( _MSG_RENDERER_CONTEXT['plain'] )) && return 0
-      msg::_drop_inline_style "$tag"
-      msg::_render_style
-      ;;
-    *)
-      logger --error "invalid tag: ${tag}"
-      ;;
-  esac
-}
-
-msg::_render_token() {
-  msg::_renderer_isinit || return 1
-  msg::_tokenizer_isinit || return 1
-
-  local i type value
-
-  for i in "${!_MSG_TOKENIZER_OUTPUT_TYPE[@]}"; do
-    type="${_MSG_TOKENIZER_OUTPUT_TYPE[i]}"
-    value="${_MSG_TOKENIZER_OUTPUT_VALUE[i]}"
-
-    logger --debug --ch="$_MSG_LOG_CH_RENDERER" "rendering token[${i}]: type=\"${type}\" value=\"${value}\""
-
-    case "$type" in
-      BEGIN)
-        ;;
-      BEGIN_LINE)
-        msg::_render_indent
-        msg::_render_prompt
-        msg::_render_style
-        ;;
-      TEXT)
-        _MSG_RENDER_OUTPUT+="$value"
-        ;;
-      TAG_OPEN)
-        msg::_render_tag_open "$i"
-        ;;
-      TAG_CLOSE)
-        msg::_render_tag_close "$value"
-        ;;
-      BLOCK_OPEN)
-        msg::_render_block_tag_open "$i"
-        ;;
-      BLOCK_CLOSE)
-        msg::_render_block_tag_close "$value"
-        ;;
-      END_LINE)
-        # inline tagは行内でのみ有効なので行末で破棄する。
-        # tag名とstyleは添字で対応する並列配列なので、必ず両方リセットする。
-        # 片方だけ空にすると添字がずれ、次の行で別のstyleが復帰してしまう。
-        _MSG_RENDERER_INLINE_STYLE_TAG_STACK=()
-        _MSG_RENDERER_INLINE_STYLE_STACK=()
-        if (( ! _MSG_RENDERER_CONTEXT['plain'] )); then
-          msg::_render_append_escseq "${STYLE_STDOUT['rst']:-}"
-        fi
-        ;;
-      NEWLINE)
-        _MSG_RENDER_OUTPUT+=$'\n'
-        ;;
-      END)
-        ;;
-      *)
-        logger --error "invalid token type: ${type}"
-        return 1
-        ;;
-    esac
-  done
-
-  return 0
-}
-
-msg::_render() {
-  msg::_renderer_isinit || return 1
-
-  local raw="$*"
-  local i type value
-
-  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "↓↓ input raw ↓↓
-${raw}"
-  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "↑↑ input raw ↑↑"
-  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "$(declare -p '_MSG_RENDERER_CONTEXT')"
-
-  msg::_tokenizer_init
-  msg::_tokenize "$raw"
-  msg::_render_token
-
-  # 末尾の改行を除去
-  if (( ! _MSG_RENDERER_CONTEXT['newline'] )); then
-    _MSG_RENDER_OUTPUT="${_MSG_RENDER_OUTPUT%$'\n'}"
-  fi
-
-  # output
-  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "↓↓ rendering result ↓↓
-$(printf '%q' "$_MSG_RENDER_OUTPUT")"
-  logger --debug --ch="$_MSG_LOG_CH_RENDERER" "↑↑ rendering result ↑↑"
-  # %b にすると本文のバックスラッシュが解釈されてしまう。
-  # 制御文字はバッファ構築時に実文字で入れているため %s でよい。
-  printf '%s' "$_MSG_RENDER_OUTPUT"
-
-  return 0
-}
-
 msg() {
   # スクリプトのメッセージ出力に利用できます。
-  # 引数にとった文字列をオプションに基づいて整形・色付けして出力します。
-  # themeライブラリの `STYLE_STDOUT` を利用して標準出力に出力します。
+  # 引数にとった文字列を色付けし、行頭にプレフィックス (`[>]` など) を添えて
+  # 標準出力へ出します。themeライブラリの `STYLE_STDOUT` を利用します。
   #
-  # Environment Variables:
+  # 一部だけ色を変えたい場合は、呼び出し側が `STYLE_STDOUT` を埋めて組み立てます。
+  # base style はプレフィックス後に一度だけシーケンスを出力します。そのため、
+  # 強調を終えるときは `rst` ではなく base のスタイルを出し直してください。
   #
-  #   MSG_DELAY
-  #        メッセージ出力後のsleepの秒数。
-  #        標準出力がターミナルに接続していない場合は、`MSG_DELAY=0` で実行されます。
+  #     hl="${STYLE_STDOUT['msg_highlight']:-}"
+  #     base="${STYLE_STDOUT['normal']:-}"
+  #     msg "checking ${hl}${target}${base} command..."
   #
-  #   MSG_INDENT
-  #        インデントの高さを数値で指定します(0でインデントなし)。
   #
-  # Block Tags:
+  # 色が無効なとき `STYLE_STDOUT` は空になるため、同じ式のまま平文になります。
   #
-  #   引数に取る文字列は以下のブロックタグを解釈します。
+  # 行末には必ず reset のシーケンスを出力します。呼び出し側が閉じ忘れても、
+  # 次の行やシェルのプロンプトへ色が漏れないようにするためです。
   #
-  #     <@indent width="<width>">...</@indent>:
-  #       区間のインデントを<width>でオーバーライドする。
-  #
-  #     <@noprompt>...</@noprompt>
-  #       区間のプロンプトを非表示にする。
-  #
-  #     <@hl>...</@hl>
-  #       区間の文字をハイライトする。
-  #       style属性でstyle指定可能。
-  #
-  #     <@b>...</@b>
-  #       区間の文字を太字にする。
-  #
-  #     <@b>...</@b>
-  #       区間の文字をイタリック体にする。
-  #
-  #     <@br>
-  #       改行を挿入する。
-  #
-  # Inline Tags:
-  #
-  #   引数に取る文字列は以下のインラインタグを解釈します。
-  #   改行までの1行のなかでのみ有効です。
-  #
-  #     <hl>...</hl>: 囲まれた範囲の文字をハイライトする。
-  #     <b>...</b>: 囲まれた範囲の文字を太字にする。
-  #     <it>...</it>: 囲まれた範囲をイタリック体にする。
+  # 入力に改行が含まれる場合は、行ごとにプレフィックスと base style を添えます。
   #
   # Options:
-  #   -b, --bold
-  #
-  #        メッセージ本文を太字で出力します。
-  #
-  #   -i, --indent <width>
-  #
-  #        インデント幅のデフォルトを数値で指定します。
-  #        ブロックタグ <@indent width="<attrwidth>"> が指定された場合は
-  #        <width> + <attrwidth> の幅でインデントされます。
   #
   #   -n   末尾で改行しません。
   #
-  #   -p, --plain
-  #
-  #        styleの適用なし、タグ解釈なし、タグ文字非表示で出力します。
-  #        `-r` オプションが指定された場合は、そちらが優先されます。
-  #        ( `-ppp` オプションが指定された場合は、`-p, `-pp` が同時に適用されます。)
-  #
-  #   -pp, --plain-prompt
-  #
-  #        styleの適用なし、でプロンプトを出力します。
-  #        `-r` オプションが指定された場合は、そちらが優先されます。
-  #        ( `-ppp` オプションが指定された場合は、`-p, `-pp` が同時に適用されます。)
-  #
-  #   -r, --raw
-  #
-  #        引数にとった文字列をそのまま出力します。
-  #
   #   -R, --readline
   #
-  #        readline用に制御コードSOH, STXをエスケープシーケンスに付与する。
+  #        readline用に制御コードSOH, STXをエスケープシーケンスに付与します。
+  #        `read -p` のプロンプトに渡す場合に必要です。
   #
   #   -s, --base-style <style>
   #
-  #        <style> 名を出力スタイルのデフォルトに設定します。
-  #        このスタイルは、スタイルを操作するタグにオーバーライドされます。
+  #        本文のスタイル名を指定します。行ごとに適用されます。
   #
-  #   -H, --highlight-style <style>
+  #   --prefix <prefix string>
   #
-  #        <style> 名を出力スタイルのデフォルトに設定します。
-  #        このスタイルは、スタイルを操作するタグにオーバーライドされます。
+  #        行頭のプレフィックス文字列を指定します。
   #
-  #   --prompt <prompt string>
+  #   --prefix-style <style>
   #
-  #        プロンプト文字列を指定します。
-  #        デフォルト: `>`
+  #        プレフィックスのスタイル名を指定します。
   #
-  #   --no-prompt
+  #   --no-prefix
   #
-  #        プロンプトなしで出力します。
+  #        プレフィックスなしで出力します。
 
-  msg::_isinit || return 1
-  msg::_renderer_init
+  local prefix="$MSG_PREFIX"
+  local prefix_style='msg_prefix'
+  local base_style='normal'
+  local newline=1
+  local readline=0
 
   while (( $# > 0 )); do
     case "$1" in
-      --)
-        shift
-        break
-        ;;
-      -b | --bold) _MSG_RENDERER_CONTEXT['bold']=1 ;;
-      -i | --indent | --indent=*)
-        if [[ "$1" =~ ^--indent= ]]; then
-          _MSG_RENDERER_CONTEXT['indent_width']="${1#--indent=}"
-        elif [[ -z "${2:-}" ]]; then
-          logger --error 'missing indent width'
-          return 1
-        else
-          _MSG_RENDERER_CONTEXT['indent_width']="$2"
-          shift
-        fi
-        ;;
-      -n) _MSG_RENDERER_CONTEXT['newline']=0 ;;
-      -p | --plain) _MSG_RENDERER_CONTEXT['plain']=1 ;;
-      -pp | --plain-prompt) _MSG_RENDERER_CONTEXT['plain_prompt']=1 ;;
-      -ppp)
-        _MSG_RENDERER_CONTEXT['plain']=1
-        _MSG_RENDERER_CONTEXT['plain_prompt']=1
-        ;;
-      -r | --raw) _MSG_RENDERER_CONTEXT['raw']=1 ;;
-      -R | --readline) _MSG_RENDERER_CONTEXT['readline']=1 ;;
+      --) shift; break ;;
+      -n) newline=0 ;;
+      -R | --readline) readline=1 ;;
+      --no-prefix) prefix= ;;
       -s | --base-style | --base-style=*)
-        if [[ "$1" =~ ^--base-style= ]]; then
-          _MSG_RENDERER_CONTEXT['base_style']="${1#--base-style=}"
-        elif [[ -z "${2:-}" ]]; then
+        if [[ "$1" == --base-style=* ]]; then
+          base_style="${1#--base-style=}"
+        elif (( $# < 2 )); then
           logger --error 'missing style name'
           return 1
         else
-          _MSG_RENDERER_CONTEXT['base_style']="$2"
+          base_style="$2"
           shift
         fi
         ;;
-      -H | --highlight-style | --highlight-style=*)
-        if [[ "$1" =~ ^--highlight-style= ]]; then
-          _MSG_RENDERER_CONTEXT['highlight_style']="${1#--highlight-style=}"
-        elif [[ -z "${2:-}" ]]; then
-          logger --error 'missing style name'
+      --prefix | --prefix=*)
+        if [[ "$1" == --prefix=* ]]; then
+          prefix="${1#--prefix=}"
+        elif (( $# < 2 )); then
+          logger --error 'missing prefix string'
           return 1
         else
-          _MSG_RENDERER_CONTEXT['highlight_style']="$2"
+          prefix="$2"
           shift
         fi
         ;;
-      --prompt | --prompt=*)
-        if [[ "$1" =~ ^--prompt= ]]; then
-          _MSG_RENDERER_CONTEXT['prompt_symbol']="${1#--prompt=}"
-        elif [[ -z "${2:-}" ]]; then
-          logger --error 'missing prompt symbol'
+      --prefix-style | --prefix-style=*)
+        if [[ "$1" == --prefix-style=* ]]; then
+          prefix_style="${1#--prefix-style=}"
+        elif (( $# < 2 )); then
+          logger --error 'missing prefix style'
           return 1
         else
-          _MSG_RENDERER_CONTEXT['prompt_symbol']="$2"
+          prefix_style="$2"
           shift
         fi
         ;;
-      --prompt-style | --prompt-style=*)
-        if [[ "$1" =~ ^--prompt-style= ]]; then
-          _MSG_RENDERER_CONTEXT['prompt_style']="${1#--prompt-style=}"
-        elif [[ -z "${2:-}" ]]; then
-          logger --error 'missing prompt style'
-          return 1
-        else
-          _MSG_RENDERER_CONTEXT['prompt_style']="$2"
-          shift
-        fi
-        ;;
-      --no-prompt) _MSG_RENDERER_CONTEXT['prompt_symbol']= ;;
       -*) logger --error "invalid option: $1"; return 1 ;;
       *) break ;;
     esac
     shift
   done
 
-  msg::_render "${*:-}"
+  local rst="${STYLE_STDOUT['rst']:-}"
+  local pstyle="${STYLE_STDOUT[${prefix_style}]:-}"
+  local base="${STYLE_STDOUT[${base_style}]:-}"
 
-  [[ -t 1 ]] && sleep "$MSG_DELAY"
+  if (( readline )); then
+    # read -p のプロンプトでは、エスケープシーケンスを SOH/STX で囲まないと
+    # 表示幅に数えられ、行編集の位置がずれる。
+    [[ -n "$rst" ]]    && rst=$'\x01'"${rst}"$'\x02'
+    [[ -n "$pstyle" ]] && pstyle=$'\x01'"${pstyle}"$'\x02'
+    [[ -n "$base" ]]   && base=$'\x01'"${base}"$'\x02'
+  fi
+
+  local head=''
+  [[ -n "$prefix" ]] && head="${pstyle}${prefix}${rst} "
+
+  local out='' line
+  while IFS= read -r line; do
+    out+="${head}${base}${line}${rst}"$'\n'
+  done <<< "$*"
+
+  (( newline )) || out="${out%$'\n'}"
+
+  printf '%s' "$out"
 
   return 0
 }
 
 msg::header() {
   msg \
-    --prompt="$MSG_PROMPT_HEADER" \
-    --prompt-style='msg_header' \
-    --base-style='msg_header' \
+    --prefix="$MSG_PREFIX_HEADER" \
+    --prefix-style='msg_header' \
     "$@"
 }
 
 msg::notice() {
   msg \
-    --prompt="$MSG_PROMPT_NOTICE" \
-    --prompt-style='msg_notice' \
-    --base-style='msg_notice' \
+    --prefix="$MSG_PREFIX_NOTICE" \
+    --prefix-style='msg_notice' \
     "$@"
 }
 
 msg::changed() {
   msg \
-    --prompt="$MSG_PROMPT_CHANGED" \
-    --prompt-style='msg_changed' \
-    --base-style='msg_changed' \
+    --prefix="$MSG_PREFIX_CHANGED" \
+    --prefix-style='msg_changed' \
     "$@"
 }
 
 msg::rm() {
   msg \
-    --prompt="$MSG_PROMPT_RM" \
-    --prompt-style='msg_rm' \
-    --base-style='msg_rm' \
+    --prefix="$MSG_PREFIX_RM" \
+    --prefix-style='msg_rm' \
     "$@"
 }
 
 msg::ok() {
   msg \
-    --prompt="$MSG_PROMPT_OK" \
-    --prompt-style='msg_ok' \
-    --base-style='msg_ok' \
+    --prefix="$MSG_PREFIX_OK" \
+    --prefix-style='msg_ok' \
     "$@"
 }
 
-msg::warning() {
+msg::warn() {
   msg \
-    --prompt="$MSG_PROMPT_WARNING" \
-    --prompt-style='msg_warning' \
-    --base-style='msg_warning' \
+    --prefix="$MSG_PREFIX_WARN" \
+    --prefix-style='msg_warn' \
     "$@"
 }
 
 msg::error() {
   msg \
-    --prompt="$MSG_PROMPT_ERROR" \
-    --prompt-style='msg_error' \
-    --base-style='msg_error' \
+    --prefix="$MSG_PREFIX_ERROR" \
+    --prefix-style='msg_error' \
     "$@"
 }
 
 msg::skipped() {
   msg \
-    --prompt="$MSG_PROMPT_SKIPPED" \
-    --prompt-style='msg_skipped' \
-    --base-style='msg_skipped' \
+    --prefix="$MSG_PREFIX_SKIPPED" \
+    --prefix-style='msg_skipped' \
     "$@"
 }
 
@@ -1057,8 +214,8 @@ msg::read() {
 
   prompt_msg="$(
     msg -n -R \
-    --prompt="$MSG_PROMPT_CONFIRM" \
-    --prompt-style='msg_prompt' \
+    --prefix="$MSG_PREFIX_CONFIRM" \
+    --prefix-style='msg_confirm' \
     -- "$*"
   )"
 
@@ -1092,10 +249,14 @@ msg::confirm() {
 
   case "$mode" in
     return)
-      confirm_msg='press <b><it>RETURN/ENTER</it></b> to continue or press any other key to abort.'
+      # 強調の終わりは rst ではなく属性の解除で閉じる。rst だと base style まで
+      # 落ちて、続きの文字が地の色になる。
+      confirm_msg="press ${STYLE_STDOUT['italic']:-}${STYLE_STDOUT['bold']:-}RETURN/ENTER"
+      confirm_msg+="${STYLE_STDOUT['noitalic']:-}${STYLE_STDOUT['default_intensity']:-}"
+      confirm_msg+=' to continue or press any other key to abort.'
       msg -n \
-        --prompt="$MSG_PROMPT_CONFIRM" \
-        --prompt-style='msg_prompt' \
+        --prefix="$MSG_PREFIX_CONFIRM" \
+        --prefix-style='msg_confirm' \
         -- "${confirm_msg} " </dev/tty >/dev/tty
 
       # stdin flush
@@ -1125,8 +286,8 @@ msg::confirm() {
     yes-or-no)
       while true; do
         msg -n \
-          --prompt="$MSG_PROMPT_CONFIRM" \
-          --prompt-style='msg_prompt' \
+          --prefix="$MSG_PREFIX_CONFIRM" \
+          --prefix-style='msg_confirm' \
           -- "$* (y/n) " </dev/tty >/dev/tty
 
         # stdin flush
@@ -1138,7 +299,7 @@ msg::confirm() {
         elif [[ "$input" =~ ^([Nn]|[Nn][Oo])$ ]]; then
           return 1
         else
-          msg::warning 'invalid input:('
+          msg::warn 'invalid input:('
           continue
         fi
       done
@@ -1185,7 +346,7 @@ msg::select() {
   done
 
   if [[ -n "${ps:-}" ]]; then
-    PS3="$(msg --prompt="$MSG_PROMPT_CONFIRM" --prompt-style='msg_prompt' -- "$ps")"
+    PS3="$(msg --prefix="$MSG_PREFIX_CONFIRM" --prefix-style='msg_confirm' -- "$ps")"
   fi
   COLUMNS=1
 
