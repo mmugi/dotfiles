@@ -16,8 +16,8 @@ theme::load
 
 # メッセージ中の強調。色が無効なときは空文字列になり、平文がそのまま出る。
 # 強調を終えるところは base を出し直して閉じる (rst だと地の色に落ちる)。
-hl="${STYLE_STDOUT['msg_highlight']:-}"
-base="${STYLE_STDOUT['normal']:-}"
+hl="${STYLE[msg_highlight]}"
+base="${STYLE[normal]}"
 
 # シェル用のプロンプト設定を生成し、標準出力にそのままコピー&ペーストできる形式で出力します。
 # (git-completionのシェル設定生成は scripts/git/git-completion-conf.sh を参照)

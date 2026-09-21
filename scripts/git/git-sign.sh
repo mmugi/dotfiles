@@ -12,8 +12,8 @@ theme::load
 
 # メッセージ中の強調。色が無効なときは空文字列になり、平文がそのまま出る。
 # 強調を終えるところは base を出し直して閉じる (rst だと地の色に落ちる)。
-hl="${STYLE_STDOUT['msg_highlight']:-}"
-base="${STYLE_STDOUT['normal']:-}"
+hl="${STYLE[msg_highlight]}"
+base="${STYLE[normal]}"
 
 _git_config_chk() {
   local key="$1"
@@ -282,4 +282,4 @@ configure_signing_format
 configure_signing_key
 configure_allowed_signers
 configure_commit_signing
-msg --prefix='🐈️' -- "${STYLE_STDOUT['success']:-}GIT SIGNING CONFIGURED"
+msg --prefix='🐈️' -- "${STYLE[success]}GIT SIGNING CONFIGURED"

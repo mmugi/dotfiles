@@ -60,7 +60,7 @@ util::chk() {
 
       if (( ! quiet )); then
         # 強調の終わりは base を出し直して閉じる (rst だと地の色に落ちる)。
-        msg "checking ${STYLE_STDOUT['msg_highlight']:-}${target}${STYLE_STDOUT['normal']:-} command..."
+        msg "checking ${STYLE[msg_highlight]}${target}${STYLE[normal]} command..."
       fi
 
       if type "$target" >/dev/null 2>&1; then

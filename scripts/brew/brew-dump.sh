@@ -13,8 +13,8 @@ DOTFILES_BREWFILE_DIR="${DOTFILES_PATH}/misc/brew"
 
 # メッセージ中の強調。色が無効なときは空文字列になり、平文がそのまま出る。
 # 強調を終えるところは base を出し直して閉じる (rst だと地の色に落ちる)。
-hl="${STYLE_STDOUT['msg_highlight']:-}"
-base="${STYLE_STDOUT['normal']:-}"
+hl="${STYLE[msg_highlight]}"
+base="${STYLE[normal]}"
 
 util::chk -c brew
 

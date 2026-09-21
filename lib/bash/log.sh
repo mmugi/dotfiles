@@ -67,11 +67,11 @@ log::_log_emit() {
   read -r line subroutine file < <(caller 1)
   fmt_file="$(log::_fmt_filename "$file")"
 
-  local style_ts="${STYLE_STDERR['log_timestamp']:-}"
-  local style_ch="${STYLE_STDERR['log_ch']:-}"
-  local style_file="${STYLE_STDERR['log_filename']:-}"
-  local style_func="${STYLE_STDERR['log_funcname']:-}"
-  local rst="${STYLE_STDERR['rst']:-}"
+  local style_ts="${STYLE_ERR[log_timestamp]}"
+  local style_ch="${STYLE_ERR[log_ch]}"
+  local style_file="${STYLE_ERR[log_filename]}"
+  local style_func="${STYLE_ERR[log_funcname]}"
+  local rst="${STYLE_ERR[rst]}"
   local date
   local section_ts section_level section_func section_file section_ch
 
@@ -117,8 +117,8 @@ log::_log_stacktrace() {
     fmt_file="$(log::_fmt_filename "$file")"
     printf '  #%d %s (%s)\n' \
       "$i" \
-      "${STYLE_STDERR['log_stacktrace_function']:-}${subroutine}${STYLE_STDERR['rst']:-}" \
-      "${STYLE_STDERR['log_stacktrace_location']:-}${fmt_file}:${line}${STYLE_STDERR['rst']:-}" >&2
+      "${STYLE_ERR[log_stacktrace_function]}${subroutine}${STYLE_ERR[rst]}" \
+      "${STYLE_ERR[log_stacktrace_location]}${fmt_file}:${line}${STYLE_ERR[rst]}" >&2
     i=$((++i))
   done
 }
@@ -215,31 +215,31 @@ logger() {
       --fatal)
         level='FATAL'
         level_num=4
-        style="${STYLE_STDERR['fatal']:-}"
+        style="${STYLE_ERR[fatal]}"
         stacktrace="$LOG_TRACE_FATAL"
         ;;
       --error)
         level='ERROR'
         level_num=3
-        style="${STYLE_STDERR['error']:-}"
+        style="${STYLE_ERR[error]}"
         stacktrace="$LOG_TRACE_ERROR"
         ;;
       --warning)
         level='WARNING'
         level_num=2
-        style="${STYLE_STDERR['warning']:-}"
+        style="${STYLE_ERR[warning]}"
         stacktrace="$LOG_TRACE_WARN"
         ;;
       --info)
         level='INFO'
         level_num=1
-        style="${STYLE_STDERR['info']:-}"
+        style="${STYLE_ERR[info]}"
         stacktrace="$LOG_TRACE_INFO"
         ;;
       --debug)
         level='DEBUG'
         level_num=0
-        style="${STYLE_STDERR['debug']:-}"
+        style="${STYLE_ERR[debug]}"
         stacktrace="$LOG_TRACE_DEBUG"
         ;;
       -b|--brief) brief=1 ;;

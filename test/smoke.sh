@@ -214,15 +214,19 @@ check_rc 'TERMCAP_COLOR_MODE=always で色あり' 0 \
 check_rc 'theme::load 既定テーマ' 0 theme::load
 check_rc 'theme::load 存在しないテーマ' 1 theme::load nosuchtheme
 
-# 回帰: 色なしfdでは nameref 経由でスタイルマップがクリアされる
-STYLE_STDOUT=( ['dummy']='x' )
+# 回帰: 前回の内容が残らないよう nameref 経由でクリアされる
+STYLE=( ['dummy']='x' )
 theme::_apply_styles 1
-check '色なしfdでスタイルマップが空になる' '0' "${#STYLE_STDOUT[@]}"
+check '前回のキーが残らない' '' "${STYLE[dummy]:-}"
 # shellcheck disable=SC2154  # 定義されていないことを確認するテスト
 check 'init_map というグローバル変数を作らない' '' "$(declare -p init_map 2>/dev/null || true)"
 
+# 色が無効でもキーは揃える。欠けていると参照側が :- を書かないと set -u で落ちる。
+check '色なしでもキーは揃う' '1' "$(( ${#STYLE[@]} > 0 ? 1 : 0 ))"
+check '色なしでは値が空になる' '' "${STYLE[msg_highlight]}"
+
 TERMCAP_COLOR_MODE=always theme::_apply_styles 1
-check '色ありfdでスタイルが入る' '1' "$(( ${#STYLE_STDOUT[@]} > 0 ? 1 : 0 ))"
+check '色ありでは値が入る' '1' "$(( ${#STYLE[msg_highlight]} > 0 ? 1 : 0 ))"
 theme::load
 
 # --- log ----------------------------------------------------------------------
@@ -274,14 +278,14 @@ check '字下げはプレフィックスの幅に合わせる' "$(printf '##### 
 check '--no-prefix では字下げもしない' "$(printf 'a\nb')" \
   "$(msg --no-prefix -- "$(printf 'a\nb')")"
 
-# 色は呼び出し側が STYLE_STDOUT を埋めて組み立てる。色ありでしか確認できない
+# 色は呼び出し側が STYLE を埋めて組み立てる。色ありでしか確認できない
 #   ため、ここだけテーマを読み直す。
 TERMCAP_COLOR_MODE=always theme::load
 
-_msg_rst="${STYLE_STDOUT['rst']}"
-_msg_hl="${STYLE_STDOUT['msg_highlight']}"
-_msg_normal="${STYLE_STDOUT['normal']}"
-_msg_bold="${STYLE_STDOUT['bold']}"
+_msg_rst="${STYLE[rst]}"
+_msg_hl="${STYLE[msg_highlight]}"
+_msg_normal="${STYLE[normal]}"
+_msg_bold="${STYLE[bold]}"
 
 # base style は行の頭に置く。本文は書き換えない。
 check '行頭に base style を置く' "${_msg_normal}x${_msg_rst}" \
@@ -295,7 +299,7 @@ check '呼び出し側のスタイルをそのまま通す' \
 
 # --base-style は行の頭に置くだけ。本文は書き換えない。
 check '--base-style は行頭に置く' \
-  "${STYLE_STDOUT['msg_ok']}x${_msg_rst}" \
+  "${STYLE[msg_ok]}x${_msg_rst}" \
   "$(msg --no-prefix --base-style='msg_ok' -- 'x')"
 
 # 回帰: 強調を base のスタイルで閉じるとリセットを通らないため、呼び出し側が
@@ -316,7 +320,7 @@ check '行ごとに base style を置く' \
 # msg::notice などが色を付けるのはプレフィックスだけ。本文は既定の base に
 #   なるため、呼び出し側は戻り先 (normal) を知ったうえで組み立てられる。
 check 'msg::notice が色を付けるのはプレフィックスだけ' \
-  "${STYLE_STDOUT['msg_notice']}[~]${_msg_rst} ${_msg_normal}hello${_msg_rst}" \
+  "${STYLE[msg_notice]}[~]${_msg_rst} ${_msg_normal}hello${_msg_rst}" \
   "$(msg::notice 'hello')"
 
 # -R は行を組み立てたあとに囲むため、呼び出し側が本文へ埋めたシーケンスも

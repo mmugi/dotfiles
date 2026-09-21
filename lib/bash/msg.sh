@@ -43,17 +43,17 @@ msg::_readline_escape() {
 msg() {
   # スクリプトのメッセージ出力に利用できます。
   # 引数にとった文字列を色付けし、行頭にプレフィックス (`[>]` など) を添えて
-  # 標準出力へ出します。themeライブラリの `STYLE_STDOUT` を利用します。
+  # 標準出力へ出します。themeライブラリの `STYLE` を利用します。
   #
-  # 一部だけ色を変えたい場合は、呼び出し側が `STYLE_STDOUT` を埋めて組み立てます。
+  # 一部だけ色を変えたい場合は、呼び出し側が `STYLE` を埋めて組み立てます。
   # base style はプレフィックス後に一度だけシーケンスを出力します。そのため、
   # 強調を終えるときは `rst` ではなく base のスタイルを出し直してください。
   #
-  #     hl="${STYLE_STDOUT['msg_highlight']:-}"
-  #     base="${STYLE_STDOUT['normal']:-}"
+  #     hl="${STYLE[msg_highlight]}"
+  #     base="${STYLE[normal]}"
   #     msg "checking ${hl}${target}${base} command..."
   #
-  # 色が無効なとき `STYLE_STDOUT` は空になるため、同じ式のまま平文になります。
+  # 色が無効なとき `STYLE` の値は空文字になるため、同じ式のまま平文になります。
   #
   # 行末には必ず reset のシーケンスを出力します。呼び出し側が閉じ忘れても、
   # 次の行やシェルのプロンプトへ色が漏れないようにするためです。
@@ -137,9 +137,9 @@ msg() {
     shift
   done
 
-  local rst="${STYLE_STDOUT['rst']:-}"
-  local pstyle="${STYLE_STDOUT[${prefix_style}]:-}"
-  local base="${STYLE_STDOUT[${base_style}]:-}"
+  local rst="${STYLE[rst]}"
+  local pstyle="${STYLE[${prefix_style}]:-}"
+  local base="${STYLE[${base_style}]:-}"
 
   # ponytail: 字下げの幅は文字数で数える。全角を含むプレフィックスでは表示幅と
   #           ずれるが、現状はすべて ASCII。ずれが問題になったら表示幅の計算が必要。

@@ -22,12 +22,14 @@
 #   `theme::load` では、setupで定義されたstyle mapを元にして、`THEME_STYLE_MAP_NAME_STDOUT` ,
 #   `THEME_STYLE_MAP_NAME_STDERR` に示す名前の連想配列を生成します。
 #   この配列は、スタイルを適用したい場面にあわせて利用してください。
-#   キーの構成はテーマによって定義されるため、キーが空になる場合があります。
-#   そのため、利用側でfallbackを行うようにしてください。
 #
 #   `THEME_STYLE_MAP_NAME_STDOUT`、`THEME_STYLE_MAP_NAME_STDERR` はそれぞれ、標準出力・標準エラー出力用
 #   に定義されます。`theme::load` 実行時に、標準出力(fd 1)、標準エラー出力(fd 2)がターミナルに
-#   接続されているかどうかを判定し、接続されていない場合はそれぞれの配列を空にセットします。
+#   接続されているかどうかを判定し、接続されていない場合は値を空文字にします。
+#
+#   色の有無にかかわらずキーは同じだけ揃うため、利用側は `${STYLE[key]}` と
+#   そのまま書けます。綴りを誤ったキーは用意されないため、`set -u` の下では
+#   そちらだけが落ちます。
 #
 #   `TERMCAP_COLOR_MODE` で上記の動作をオーバーライド可能です。(termcap.sh参照)
 #     - auto: fdのターミナル接続をチェック (default)
@@ -86,8 +88,8 @@ fi
 declare -gr THEME_DEFAULT='mmerr'
 declare -gr THEME_PALETTE_MAP_NAME='THEME_PALETTE'
 declare -gr THEME_STYLE_MAP_NAME='THEME_STYLE'
-declare -gr THEME_STYLE_MAP_NAME_STDOUT='STYLE_STDOUT'
-declare -gr THEME_STYLE_MAP_NAME_STDERR='STYLE_STDERR'
+declare -gr THEME_STYLE_MAP_NAME_STDOUT='STYLE'
+declare -gr THEME_STYLE_MAP_NAME_STDERR='STYLE_ERR'
 declare -grA THEME_STYLE_COMMON=(
   ['rst']="$(escseq::sgr --reset)"
   ['bold']="$(escseq::sgr --bold)"
@@ -130,6 +132,8 @@ theme::_check_duplicate_map_key() {
   return "$duplicated"
 }
 
+# init_map は nameref なので、代入先は参照先のグローバル配列になる。
+# shellcheck disable=SC2034
 theme::_apply_styles() {
   local fd="$1" init_map_name key
 
@@ -145,19 +149,22 @@ theme::_apply_styles() {
   local -n style_map="$THEME_STYLE_MAP_NAME"
   local -n init_map="$init_map_name"
 
-  if termcap::is_color_supported "$fd"; then
-    for key in "${!THEME_STYLE_COMMON[@]}"; do
-      init_map["$key"]="${THEME_STYLE_COMMON["$key"]}"
-    done
-    for key in "${!style_map[@]}"; do
-      init_map["$key"]="${style_map["$key"]}"
-    done
-  else
-    # nameref に対して declare を使うと参照先ではなく `init_map` という名前の
-    # 変数が新規に作られてしまうため、nameref 経由の通常代入でクリアする。
-    # shellcheck disable=SC2034
-    init_map=()
-  fi
+  # 色が使えない場合もキーは同じだけ用意し、値だけ空にする。キーが欠けていると
+  # 参照側が :- を書かないかぎり set -u で落ちるため。綴りを誤ったキーは用意
+  # されないので、そちらは今までどおり落ちる。
+  local colored=''
+  termcap::is_color_supported "$fd" && colored=1
+
+  # nameref に対して declare を使うと参照先ではなく `init_map` という名前の
+  # 変数が新規に作られてしまうため、nameref 経由の通常代入でクリアする。
+  init_map=()
+
+  for key in "${!THEME_STYLE_COMMON[@]}"; do
+    init_map["$key"]="${colored:+${THEME_STYLE_COMMON["$key"]}}"
+  done
+  for key in "${!style_map[@]}"; do
+    init_map["$key"]="${colored:+${style_map["$key"]}}"
+  done
 }
 
 theme::clear() {
