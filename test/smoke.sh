@@ -311,6 +311,19 @@ check 'msg::notice が色を付けるのはプレフィックスだけ' \
   "${STYLE_STDOUT['msg_notice']}[~]${_msg_rst} ${_msg_normal}hello${_msg_rst}" \
   "$(msg::notice 'hello')"
 
+# -R は行を組み立てたあとに囲むため、呼び出し側が本文へ埋めたシーケンスも
+#   取りこぼさない。裸のまま残すと readline が表示幅に数えて位置がずれる。
+_msg_count() { printf '%s' "$2" | tr -dc "$1" | wc -c | tr -d ' '; }
+
+_msg_r="$(msg -n -R --no-prefix -- "a ${_msg_hl}b")"
+
+check '-R が本文のシーケンスも囲む' \
+  "$(_msg_count $'\033' "$_msg_r")" "$(_msg_count $'\x01' "$_msg_r")"
+check '-R の SOH と STX が対になる' \
+  "$(_msg_count $'\x01' "$_msg_r")" "$(_msg_count $'\x02' "$_msg_r")"
+check '-R なしでは印を付けない' '0' \
+  "$(_msg_count $'\x01' "$(msg -n --no-prefix -- "a ${_msg_hl}b")")"
+
 theme::load
 
 # --- util ---------------------------------------------------------------------

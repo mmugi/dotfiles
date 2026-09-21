@@ -14,6 +14,32 @@
 
 msg::newline() { printf '\n'; }
 
+msg::_readline_escape() {
+  # usage: msg::_readline_escape <文字列>
+  #
+  # 文字列に含まれる CSI シーケンスを SOH/STX で囲んで標準出力へ出す。
+  # readline はこの印の内側を表示幅に数えないため、プロンプトに色が付いて
+  # いても行編集の位置がずれない。
+  #
+  # 組み立て終わった行に対してまとめてかけるため、呼び出し側が本文へ埋めた
+  # シーケンスも取りこぼさない。
+  #
+  # ponytail: 扱うのは CSI (ESC [ ... 英字) だけ。OSC などそれ以外の
+  #           シーケンスは囲まない。使う場面が出てきたら足すこと。
+  #           末尾の改行は $( ) に落とされるため、改行を含む文字列は渡せない。
+
+  local src="$1" out='' seq
+  local re=$'\033\\[[0-9;:?]*[a-zA-Z]'
+
+  while [[ "$src" =~ $re ]]; do
+    seq="${BASH_REMATCH[0]}"
+    out+="${src%%"$seq"*}"$'\x01'"${seq}"$'\x02'
+    src="${src#*"$seq"}"
+  done
+
+  printf '%s' "${out}${src}"
+}
+
 msg() {
   # スクリプトのメッセージ出力に利用できます。
   # 引数にとった文字列を色付けし、行頭にプレフィックス (`[>]` など) を添えて
@@ -115,20 +141,15 @@ msg() {
   local pstyle="${STYLE_STDOUT[${prefix_style}]:-}"
   local base="${STYLE_STDOUT[${base_style}]:-}"
 
-  if (( readline )); then
-    # read -p のプロンプトでは、エスケープシーケンスを SOH/STX で囲まないと
-    # 表示幅に数えられ、行編集の位置がずれる。
-    [[ -n "$rst" ]]    && rst=$'\x01'"${rst}"$'\x02'
-    [[ -n "$pstyle" ]] && pstyle=$'\x01'"${pstyle}"$'\x02'
-    [[ -n "$base" ]]   && base=$'\x01'"${base}"$'\x02'
-  fi
-
   local head=''
   [[ -n "$prefix" ]] && head="${pstyle}${prefix}${rst} "
 
-  local out='' line
-  while IFS= read -r line; do
-    out+="${head}${base}${line}${rst}"$'\n'
+  local out='' raw line
+  while IFS= read -r raw; do
+    line="${head}${base}${raw}${rst}"
+    # 組み立てたあとに囲む。本文に埋められたシーケンスもここで拾う。
+    (( readline )) && line="$(msg::_readline_escape "$line")"
+    out+="${line}"$'\n'
   done <<< "$*"
 
   (( newline )) || out="${out%$'\n'}"
