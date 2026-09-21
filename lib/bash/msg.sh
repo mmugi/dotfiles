@@ -53,13 +53,13 @@ msg() {
   #     base="${STYLE_STDOUT['normal']:-}"
   #     msg "checking ${hl}${target}${base} command..."
   #
-  #
   # 色が無効なとき `STYLE_STDOUT` は空になるため、同じ式のまま平文になります。
   #
   # 行末には必ず reset のシーケンスを出力します。呼び出し側が閉じ忘れても、
   # 次の行やシェルのプロンプトへ色が漏れないようにするためです。
   #
-  # 入力に改行が含まれる場合は、行ごとにプレフィックスと base style を添えます。
+  # 入力に改行が含まれる場合、プレフィックスは最初の行だけに付き、続く行は
+  # 同じ幅の空白で字下げされます。base style と行末の reset は行ごとに出力されます。
   #
   # Options:
   #
@@ -141,12 +141,18 @@ msg() {
   local pstyle="${STYLE_STDOUT[${prefix_style}]:-}"
   local base="${STYLE_STDOUT[${base_style}]:-}"
 
-  local head=''
-  [[ -n "$prefix" ]] && head="${pstyle}${prefix}${rst} "
+  # ponytail: 字下げの幅は文字数で数える。全角を含むプレフィックスでは表示幅と
+  #           ずれるが、現状はすべて ASCII。ずれが問題になったら表示幅の計算が必要。
+  local line_start='' indent=''
+  if [[ -n "$prefix" ]]; then
+    line_start="${pstyle}${prefix}${rst} "
+    printf -v indent '%*s' $(( ${#prefix} + 1 )) ''
+  fi
 
   local out='' raw line
   while IFS= read -r raw; do
-    line="${head}${base}${raw}${rst}"
+    line="${line_start}${base}${raw}${rst}"
+    line_start="$indent"
     # 組み立てたあとに囲む。本文に埋められたシーケンスもここで拾う。
     (( readline )) && line="$(msg::_readline_escape "$line")"
     out+="${line}"$'\n'

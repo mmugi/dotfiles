@@ -262,9 +262,17 @@ check 'msg がバックスラッシュを保つ' \
 check 'msg が \n を改行にしない' 'a\nb' "$(msg --no-prefix -- 'a\nb')"
 check 'msg が \\ を畳まない' 'a\\b' "$(msg --no-prefix -- 'a\\b')"
 
-# 実際の改行は行ごとにプロンプトを添える
-check 'msg は行ごとにプロンプトを添える' "$(printf '[>] a\n[>] b')" \
+# プレフィックスは最初の行だけ。続く行は同じ幅の空白で揃える。
+check 'プレフィックスは最初の行だけに付く' "$(printf '[>] a\n    b')" \
   "$(msg -- "$(printf 'a\nb')")"
+
+# 字下げの幅はプレフィックスに追従する
+check '字下げはプレフィックスの幅に合わせる' "$(printf '##### a\n      b')" \
+  "$(msg --prefix='#####' -- "$(printf 'a\nb')")"
+
+# --no-prefix では字下げもしない
+check '--no-prefix では字下げもしない' "$(printf 'a\nb')" \
+  "$(msg --no-prefix -- "$(printf 'a\nb')")"
 
 # 色は呼び出し側が STYLE_STDOUT を埋めて組み立てる。色ありでしか確認できない
 #   ため、ここだけテーマを読み直す。
