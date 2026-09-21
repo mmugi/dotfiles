@@ -342,31 +342,6 @@ check 'util::chk が usage 関数を漏らさない' '' "$(declare -F usage 2>/d
 # 削除済み関数
 check 'util::sysinfo は削除済み' '' "$(type -t util::sysinfo 2>/dev/null || true)"
 
-printf 'src\n' > "${_tmp}/src"
-
-check_rc 'util::install --check 配置可能' 0 util::install --check "${_tmp}/src" "${_tmp}/dst"
-check 'util::install --check は何も作らない' '0' \
-  "$([[ -e "${_tmp}/dst" || -L "${_tmp}/dst" ]] && echo 1 || echo 0)"
-
-check_rc 'util::install シンボリックリンク作成' 0 util::install "${_tmp}/src" "${_tmp}/dst"
-check 'リンクが張られている' '1' "$([[ -L "${_tmp}/dst" ]] && echo 1 || echo 0)"
-
-check_rc 'util::install 冪等' 0 util::install "${_tmp}/src" "${_tmp}/dst"
-
-printf 'other\n' > "${_tmp}/other"
-check_rc 'util::install 別ファイルが居る場合は失敗する' 1 \
-  util::install "${_tmp}/src" "${_tmp}/other"
-
-check_rc 'util::uninstall --dry-run' 0 util::uninstall --dry-run "${_tmp}/src" "${_tmp}/dst"
-check 'dry-run ではリンクが残る' '1' "$([[ -L "${_tmp}/dst" ]] && echo 1 || echo 0)"
-
-check_rc 'util::uninstall 解除' 0 util::uninstall "${_tmp}/src" "${_tmp}/dst"
-check 'リンクが消えている' '0' "$([[ -e "${_tmp}/dst" || -L "${_tmp}/dst" ]] && echo 1 || echo 0)"
-
-check_rc 'util::uninstall 存在しない対象は成功' 0 util::uninstall "${_tmp}/src" "${_tmp}/dst"
-check_rc 'util::uninstall シンボリックリンク以外は失敗' 1 \
-  util::uninstall "${_tmp}/src" "${_tmp}/other"
-
 # --- dotfiles -----------------------------------------------------------------
 
 check 'DOTFILES_CONFIG_DIR' "${DOTFILES_PATH}/configs" "$DOTFILES_CONFIG_DIR"

@@ -6,7 +6,6 @@
 : "${MSG_PREFIX_HEADER:=###}"
 : "${MSG_PREFIX_NOTICE:=[~]}"
 : "${MSG_PREFIX_CHANGED:=[*]}"
-: "${MSG_PREFIX_RM:=[-]}"
 : "${MSG_PREFIX_SKIPPED:=[=]}"
 : "${MSG_PREFIX_OK:=[^]}"
 : "${MSG_PREFIX_WARN:=[!]}"
@@ -157,13 +156,6 @@ msg::changed() {
   msg \
     --prefix="$MSG_PREFIX_CHANGED" \
     --prefix-style='msg_changed' \
-    "$@"
-}
-
-msg::rm() {
-  msg \
-    --prefix="$MSG_PREFIX_RM" \
-    --prefix-style='msg_rm' \
     "$@"
 }
 

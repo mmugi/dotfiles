@@ -37,7 +37,6 @@ mmerr::setup() {
     ['msg_header']="$(escseq::sgr --fg-tc "${THEME_PALETTE['purple']}")"
     ['msg_notice']="$(escseq::sgr --fg-tc "${THEME_PALETTE['blue']}")"
     ['msg_changed']="$(escseq::sgr --fg-tc "${THEME_PALETTE['pink']}")"
-    ['msg_rm']="$(escseq::sgr --fg-tc "${THEME_PALETTE['red']}")"
     ['msg_ok']="$(escseq::sgr --fg-tc "${THEME_PALETTE['turquoise']}")"
     ['msg_warn']="$(escseq::sgr --fg-tc "${THEME_PALETTE['yellow']}")"
     ['msg_error']="$(escseq::sgr --fg-tc "${THEME_PALETTE['red']}")"
