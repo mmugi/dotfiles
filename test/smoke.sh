@@ -21,7 +21,7 @@ unset NO_COLOR
 
 # shellcheck source=/dev/null
 source "${DOTFILES_PATH}/lib/bash/import.sh"
-import core escseq termcap trap theme log msg util dotfiles
+import core escseq termcap trap theme log msg util
 theme::load
 
 declare -i _tests=0
@@ -54,7 +54,7 @@ trap 'rm -rf -- "$_tmp"' EXIT
 # --- import -------------------------------------------------------------------
 
 check 'すべてのライブラリが読み込まれている' \
-  '9' "${#IMPORT_IMPORTED_LIBS[@]}"
+  '8' "${#IMPORT_IMPORTED_LIBS[@]}"
 
 check 'ライブラリの読み込み元パスが記録されている' \
   "${DOTFILES_PATH}/lib/bash/core.sh" "${IMPORT_IMPORTED_LIBS['core']}"
@@ -341,37 +341,6 @@ check 'util::chk が usage 関数を漏らさない' '' "$(declare -F usage 2>/d
 
 # 削除済み関数
 check 'util::sysinfo は削除済み' '' "$(type -t util::sysinfo 2>/dev/null || true)"
-
-# --- dotfiles -----------------------------------------------------------------
-
-check 'DOTFILES_CONFIG_DIR' "${DOTFILES_PATH}/configs" "$DOTFILES_CONFIG_DIR"
-check 'DOTFILES_IGNOREFILE' "${DOTFILES_PATH}/.dotignore" "$DOTFILES_IGNOREFILE"
-check 'DOTFILES_LOGO が定義されている' '1' \
-  "$(( ${#DOTFILES_LOGO} > 0 ? 1 : 0 ))"
-
-# dotfiles::is_ignored
-#   実際の .dotignore はユーザー固有のファイルなので触らない。
-#   DOTFILES_IGNOREFILE は declare -g なので、import 後に差し替えられる。
-_ignorefile_orig="$DOTFILES_IGNOREFILE"
-DOTFILES_IGNOREFILE="${_tmp}/dotignore"
-
-printf '# comment\n.vimrc\n\n.config/git\n' > "$DOTFILES_IGNOREFILE"
-
-check_rc 'is_ignored 完全一致' 0 dotfiles::is_ignored '.vimrc'
-check_rc 'is_ignored 前方一致' 0 dotfiles::is_ignored '.config/git/ignore'
-check_rc 'is_ignored 一致しない' 1 dotfiles::is_ignored '.config/nvim/init.lua'
-check_rc 'is_ignored コメント行は無視' 1 dotfiles::is_ignored 'comment'
-check_rc 'is_ignored 空行は全一致しない' 1 dotfiles::is_ignored 'anything/else'
-check_rc 'is_ignored 引数なしは失敗' 1 dotfiles::is_ignored
-check_rc 'is_ignored 引数過多は失敗' 1 dotfiles::is_ignored a b
-
-: > "$DOTFILES_IGNOREFILE"
-check_rc 'is_ignored 空ファイルでは何も除外しない' 1 dotfiles::is_ignored '.vimrc'
-
-rm -f "$DOTFILES_IGNOREFILE"
-check_rc 'is_ignored ファイルが無い場合も失敗しない' 1 dotfiles::is_ignored '.vimrc'
-
-DOTFILES_IGNOREFILE="$_ignorefile_orig"
 
 # --- 結果 ---------------------------------------------------------------------
 

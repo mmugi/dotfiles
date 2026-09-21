@@ -4,9 +4,12 @@ set -ueo pipefail
 
 # shellcheck source=/dev/null
 source "${DOTFILES_PATH:?}/lib/bash/import.sh"
-import msg theme util log dotfiles
+import msg theme util log
 
 theme::load
+
+# Brewfile の置き場所
+DOTFILES_BREWFILE_DIR="${DOTFILES_PATH}/misc/brew"
 
 util::chk -c brew
 
