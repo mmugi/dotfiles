@@ -13,4 +13,3 @@ core::_log_body() {
 }
 
 core::error() { core::_log_header 'ERROR'; core::_log_body "$@"; }
-core::warn()  { core::_log_header 'WARN'; core::_log_body "$@"; }

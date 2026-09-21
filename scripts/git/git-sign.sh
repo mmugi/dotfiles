@@ -244,7 +244,7 @@ configure_allowed_signers() {
     return 0
   fi
 
-  if msg::confirm --yes-no 'add yourself to allowed signers?'; then
+  if msg::confirm 'add yourself to allowed signers?'; then
     printf '%s\n' "$line" >>"$allowed_signers_file"
     msg::changed "added to allowed signers: ${line} >> ${allowed_signers_file}"
     msg::ok 'allowed signers configured!'
@@ -264,7 +264,7 @@ configure_commit_signing() {
     msg 'commit signing is already enabled.'
     msg::skipped 'commit signing configuration skipped.'
   else
-    if msg::confirm --yes-no 'sign commits by default?'; then
+    if msg::confirm 'sign commits by default?'; then
       _git_config_set commit.gpgsign true
       msg::ok 'commit signing configured!'
     else

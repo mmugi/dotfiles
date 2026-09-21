@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 
-# @deps trap log theme
+# @deps log theme
 
 : "${MSG_PREFIX:=[>]}"
 : "${MSG_PREFIX_HEADER:=###}"
@@ -216,93 +216,44 @@ msg::read() {
 }
 
 msg::confirm() {
+  # usage: msg::confirm <質問>
+  #
+  # y / yes が入力されたら 0、n / no なら 1 を返します。
+  # それ以外の入力は聞き直します。
+
   if [[ ! -t 0 ]]; then
     logger --error 'standard input is not a terminal'
     return 1
   fi
 
-  local input mode confirm_msg tty_state
+  if (( $# == 0 )); then
+    logger --error 'missing question message'
+    return 1
+  fi
 
-  case "${1:-notset}" in
-    --return|notset) mode='return'; shift ;;
-    --yes-no)
-      if [[ -z "${2:-}" ]]; then
-        logger --error 'missing question message'
-        return 1
-      fi
-      mode='yes-or-no'
-      shift
-      ;;
-    *)
-      logger --error "invalid option: $1"
+  local input
+
+  while true; do
+    msg -n \
+      --prefix="$MSG_PREFIX_CONFIRM" \
+      --prefix-style='msg_confirm' \
+      -- "$* (y/n) " </dev/tty >/dev/tty
+
+    # プロンプトが出る前に打たれていた先行入力を捨てる。無ければタイムアウトで
+    # 非ゼロが返るが、異常ではないので無視(set -e の下で呼ばれた場合、ここで
+    # 落ちてしまう)。
+    read -sr -t 0.1 -N 255 _ || true
+
+    IFS='' read -r input
+    if [[ "$input" =~ ^([Yy]|[Yy][Ee][Ss])$ ]]; then
+      return 0
+    elif [[ "$input" =~ ^([Nn]|[Nn][Oo])$ ]]; then
       return 1
-      ;;
-  esac
-
-  case "$mode" in
-    return)
-      # 強調の終わりは rst ではなく属性の解除で閉じる。rst だと base style まで
-      # 落ちて、続きの文字が地の色になる。
-      confirm_msg="press ${STYLE_STDOUT['italic']:-}${STYLE_STDOUT['bold']:-}RETURN/ENTER"
-      confirm_msg+="${STYLE_STDOUT['noitalic']:-}${STYLE_STDOUT['default_intensity']:-}"
-      confirm_msg+=' to continue or press any other key to abort.'
-      msg -n \
-        --prefix="$MSG_PREFIX_CONFIRM" \
-        --prefix-style='msg_confirm' \
-        -- "${confirm_msg} " </dev/tty >/dev/tty
-
-      # stdin flush
-      read -sr -t 0.1 -N 255 _
-
-      tty_state="$(/bin/stty -g)"
-
-      # raw中に中断されると端末がエコーなしのまま残るため、復帰処理を
-      # トラップにも登録しておく。既存ハンドラは trap::concat で保持される。
-      trap::save_handler 'EXIT' 'INT' 'TERM'
-      trap::concat 'EXIT' "/bin/stty '${tty_state}'"
-      trap::concat 'INT'  "/bin/stty '${tty_state}'"
-      trap::concat 'TERM' "/bin/stty '${tty_state}'"
-
-      /bin/stty raw -echo
-      IFS='' read -r -n 1 -d '' -p 'ready? ' input
-      /bin/stty "$tty_state"
-      trap::restore_handler
-      msg::newline
-
-      if [[ "$input" == $'\n' ]]; then
-        return 0
-      else
-        return 1
-      fi
-      ;;
-    yes-or-no)
-      while true; do
-        msg -n \
-          --prefix="$MSG_PREFIX_CONFIRM" \
-          --prefix-style='msg_confirm' \
-          -- "$* (y/n) " </dev/tty >/dev/tty
-
-        # stdin flush
-        read -sr -t 0.1 -N 255 _
-
-        IFS='' read -r input
-        if [[ "$input" =~ ^([Yy]|[Yy][Ee][Ss])$ ]]; then
-          return 0
-        elif [[ "$input" =~ ^([Nn]|[Nn][Oo])$ ]]; then
-          return 1
-        else
-          msg::warn 'invalid input:('
-          continue
-        fi
-      done
-      ;;
-    *)
-      logger --error "invalid mode: ${mode}"
-      return 1
-      ;;
-  esac
-
-  return 1
+    else
+      msg::warn 'invalid input:('
+      continue
+    fi
+  done
 }
 
 msg::select() {

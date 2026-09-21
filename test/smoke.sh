@@ -21,7 +21,7 @@ unset NO_COLOR
 
 # shellcheck source=/dev/null
 source "${DOTFILES_PATH}/lib/bash/import.sh"
-import core escseq termcap trap theme log msg util
+import core escseq termcap theme log msg util
 theme::load
 
 declare -i _tests=0
@@ -54,7 +54,7 @@ trap 'rm -rf -- "$_tmp"' EXIT
 # --- import -------------------------------------------------------------------
 
 check 'すべてのライブラリが読み込まれている' \
-  '8' "${#IMPORT_IMPORTED_LIBS[@]}"
+  '7' "${#IMPORT_IMPORTED_LIBS[@]}"
 
 check 'ライブラリの読み込み元パスが記録されている' \
   "${DOTFILES_PATH}/lib/bash/core.sh" "${IMPORT_IMPORTED_LIBS['core']}"
@@ -224,21 +224,6 @@ check 'init_map というグローバル変数を作らない' '' "$(declare -p 
 TERMCAP_COLOR_MODE=always theme::_apply_styles 1
 check '色ありfdでスタイルが入る' '1' "$(( ${#STYLE_STDOUT[@]} > 0 ? 1 : 0 ))"
 theme::load
-
-# --- trap ---------------------------------------------------------------------
-
-# サブシェルにするとカウンタの更新が親に戻らないため、このシェルで実行して
-# trap::restore_handler で後片付けする(この時点でEXITトラップは未使用)。
-trap -- 'true' EXIT
-trap::save_handler 'EXIT' 'INT'
-trap::concat 'EXIT' 'echo injected'
-check 'trap::concat が既存ハンドラを保持する' \
-  "trap -- 'echo injected;true' EXIT" "$(trap -p EXIT)"
-trap::restore_handler
-check 'trap::restore_handler が元に戻す' \
-  "trap -- 'true' EXIT" "$(trap -p EXIT)"
-check 'trap::restore_handler が未設定シグナルを解除する' '' "$(trap -p INT)"
-trap -- - EXIT
 
 # --- log ----------------------------------------------------------------------
 
