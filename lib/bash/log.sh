@@ -37,26 +37,12 @@
 : "${LOG_DISABLE_CH:=0}"
 
 log::_fmt_filename() {
-  local f="$1" filename filepath
-
-  filepath="$(realpath -- "$f")"
-  filename="$(basename -- "$filepath")"
-
-  if [[ ! -f "$filepath" ]]; then
-    core::error "no such file or directory: ${filepath}"
-    return 1
-  fi
-
-  if
-    (
-      [[ "${FUNCNAME[1]}" == 'log::_log_stacktrace' ]] && (( LOG_TRACE_ABSPATH ))
-    ) || (
-      [[ "${FUNCNAME[1]}" == 'log::_log_emit' ]] && (( LOG_ABSPATH ))
-    )
-  then
-    printf '%s' "$filepath"
+  # usage: log::_fmt_filename <ファイルパス> <絶対パス表示on,off(1,0)>
+  local f="$1" abspath="$2"
+  if (( abspath )); then
+    realpath -- "$f"
   else
-    printf '%s' "$filename"
+    printf '%s' "${f##*/}"
   fi
 }
 
@@ -65,18 +51,20 @@ log::_log_emit() {
   local line file subroutine fmt_file
 
   read -r line subroutine file < <(caller 1)
-  fmt_file="$(log::_fmt_filename "$file")"
+  fmt_file="$(log::_fmt_filename "$file" "$LOG_ABSPATH")"
 
   local style_ts="${STYLE_ERR[log_timestamp]}"
   local style_ch="${STYLE_ERR[log_ch]}"
   local style_file="${STYLE_ERR[log_filename]}"
   local style_func="${STYLE_ERR[log_funcname]}"
   local rst="${STYLE_ERR[rst]}"
-  local date
-  local section_ts section_level section_func section_file section_ch
+  local date section_ts section_level section_func section_file section_ch
 
   if (( LOG_INFO_TS )); then
-    date="$(TZ='JST-9' date -Iseconds)"
+    # date(1) のフォークを避けてビルトインで組み立てる。%z は +0900 の形で
+    # 出るため、date -Iseconds と同じ +09:00 に直す。
+    TZ='JST-9' printf -v date '%(%FT%T%z)T' -1
+    date="${date%??}:${date: -2}"
     section_ts="${style_ts}${date}${rst}"
     section_level=" [${style_level}${level}${rst}]"
   else
@@ -114,33 +102,27 @@ log::_log_emit() {
 log::_log_stacktrace() {
   local i=1 line subroutine file fmt_file
   while read -r line subroutine file < <(caller "$i"); do
-    fmt_file="$(log::_fmt_filename "$file")"
+    fmt_file="$(log::_fmt_filename "$file" "$LOG_TRACE_ABSPATH")"
     printf '  #%d %s (%s)\n' \
       "$i" \
       "${STYLE_ERR[log_stacktrace_function]}${subroutine}${STYLE_ERR[rst]}" \
       "${STYLE_ERR[log_stacktrace_location]}${fmt_file}:${line}${STYLE_ERR[rst]}" >&2
-    i=$((++i))
+    i=$(( i + 1 ))
   done
 }
 
 log::_ge_level() {
+  # usage: log::_ge_level <ログレベル(数値)> <ログレベル(値を持つ変数名)>
   local log_level="$1"
-  local log_level_var="$2"
-  local value="${!log_level_var}"
-
-  # 表示しようとしているログレベル `log_level` が
-  # loggerの表示レベル `value` 以上であれば0、そうでなければ1
-  if (( value >= 0 && log_level >= value )); then
-    return 0
-  else
-    return 1
-  fi
+  local value="${!2}"
+  (( value >= 0 && log_level >= value ))
 }
 
 log::_should_output_log() {
   local level_num="$1"
   local ch="${2:-}"
   local lib var
+  local -a candidates=()
 
   # ファイル別ログレベルの解決に使うファイル名は呼び出し元のスタック位置から
   # 求める。そのため logger をラップする関数を挟むと、ラッパーのファイル名で
@@ -155,37 +137,20 @@ log::_should_output_log() {
   lib="${lib//-/_}"     # foo-bar -> foo_bar
   lib="${lib^^}"        # foo_bar -> FOO_BAR
 
-  # channel level
   if [[ -n "$ch" ]]; then
     (( LOG_DISABLE_CH )) && return 1
     ch="${ch//-/_}"
     ch="${ch^^}"
-    var="LOG_LEVEL_${lib}_${ch}"
-    if [[ -n "${!var+defined}" ]]; then
-      if log::_ge_level "$level_num" "$var"; then
-        return 0
-      else
-        return 1
-      fi
-    fi
+    candidates+=( "LOG_LEVEL_${lib}_${ch}" )
   fi
+  candidates+=( "LOG_LEVEL_${lib}" 'LOG_LEVEL' )
 
-  # file level
-  var="LOG_LEVEL_${lib}"
-  if [[ -n "${!var+defined}" ]]; then
-    if log::_ge_level "$level_num" "$var"; then
-      return 0
-    else
-      return 1
-    fi
-  fi
-
-  # root
-  if log::_ge_level "$level_num" 'LOG_LEVEL'; then
-    return 0
-  else
-    return 1
-  fi
+  # チャンネル別、ファイル別、ルートの順に見て、最初に定義されているものに従う。
+  for var in "${candidates[@]}"; do
+    [[ -v "$var" ]] || continue
+    log::_ge_level "$level_num" "$var"
+    return
+  done
 }
 
 logger() {
