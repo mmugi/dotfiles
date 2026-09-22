@@ -322,6 +322,16 @@ check '--base-style は行頭に置く' \
   "${STYLE[msg_ok]}x${_msg_rst}" \
   "$(msg --no-prefix --base-style='msg_ok' -- 'x')"
 
+# --opt=value と --opt value は同じ結果になる。
+check '--base-style=X と --base-style X が一致する' \
+  "$(msg --no-prefix --base-style 'msg_ok' -- 'x')" \
+  "$(msg --no-prefix --base-style='msg_ok' -- 'x')"
+check '--prefix=X と --prefix X が一致する' \
+  "$(msg --prefix '##' -- 'x')" "$(msg --prefix='##' -- 'x')"
+
+# 値の区切りに = を使う形でも、-- 以降の本文は巻き込まない。
+check '-- 以降の本文を分割しない' '1' "$(msg -- '--a=b' | grep -c -- '--a=b')"
+
 # 回帰: 強調を base のスタイルで閉じるとリセットを通らないため、呼び出し側が
 #   重ねた属性 (bold など) が残る。rst で閉じると一緒に落ちてしまう。
 _msg_out="$(msg --no-prefix -- "${_msg_bold}a ${_msg_hl}b${_msg_normal} c")"

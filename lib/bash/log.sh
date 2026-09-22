@@ -214,16 +214,14 @@ logger() {
         stacktrace="$LOG_TRACE_DEBUG"
         ;;
       -b|--brief) brief=1 ;;
-      -c|--ch|--ch=*)
-        if [[ "$1" =~ ^--ch= ]]; then
-          ch="${1#--ch=}"
-        elif [[ -z "${2:-}" ]]; then
-          logger --error 'missing channel'
-          return 1
-        else
-          ch="$2"
-          shift
-        fi
+      --ch=*)
+        set -- '--ch' "${1#*=}" "${@:2}"
+        continue
+        ;;
+      -c|--ch)
+        (( $# >= 2 )) || { logger --error 'missing channel'; return 1; }
+        ch="$2"
+        shift
         ;;
       *) break ;;
     esac

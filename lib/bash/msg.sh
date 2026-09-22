@@ -98,38 +98,24 @@ msg() {
       -n) newline=0 ;;
       -R | --readline) readline=1 ;;
       --no-prefix) prefix= ;;
-      -s | --base-style | --base-style=*)
-        if [[ "$1" == --base-style=* ]]; then
-          base_style="${1#--base-style=}"
-        elif (( $# < 2 )); then
-          logger --error 'missing style name'
-          return 1
-        else
-          base_style="$2"
-          shift
-        fi
+      --base-style=* | --prefix=* | --prefix-style=*)
+        set -- "${1%%=*}" "${1#*=}" "${@:2}"
+        continue
         ;;
-      --prefix | --prefix=*)
-        if [[ "$1" == --prefix=* ]]; then
-          prefix="${1#--prefix=}"
-        elif (( $# < 2 )); then
-          logger --error 'missing prefix string'
-          return 1
-        else
-          prefix="$2"
-          shift
-        fi
+      -s | --base-style)
+        (( $# >= 2 )) || { logger --error 'missing style name'; return 1; }
+        base_style="$2"
+        shift
         ;;
-      --prefix-style | --prefix-style=*)
-        if [[ "$1" == --prefix-style=* ]]; then
-          prefix_style="${1#--prefix-style=}"
-        elif (( $# < 2 )); then
-          logger --error 'missing prefix style'
-          return 1
-        else
-          prefix_style="$2"
-          shift
-        fi
+      --prefix)
+        (( $# >= 2 )) || { logger --error 'missing prefix string'; return 1; }
+        prefix="$2"
+        shift
+        ;;
+      --prefix-style)
+        (( $# >= 2 )) || { logger --error 'missing prefix style'; return 1; }
+        prefix_style="$2"
+        shift
         ;;
       -*) logger --error "invalid option: $1"; return 1 ;;
       *) break ;;
@@ -298,16 +284,14 @@ msg::select() {
   while (( $# > 0 )); do
     case "$1" in
       --) shift; break ;;
-      --ps | --ps=*)
-        if [[ "${1:-}" =~ ^--ps= ]]; then
-          ps="${1#--ps=}"
-        elif [[ -z "${2:-}" ]]; then
-          logger --error 'missing prompt'
-          return 1
-        else
-          ps="$2"
-          shift
-        fi
+      --ps=*)
+        set -- '--ps' "${1#*=}" "${@:2}"
+        continue
+        ;;
+      --ps)
+        (( $# >= 2 )) || { logger --error 'missing prompt'; return 1; }
+        ps="$2"
+        shift
         ;;
       -*) msg_args+=( "$1" ) ;;
       *)  break ;;
