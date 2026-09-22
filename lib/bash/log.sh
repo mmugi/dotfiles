@@ -1,6 +1,12 @@
 # shellcheck shell=bash
 
-# @deps core theme
+# theme より下層のライブラリ(escseq, theme 自身)からも logger を使えるよう、
+# log は theme に依存しない。スタイルは theme::load が入れるまで空のままで、
+# 色が付かないだけで出力はできる。declare -gA の再宣言では中身は消えない。
+#
+# いずれもライブラリの外から参照されるグローバル連想配列。
+# shellcheck disable=SC2034
+declare -gA STYLE STYLE_ERR
 
 # ログレベル
 #   4: FATAL    致命的なエラー、対応が必要
@@ -53,11 +59,11 @@ log::_log_emit() {
   read -r line subroutine file < <(caller 1)
   fmt_file="$(log::_fmt_filename "$file" "$LOG_ABSPATH")"
 
-  local style_ts="${STYLE_ERR[log_timestamp]}"
-  local style_ch="${STYLE_ERR[log_ch]}"
-  local style_file="${STYLE_ERR[log_filename]}"
-  local style_func="${STYLE_ERR[log_funcname]}"
-  local rst="${STYLE_ERR[rst]}"
+  local style_ts="${STYLE_ERR[log_timestamp]:-}"
+  local style_ch="${STYLE_ERR[log_ch]:-}"
+  local style_file="${STYLE_ERR[log_filename]:-}"
+  local style_func="${STYLE_ERR[log_funcname]:-}"
+  local rst="${STYLE_ERR[rst]:-}"
   local date section_ts section_level section_func section_file section_ch
 
   if (( LOG_INFO_TS )); then
@@ -105,8 +111,8 @@ log::_log_stacktrace() {
     fmt_file="$(log::_fmt_filename "$file" "$LOG_TRACE_ABSPATH")"
     printf '  #%d %s (%s)\n' \
       "$i" \
-      "${STYLE_ERR[log_stacktrace_function]}${subroutine}${STYLE_ERR[rst]}" \
-      "${STYLE_ERR[log_stacktrace_location]}${fmt_file}:${line}${STYLE_ERR[rst]}" >&2
+      "${STYLE_ERR[log_stacktrace_function]:-}${subroutine}${STYLE_ERR[rst]:-}" \
+      "${STYLE_ERR[log_stacktrace_location]:-}${fmt_file}:${line}${STYLE_ERR[rst]:-}" >&2
     i=$(( i + 1 ))
   done
 }
@@ -180,31 +186,31 @@ logger() {
       --fatal)
         level='FATAL'
         level_num=4
-        style="${STYLE_ERR[fatal]}"
+        style="${STYLE_ERR[fatal]:-}"
         stacktrace="$LOG_TRACE_FATAL"
         ;;
       --error)
         level='ERROR'
         level_num=3
-        style="${STYLE_ERR[error]}"
+        style="${STYLE_ERR[error]:-}"
         stacktrace="$LOG_TRACE_ERROR"
         ;;
       --warning)
         level='WARNING'
         level_num=2
-        style="${STYLE_ERR[warning]}"
+        style="${STYLE_ERR[warning]:-}"
         stacktrace="$LOG_TRACE_WARN"
         ;;
       --info)
         level='INFO'
         level_num=1
-        style="${STYLE_ERR[info]}"
+        style="${STYLE_ERR[info]:-}"
         stacktrace="$LOG_TRACE_INFO"
         ;;
       --debug)
         level='DEBUG'
         level_num=0
-        style="${STYLE_ERR[debug]}"
+        style="${STYLE_ERR[debug]:-}"
         stacktrace="$LOG_TRACE_DEBUG"
         ;;
       -b|--brief) brief=1 ;;
@@ -212,7 +218,7 @@ logger() {
         if [[ "$1" =~ ^--ch= ]]; then
           ch="${1#--ch=}"
         elif [[ -z "${2:-}" ]]; then
-          core::error 'missing channel'
+          logger --error 'missing channel'
           return 1
         else
           ch="$2"
@@ -225,7 +231,7 @@ logger() {
   done
 
   if [[ -z "${level:-}" ]]; then
-    core::error 'missing log level'
+    logger --error 'missing log level'
     return 1
   fi
 

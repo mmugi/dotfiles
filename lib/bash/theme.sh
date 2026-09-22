@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 
-# @deps core escseq termcap
+# @deps escseq termcap
 
 # Bash Theme Loader <theme.sh>
 #
@@ -104,7 +104,7 @@ theme::_check_duplicate_keys() {
 
   for key in "${!THEME_STYLE_COMMON[@]}"; do
     if [[ -v "THEME_STYLE[${key}]" ]]; then
-      core::error "duplicate map key: ${key}"
+      logger --error "duplicate map key: ${key}"
       duplicated=1
     fi
   done
@@ -121,7 +121,7 @@ theme::_apply_styles() {
     1) init_map_name='STYLE' ;;
     2) init_map_name='STYLE_ERR' ;;
     *)
-      core::error "invalid fd: ${fd}"
+      logger --error "invalid fd: ${fd}"
       return 1
       ;;
   esac
@@ -149,7 +149,7 @@ theme::load() {
   script_dir="$(dirname "$(realpath -- "${BASH_SOURCE[0]}")")"
 
   if (( $# > 1 )); then
-    core::error "illegal options: $*"
+    logger --error "illegal options: $*"
     return 1
   fi
 
@@ -157,7 +157,7 @@ theme::load() {
   local theme_file="${script_dir}/themes/${theme}.sh"
 
   if [[ ! -f "$theme_file" ]]; then
-    core::error "theme file not found: ${theme_file}"
+    logger --error "theme file not found: ${theme_file}"
     return 1
   fi
 
@@ -165,13 +165,13 @@ theme::load() {
 
   # shellcheck source=/dev/null
   if ! source "$theme_file"; then
-    core::error "failed to source theme file: ${theme_file}"
+    logger --error "failed to source theme file: ${theme_file}"
     theme::_clear
     return 1
   fi
 
   if ! "${theme}::setup"; then
-    core::error 'setup failed'
+    logger --error 'setup failed'
     theme::_clear
     return 1
   fi

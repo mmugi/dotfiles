@@ -48,7 +48,7 @@
 #     ```
 #     # shellcheck shell=bash
 #
-#     # @deps core theme
+#     # @deps escseq termcap
 #     # @requires-bash 4.1
 #     ```
 #
@@ -200,7 +200,6 @@ import::_init() {
   # なる。この挙動は 4.4 で修正された。スクリプト側は `set -ueo pipefail` を敷いて
   # いるため、4.3 以下ではライブラリの読み込み自体が失敗する。
   local requires_bash='4.4'
-  local preload_libs=( core )
 
   if [ -z "${BASH_VERSION:-}" ]; then
     printf 'import: must be sourced from bash.\n' >&2
@@ -221,8 +220,6 @@ import::_init() {
   declare -g  _IMPORT_RESOLVING_STACK=
   declare -ga _IMPORT_META_DEPS=()
   declare -g  _IMPORT_META_REQUIRES_BASH=
-
-  import "${preload_libs[@]}"
 
   IMPORT_INITIALIZED=1
 }

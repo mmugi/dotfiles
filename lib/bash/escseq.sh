@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 
-# @deps core
+# @deps log
 
 # Escape Sequence <escseq.sh>
 #
@@ -80,14 +80,14 @@ escseq::csi() {
   local type
 
   if (( $# != 2 )); then
-    core::error 'usage: escseq::csi <type> <parameter string>'
+    logger --error 'usage: escseq::csi <type> <parameter string>'
     return 1
   fi
 
   case "$1" in
     --sgr) type="$sgr" ;;
     *)
-      core::error "invalid type: $1"
+      logger --error "invalid type: $1"
       return 1
       ;;
   esac
@@ -99,7 +99,7 @@ escseq::csi() {
 escseq::_hexcc2rgb() {
   local cc="${1#\#}"
   if [[ ! "$cc" =~ ^[0-9a-fA-F]{6}$ ]]; then
-    core::error "invalid colorcode format: ${cc}"
+    logger --error "invalid colorcode format: ${cc}"
     return 1
   fi
   printf '%d;%d;%d' \
@@ -121,14 +121,14 @@ escseq::_sgr_color_code() {
     --fg-*) base="${ESCSEQ_SGR['fg-set-color']}" ;;
     --bg-*) base="${ESCSEQ_SGR['bg-set-color']}" ;;
     *)
-      core::error "invalid option: ${opt}"
+      logger --error "invalid option: ${opt}"
       return 1
       ;;
   esac
 
   if [[ "$opt" == *-256 ]]; then
     if [[ ! "$value" =~ ^[0-9]+$ ]]; then
-      core::error "${opt}: invalid color code: ${value}"
+      logger --error "${opt}: invalid color code: ${value}"
       return 1
     fi
     printf '%s;5;%s' "$base" "$value"
@@ -146,7 +146,7 @@ escseq::_sgr_color_code() {
     return 0
   fi
 
-  core::error "${opt}: invalid color code (expected: \"R:G:B\" or \"#RRGGBB\"): ${value}"
+  logger --error "${opt}: invalid color code (expected: \"R:G:B\" or \"#RRGGBB\"): ${value}"
   return 1
 }
 
@@ -163,7 +163,7 @@ escseq::sgr() {
     case "$1" in
       --fg-256 | --bg-256 | --fg-tc | --bg-tc)
         if (( $# < 2 )); then
-          core::error "missing color argument: $1"
+          logger --error "missing color argument: $1"
           invalid=1
         else
           if code="$(escseq::_sgr_color_code "$1" "$2")"; then
@@ -179,12 +179,12 @@ escseq::sgr() {
         if [[ -n "$code" ]]; then
           code_arr+=( "$code" )
         else
-          core::error "illegal option: $1"
+          logger --error "illegal option: $1"
           invalid=1
         fi
         ;;
       *)
-        core::error "illegal option: $1"
+        logger --error "illegal option: $1"
         invalid=1
         ;;
     esac

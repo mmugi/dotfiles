@@ -21,7 +21,7 @@ unset NO_COLOR
 
 # shellcheck source=/dev/null
 source "${DOTFILES_PATH}/lib/bash/import.sh"
-import core escseq termcap theme log msg util
+import escseq termcap theme log msg util
 theme::load
 
 declare -i _tests=0
@@ -54,10 +54,10 @@ trap 'rm -rf -- "$_tmp"' EXIT
 # --- import -------------------------------------------------------------------
 
 check 'すべてのライブラリが読み込まれている' \
-  '7' "${#IMPORT_IMPORTED_LIBS[@]}"
+  '6' "${#IMPORT_IMPORTED_LIBS[@]}"
 
 check 'ライブラリの読み込み元パスが記録されている' \
-  "${DOTFILES_PATH}/lib/bash/core.sh" "${IMPORT_IMPORTED_LIBS['core']}"
+  "${DOTFILES_PATH}/lib/bash/log.sh" "${IMPORT_IMPORTED_LIBS['log']}"
 
 check_rc 'bashバージョン要求を満たす' 0 import::_version_satisfies '4.0'
 check_rc 'bashバージョン要求を満たさない' 1 import::_version_satisfies '99.0'
@@ -87,8 +87,8 @@ check_rc '先頭ゼロを含むバージョンを判定できる' 0 \
 _metadir="${_tmp}/metalibs"
 mkdir -p "$_metadir"
 
-printf '%s\n' '# @deps core' '' 'echo body' > "${_metadir}/sidefx.sh"
-printf '%s\n' '# @author someone' '# @deps core' '# @totally-unknown xyz' '' \
+printf '%s\n' '# @deps termcap' '' 'echo body' > "${_metadir}/sidefx.sh"
+printf '%s\n' '# @author someone' '# @deps termcap' '# @totally-unknown xyz' '' \
   'echo body' > "${_metadir}/unknown.sh"
 printf '%s\n' '# @requires-bash 9.0' '' 'this is a ((( syntax error )))' \
   > "${_metadir}/newsyntax.sh"
@@ -111,7 +111,7 @@ check '要求bashを満たさないライブラリは本体をparseしない' '1
 
 # メタ情報の走査は最初のコメント以外の行で終わる。走査範囲がファイル全体に広がると、
 # 関数本体のコメント (msg.sh の <@indent> など) をディレクティブと誤認しうる。
-printf '%s\n' '# @deps core' '' 'echo body' '# @deps nonexistent_lib' \
+printf '%s\n' '# @deps termcap' '' 'echo body' '# @deps nonexistent_lib' \
   > "${_metadir}/latedirective.sh"
 
 check 'コード行より後のディレクティブは読まない' 'body' \
@@ -248,6 +248,19 @@ check 'LOG_LEVEL=-1 でログ無効' \
   '0' "$(LOG_LEVEL=-1 logger --error 'quiet' 2>&1 | grep -c 'quiet')"
 
 check_rc 'logger はレベル指定なしで失敗する' 1 logger 'no level'
+
+# 回帰: log は theme に依存しない。core.sh を消して escseq/theme も logger を
+#   使うようにしたため、theme::load 前に logger が落ちると全体が読み込めなくなる。
+check 'theme::load 前でも logger が動く' '1' \
+  "$(bash -c "source '${DOTFILES_PATH}/lib/bash/import.sh'
+              import log
+              logger --info 'nostyle'" 2>&1 | grep -c 'nostyle')"
+
+# 下層ライブラリのエラーも logger の書式で出る。
+check 'escseq のエラーが logger 経由で出る' '1' \
+  "$(escseq::sgr --nosuchoption 2>&1 | grep -c 'ERROR.*illegal option')"
+
+check 'core::error は削除済み' '' "$(type -t core::error 2>/dev/null || true)"
 
 # --- msg ----------------------------------------------------------------------
 
