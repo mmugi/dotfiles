@@ -21,7 +21,7 @@ unset NO_COLOR
 
 # shellcheck source=/dev/null
 source "${DOTFILES_PATH}/lib/bash/import.sh"
-import escseq termcap theme log msg util
+import escseq termcap theme log msg cmd
 theme::load
 
 declare -i _tests=0
@@ -165,7 +165,7 @@ check '初期化後に設定した検索パスが反映される' 'alt' \
 
 check '検索パスを足しても既定のパスは残る' 'ok' \
   "$(DOTFILES_IMPORT_PATH="$_altdir" bash -c \
-      "source '${DOTFILES_PATH}/lib/bash/import.sh'; import util && echo ok" 2>/dev/null)"
+      "source '${DOTFILES_PATH}/lib/bash/import.sh'; import cmd && echo ok" 2>/dev/null)"
 
 # 回帰: 配列は export できないため、子プロセスで追加パスが失われていた。
 check '検索パスが子プロセスに引き継がれる' 'alt' \
@@ -368,20 +368,25 @@ check '-R なしでは印を付けない' '0' \
 
 theme::load
 
-# --- util ---------------------------------------------------------------------
+# --- cmd ----------------------------------------------------------------------
 
-check_rc 'util::has_cmd 存在するコマンド' 0 util::has_cmd -q bash
-check_rc 'util::has_cmd 存在しないコマンド' 1 util::has_cmd -q __no_such_command__
-check_rc 'util::has_cmd 不正なオプションは失敗する' 1 util::has_cmd -z bash
-check_rc 'util::has_cmd 引数なしは失敗する' 1 util::has_cmd
+check_rc 'cmd::check 存在するコマンド' 0 cmd::check bash
+check_rc 'cmd::check 存在しないコマンド' 1 cmd::check __no_such_command__
+check_rc 'cmd::check 引数なしは失敗する' 1 cmd::check
+check_rc 'cmd::check 引数が多いと失敗する' 1 cmd::check bash sh
 
-# 回帰: util::has_cmd がグローバルな usage 関数を定義しない
-util::has_cmd -q bash || true
-check 'util::has_cmd が usage 関数を漏らさない' '' "$(declare -F usage 2>/dev/null || true)"
+# 見つからないことは戻り値だけでなく表示でも知らせる。
+check 'cmd::check は not found を知らせる' '1' \
+  "$(cmd::check __no_such_command__ 2>&1 | grep -c 'command not found')"
 
-# 削除済み関数
+# 回帰: cmd::check がグローバルな usage 関数を定義しない
+cmd::check bash >/dev/null || true
+check 'cmd::check が usage 関数を漏らさない' '' "$(declare -F usage 2>/dev/null || true)"
+
+# 削除・改名済み関数
 check 'util::sysinfo は削除済み' '' "$(type -t util::sysinfo 2>/dev/null || true)"
 check 'util::chk は改名済み' '' "$(type -t util::chk 2>/dev/null || true)"
+check 'util::has_cmd は改名済み' '' "$(type -t util::has_cmd 2>/dev/null || true)"
 
 # --- 結果 ---------------------------------------------------------------------
 

@@ -4,7 +4,7 @@ set -ueo pipefail
 
 # shellcheck source=/dev/null
 source "${DOTFILES_PATH:?}/lib/bash/import.sh"
-import msg theme util log
+import msg theme cmd log
 
 theme::load
 
@@ -16,7 +16,7 @@ DOTFILES_BREWFILE_DIR="${DOTFILES_PATH}/misc/brew"
 hl="${STYLE[msg_highlight]}"
 base="${STYLE[normal]}"
 
-util::has_cmd brew
+cmd::check brew
 
 if [[ ! -d "$DOTFILES_BREWFILE_DIR" ]]; then
   logger --fatal "directory not found: ${DOTFILES_BREWFILE_DIR}"

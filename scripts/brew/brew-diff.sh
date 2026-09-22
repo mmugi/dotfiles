@@ -4,14 +4,14 @@ set -ueo pipefail
 
 # shellcheck source=/dev/null
 source "${DOTFILES_PATH:?}/lib/bash/import.sh"
-import msg theme util log
+import msg theme cmd log
 
 theme::load
 
 # Brewfile の置き場所
 DOTFILES_BREWFILE_DIR="${DOTFILES_PATH}/misc/brew"
 
-util::has_cmd brew
+cmd::check brew
 
 if [[ ! -d "$DOTFILES_BREWFILE_DIR" ]]; then
   logger --fatal "directory not found: ${DOTFILES_BREWFILE_DIR}"
@@ -44,7 +44,7 @@ dump="$(
     brew bundle dump --file=- --no-describe
 )"
 
-if util::has_cmd -q 'git'; then
+if command -v git >/dev/null 2>&1; then
   git diff "$brewfile" <(echo "$dump") && msg::ok 'no differences.'
 else
   diff -u "$brewfile" <(echo "$dump") && msg::ok 'no differences.'

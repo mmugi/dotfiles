@@ -6,7 +6,7 @@ trap 'echo; echo "Interrupted."; exit 130' INT
 
 # shellcheck source=/dev/null
 source "${DOTFILES_PATH:?}/lib/bash/import.sh"
-import util msg theme log
+import cmd msg theme log
 
 theme::load
 
@@ -86,7 +86,7 @@ _validation_signingkey() {
 configure_signing_key() {
   msg::header 'signing key configuration'
 
-  util::has_cmd ssh-keygen
+  cmd::check ssh-keygen
 
   local config content pubkey
 
@@ -107,7 +107,7 @@ configure_signing_key() {
     'enter value manually'
   )
 
-  if util::has_cmd 'ssh-add'; then
+  if cmd::check 'ssh-add'; then
     methods+=( 'from ssh-agent' )
   fi
 
@@ -275,7 +275,7 @@ configure_commit_signing() {
   msg::newline
 }
 
-util::has_cmd git
+cmd::check git
 msg::newline
 
 configure_signing_format
