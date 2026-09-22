@@ -190,6 +190,13 @@ check 'escseq::sgr 真彩色(16進)' \
 check 'escseq::sgr 真彩色(R:G:B)' \
   "$(printf '\033[38;2;255;0;0m')" "$(escseq::sgr --fg-tc '255:0:0')"
 
+# 前景と背景の違いは先頭のコードだけ。表から引く値を取り違えると入れ替わる。
+check 'escseq::sgr 背景の真彩色' \
+  "$(printf '\033[48;2;0;0;255m')" "$(escseq::sgr --bg-tc '#0000ff')"
+
+check 'escseq::sgr 8bit色' \
+  "$(printf '\033[38;5;42m')" "$(escseq::sgr --fg-256 42)"
+
 check 'escseq::sgr 引数なしはreset' \
   "$(printf '\033[0m')" "$(escseq::sgr)"
 
