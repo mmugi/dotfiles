@@ -36,9 +36,6 @@ declare -gA STYLE STYLE_ERR
 : "${LOG_ABSPATH:=0}"
 : "${LOG_TRACE_ABSPATH:=1}"
 
-# fatal関数でexit 1する
-: "${LOG_FATAL_EXIT:=1}"
-
 # チャンネル指定のログを非表示
 : "${LOG_DISABLE_CH:=0}"
 
@@ -243,7 +240,7 @@ logger() {
     log::_log_stacktrace
   fi
 
-  if [[ "$level" == 'FATAL' ]] && (( LOG_FATAL_EXIT )); then
+  if [[ "$level" == 'FATAL' ]]; then
     exit 1
   fi
 }
