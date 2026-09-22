@@ -16,7 +16,7 @@ DOTFILES_BREWFILE_DIR="${DOTFILES_PATH}/misc/brew"
 hl="${STYLE[msg_highlight]}"
 base="${STYLE[normal]}"
 
-util::chk -c brew
+util::has_cmd brew
 
 if [[ ! -d "$DOTFILES_BREWFILE_DIR" ]]; then
   logger --fatal "directory not found: ${DOTFILES_BREWFILE_DIR}"

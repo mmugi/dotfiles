@@ -347,17 +347,18 @@ theme::load
 
 # --- util ---------------------------------------------------------------------
 
-check_rc 'util::chk 存在するコマンド' 0 util::chk -cq bash
-check_rc 'util::chk 存在しないコマンド' 1 util::chk -cq __no_such_command__
-check_rc 'util::chk セレクタなしは失敗する' 1 util::chk -q bash
-check_rc 'util::chk 引数なしは失敗する' 1 util::chk
+check_rc 'util::has_cmd 存在するコマンド' 0 util::has_cmd -q bash
+check_rc 'util::has_cmd 存在しないコマンド' 1 util::has_cmd -q __no_such_command__
+check_rc 'util::has_cmd 不正なオプションは失敗する' 1 util::has_cmd -z bash
+check_rc 'util::has_cmd 引数なしは失敗する' 1 util::has_cmd
 
-# 回帰: util::chk がグローバルな usage 関数を定義しない
-util::chk -cq bash || true
-check 'util::chk が usage 関数を漏らさない' '' "$(declare -F usage 2>/dev/null || true)"
+# 回帰: util::has_cmd がグローバルな usage 関数を定義しない
+util::has_cmd -q bash || true
+check 'util::has_cmd が usage 関数を漏らさない' '' "$(declare -F usage 2>/dev/null || true)"
 
 # 削除済み関数
 check 'util::sysinfo は削除済み' '' "$(type -t util::sysinfo 2>/dev/null || true)"
+check 'util::chk は改名済み' '' "$(type -t util::chk 2>/dev/null || true)"
 
 # --- 結果 ---------------------------------------------------------------------
 

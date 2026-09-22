@@ -86,7 +86,7 @@ _validation_signingkey() {
 configure_signing_key() {
   msg::header 'signing key configuration'
 
-  util::chk -c ssh-keygen
+  util::has_cmd ssh-keygen
 
   local config content pubkey
 
@@ -107,7 +107,7 @@ configure_signing_key() {
     'enter value manually'
   )
 
-  if util::chk -c 'ssh-add'; then
+  if util::has_cmd 'ssh-add'; then
     methods+=( 'from ssh-agent' )
   fi
 
@@ -275,7 +275,7 @@ configure_commit_signing() {
   msg::newline
 }
 
-util::chk -c git
+util::has_cmd git
 msg::newline
 
 configure_signing_format

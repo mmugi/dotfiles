@@ -11,7 +11,7 @@ theme::load
 # Brewfile の置き場所
 DOTFILES_BREWFILE_DIR="${DOTFILES_PATH}/misc/brew"
 
-util::chk -c brew
+util::has_cmd brew
 
 if [[ ! -d "$DOTFILES_BREWFILE_DIR" ]]; then
   logger --fatal "directory not found: ${DOTFILES_BREWFILE_DIR}"
@@ -44,7 +44,7 @@ dump="$(
     brew bundle dump --file=- --no-describe
 )"
 
-if util::chk -cq 'git'; then
+if util::has_cmd -q 'git'; then
   git diff "$brewfile" <(echo "$dump") && msg::ok 'no differences.'
 else
   diff -u "$brewfile" <(echo "$dump") && msg::ok 'no differences.'

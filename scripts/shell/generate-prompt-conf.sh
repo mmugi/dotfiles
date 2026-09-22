@@ -71,7 +71,7 @@ _generate_prompt_conf_search_dirs() {
     )
   fi
 
-  if util::chk -cq brew && brew_prefix="$(brew --prefix git 2>/dev/null)"; then
+  if util::has_cmd -q brew && brew_prefix="$(brew --prefix git 2>/dev/null)"; then
     dirs+=(
       "${brew_prefix}/share/git-core"
       "${brew_prefix}/etc/bash_completion.d"
@@ -224,7 +224,7 @@ stdout_is_tty=0
 [[ -t 1 ]] && stdout_is_tty=1
 
 stdout_target=
-if (( ! stdout_is_tty )) && util::chk -cq lsof; then
+if (( ! stdout_is_tty )) && util::has_cmd -q lsof; then
   stdout_target="$(lsof -p "$$" -a -d1 -Fn 2>/dev/null | awk '/^n/ { print substr($0, 2); exit }')"
 fi
 
@@ -232,13 +232,13 @@ fi
 # 生成されたシェル設定のみが出力されるようにする
 # (そのまま `>> ~/.bashrc` のようにリダイレクトして利用できるようにするため)
 {
-  if util::chk -c starship; then
+  if util::has_cmd starship; then
     msg "generating starship-based prompt configuration for ${hl}${shell}${base}..."
     config="$(_generate_prompt_conf_render_bash 'starship')"
   else
     prompt_path=
 
-    if util::chk -c git; then
+    if util::has_cmd git; then
       msg "searching for ${hl}git-prompt.sh${base}..."
       if _generate_prompt_conf_locate 'git-prompt.sh'; then
         prompt_path="$GENERATE_PROMPT_CONF_RESULT"
