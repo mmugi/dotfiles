@@ -27,16 +27,16 @@ declare -gA STYLE STYLE_ERR
 : "${LOG_INFO_CH:=1}"
 
 # スタックトレース設定
-: "${LOG_TRACE_FATAL:=1}"
-: "${LOG_TRACE_ERROR:=1}"
-: "${LOG_TRACE_WARN:=0}"
-: "${LOG_TRACE_NOTICE:=0}"
-: "${LOG_TRACE_INFO:=0}"
-: "${LOG_TRACE_DEBUG:=0}"
+: "${LOG_STACKTRACE_FATAL:=1}"
+: "${LOG_STACKTRACE_ERROR:=1}"
+: "${LOG_STACKTRACE_WARN:=0}"
+: "${LOG_STACKTRACE_NOTICE:=0}"
+: "${LOG_STACKTRACE_INFO:=0}"
+: "${LOG_STACKTRACE_DEBUG:=0}"
 
 # ファイル名を絶対パスで出力
 : "${LOG_ABSPATH:=0}"
-: "${LOG_TRACE_ABSPATH:=1}"
+: "${LOG_STACKTRACE_ABSPATH:=1}"
 
 log::_fmt_filename() {
   # usage: log::_fmt_filename <ファイルパス> <絶対パス表示on,off(1,0)>
@@ -116,7 +116,7 @@ log::_log_stacktrace() {
   printf 'stacktrace:\n' >&2
 
   while read -r line subroutine file < <(caller "$i"); do
-    fmt_file="$(log::_fmt_filename "$file" "$LOG_TRACE_ABSPATH")"
+    fmt_file="$(log::_fmt_filename "$file" "$LOG_STACKTRACE_ABSPATH")"
     # 色を付けるのは位置だけ。関数名は地の色のまま残して、追いたい行を
     # 1色で拾えるようにする。
     printf '    at %s(%s)\n' \
@@ -196,37 +196,37 @@ logger() {
         level='FATAL'
         level_num=5
         style="${STYLE_ERR[log_fatal]:-}"
-        stacktrace="$LOG_TRACE_FATAL"
+        stacktrace="$LOG_STACKTRACE_FATAL"
         ;;
       --error)
         level='ERROR'
         level_num=4
         style="${STYLE_ERR[log_error]:-}"
-        stacktrace="$LOG_TRACE_ERROR"
+        stacktrace="$LOG_STACKTRACE_ERROR"
         ;;
       --warn | --warning)
         level='WARN'
         level_num=3
         style="${STYLE_ERR[log_warn]:-}"
-        stacktrace="$LOG_TRACE_WARN"
+        stacktrace="$LOG_STACKTRACE_WARN"
         ;;
       --notice)
         level='NOTICE'
         level_num=2
         style="${STYLE_ERR[log_notice]:-}"
-        stacktrace="$LOG_TRACE_NOTICE"
+        stacktrace="$LOG_STACKTRACE_NOTICE"
         ;;
       --info)
         level='INFO'
         level_num=1
         style="${STYLE_ERR[log_info]:-}"
-        stacktrace="$LOG_TRACE_INFO"
+        stacktrace="$LOG_STACKTRACE_INFO"
         ;;
       --debug)
         level='DEBUG'
         level_num=0
         style="${STYLE_ERR[log_debug]:-}"
-        stacktrace="$LOG_TRACE_DEBUG"
+        stacktrace="$LOG_STACKTRACE_DEBUG"
         ;;
       -b|--brief) brief=1 ;;
       --ch=*)

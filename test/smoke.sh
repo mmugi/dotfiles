@@ -309,7 +309,7 @@ check 'レベル欄は6桁で揃える' '[  INFO] hello' \
 check 'レベル欄は最長でも6桁' '[NOTICE] hello' \
   "$(LOG_INFO_FUNC=0 logger --notice 'hello' 2>&1)"
 
-# WARNING ではなく WARN。LOG_TRACE_WARN と名前を揃える。
+# WARNING ではなく WARN。LOG_STACKTRACE_WARN と名前を揃える。
 check 'warning は WARN と出る' '[  WARN] hello' \
   "$(LOG_INFO_FUNC=0 logger --warn 'hello' 2>&1)"
 check '--warning も受ける' '[  WARN] hello' \
@@ -339,7 +339,7 @@ _rst="${STYLE_ERR[rst]}"
 # レベル欄は空スタイルでも必ず rst で閉じる。本文は囲むときだけ。
 check 'error の本文はレベル色で塗る' \
   "[${_s_err} ERROR${_rst}] $(_wrap "$_s_err" 'BODY')" \
-  "$(LOG_TRACE_ERROR=0 LOG_INFO_FUNC=0 logger --error 'BODY' 2>&1)"
+  "$(LOG_STACKTRACE_ERROR=0 LOG_INFO_FUNC=0 logger --error 'BODY' 2>&1)"
 check 'debug の本文はレベル色で塗る' \
   "[${_s_dbg} DEBUG${_rst}] $(_wrap "$_s_dbg" 'BODY')" \
   "$(LOG_LEVEL=0 LOG_INFO_FUNC=0 logger --debug 'BODY' 2>&1)"
@@ -353,10 +353,10 @@ _color_probe() { logger --error --ch='CH' 'BODY'; }
 # メタとレベル欄は空スタイルでも rst を出す。条件が付くのは本文だけ。
 check 'メタはレベル色、区切りは素のまま' \
   "[${_s_err} ERROR${_rst}] ${_s_err}_color_probe${_rst} ${_s_err}[CH]${_rst}: $(_wrap "$_s_err" 'BODY')" \
-  "$(LOG_TRACE_ERROR=0 _color_probe 2>&1)"
+  "$(LOG_STACKTRACE_ERROR=0 _color_probe 2>&1)"
 # トレースは位置だけ色を付ける。関数名は地の色のまま残す。
 _trace_probe() { logger --error 'boom'; }
-_trace_line="$(LOG_TRACE_ABSPATH=0 _trace_probe 2>&1 | grep -m1 '^    at ' || true)"
+_trace_line="$(LOG_STACKTRACE_ABSPATH=0 _trace_probe 2>&1 | grep -m1 '^    at ' || true)"
 check 'トレースの位置は log_stacktrace_location で塗る' '1' \
   "$(printf '%s' "$_trace_line" \
      | grep -cF "(${STYLE_ERR[log_stacktrace_location]}")"
