@@ -118,8 +118,6 @@ log::_log_stacktrace() {
 
   while read -r line subroutine file < <(caller "$i"); do
     fmt_file="$(log::_fmt_filename "$file" "$LOG_STACKTRACE_ABSPATH")"
-    # 色を付けるのは位置だけ。関数名は地の色のまま残して、追いたい行を
-    # 1色で拾えるようにする。
     printf '    at %s(%s)\n' \
       "$subroutine" \
       "${STYLE_ERR[log_stacktrace_location]:-}${fmt_file}:${line}${STYLE_ERR[rst]:-}" >&2

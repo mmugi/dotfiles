@@ -25,12 +25,9 @@ mmerr::setup() {
     ['gray']='#5e6164'
   )
   declare -g -A THEME_STYLE=(
-    ['normal']="$(escseq::sgr --fg-tc "${THEME_PALETTE['white']}")"
-    ['logo']="$(escseq::sgr --fg-tc "${THEME_PALETTE['pink']}")"
+    ['normal']="$(escseq::sgr --default-fg)"
     ['success']="$(escseq::sgr --fg-tc "${THEME_PALETTE['turquoise']}")"
     ['failed']="$(escseq::sgr --fg-tc "${THEME_PALETTE['red']}")"
-    ['danger']="$(escseq::sgr --fg-tc "${THEME_PALETTE['red']}")"
-    ['abort']="$(escseq::sgr --fg-tc "${THEME_PALETTE['red']}")"
 
     ['msg_prefix']="$(escseq::sgr --fg-tc "${THEME_PALETTE['purple']}")"
     ['msg_highlight']="$(escseq::sgr --fg-tc "${THEME_PALETTE['purple']}")"
@@ -48,8 +45,8 @@ mmerr::setup() {
     ['log_warn']="$(escseq::sgr --fg-tc "${THEME_PALETTE['yellow']}")"
     ['log_notice']="$(escseq::sgr --fg-tc "${THEME_PALETTE['blue']}")"
     ['log_info']="$(escseq::sgr --default-fg)"
-    ['log_debug']="$(escseq::sgr --faint)"
-    ['log_timestamp']="$(escseq::sgr --faint)"
+    ['log_debug']="$(escseq::sgr --default-fg --faint)"
+    ['log_timestamp']="$(escseq::sgr --default-fg --faint)"
     ['log_stacktrace_location']="$(escseq::sgr --fg-tc "${THEME_PALETTE['purple']}")"
   )
 }
