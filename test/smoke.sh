@@ -249,6 +249,17 @@ check 'LOG_LEVEL=-1 でログ無効' \
 
 check_rc 'logger はレベル指定なしで失敗する' 1 logger 'no level'
 
+# 回帰: caller が何も返さないと read が EOF で非ゼロを返す。受け流さないと
+#   set -e の下でシェルごと落ちて、ログが1行も出なかった。
+check 'set -e 下で caller が空でも落ちない' 'AFTER' \
+  "$(bash -c "
+       set -ueo pipefail
+       source '${DOTFILES_PATH}/lib/bash/import.sh'
+       import log theme
+       theme::load
+       logger --info 'hello'
+       echo 'AFTER'" 2>/dev/null)"
+
 # 回帰: log は theme に依存しない。core.sh を消して escseq/theme も logger を
 #   使うようにしたため、theme::load 前に logger が落ちると全体が読み込めなくなる。
 check 'theme::load 前でも logger が動く' '1' \

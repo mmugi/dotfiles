@@ -53,7 +53,9 @@ log::_log_emit() {
   local level="$1" style_level="$2" brief="$3" ch="$4"; shift 4
   local line file subroutine fmt_file
 
-  read -r line subroutine file < <(caller 1)
+  # `bash -c` の直下のように caller が何も返さない場合がある。read は EOF で
+  # 非ゼロを返すため、受け流さないと set -e の下でシェルごと落ちる。
+  read -r line subroutine file < <(caller 1) || true
   fmt_file="$(log::_fmt_filename "$file" "$LOG_ABSPATH")"
 
   local style_ts="${STYLE_ERR[log_timestamp]:-}"
