@@ -38,9 +38,6 @@ declare -gA STYLE STYLE_ERR
 : "${LOG_ABSPATH:=0}"
 : "${LOG_TRACE_ABSPATH:=1}"
 
-# チャンネル指定のログを非表示
-: "${LOG_DISABLE_CH:=0}"
-
 log::_fmt_filename() {
   # usage: log::_fmt_filename <ファイルパス> <絶対パス表示on,off(1,0)>
   local f="$1" abspath="$2"
@@ -156,7 +153,6 @@ log::_should_output_log() {
   lib="${lib^^}"        # foo_bar -> FOO_BAR
 
   if [[ -n "$ch" ]]; then
-    (( LOG_DISABLE_CH )) && return 1
     ch="${ch//-/_}"
     ch="${ch^^}"
     candidates+=( "LOG_LEVEL_${lib}_${ch}" )
@@ -181,13 +177,14 @@ logger() {
   #
   #   ファイルレベル:
   #     `LOG_LEVEL_<FILENAME>` で指定。
-  #     `test.sh` のログレベルを指定する場合は、`LOG_LEVEL_TEST=3` のように指定します。
+  #     `foo.sh` のログレベルを指定する場合は、`LOG_LEVEL_FOO=3` のように指定します。
   #
   #   チャンネルレベル:
   #     logger実行時にチャンネルを指定できる。
   #     チャンネル指定のログは `LOG_LEVEL_<FILENAME>_<CH>` で指定されたレベルに従います。
-  #     `test.sh` で実行した `logger --error --ch='testch' 'message'` を表示させる場合、
-  #     `LOG_LEVEL_TEST_TESTCH=3` のように指定します。
+  #     `foo.sh` で実行した `logger --error --ch='fooch' 'message'` を表示させる場合、
+  #     `LOG_LEVEL_FOO_FOOCH=3` のように指定します。
+  #     `LOG_LEVEL_FOO_FOOCH=-1` とすれば、そのチャンネルだけ出力が無効になります。
 
   local level level_num style stacktrace
   local brief=0 ch=

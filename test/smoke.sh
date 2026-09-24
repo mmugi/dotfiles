@@ -374,6 +374,19 @@ check 'notice は既定で出る' '1' \
 check 'notice は LOG_LEVEL=3 で落ちる' '0' \
   "$(LOG_LEVEL=3 logger --notice 'note' 2>&1 | grep -c 'note')"
 
+# チャンネル別レベルはファイル別より優先される。-1 を指定すれば、その
+# チャンネルだけ黙らせられる (LOG_DISABLE_CH の代わり)。
+_ch_probe() { logger --debug --ch="$1" 'chbody'; }
+check 'チャンネル別レベルが優先される' '1' \
+  "$(LOG_LEVEL=3 LOG_LEVEL_SMOKE_LOUD=0 _ch_probe loud 2>&1 | grep -c 'chbody')"
+check 'チャンネル別レベル -1 で黙る' '0' \
+  "$(LOG_LEVEL=0 LOG_LEVEL_SMOKE_QUIET=-1 _ch_probe quiet 2>&1 | grep -c 'chbody')"
+check '指定の無いチャンネルは影響を受けない' '1' \
+  "$(LOG_LEVEL=0 LOG_LEVEL_SMOKE_QUIET=-1 _ch_probe other 2>&1 | grep -c 'chbody')"
+
+check 'LOG_DISABLE_CH は廃止済み' '0' \
+  "$(grep -c 'LOG_DISABLE_CH' "${DOTFILES_PATH}/lib/bash/log.sh" || true)"
+
 # メタは 位置 関数 [ch] の順に並び、全体をコロンで本文と区切る。
 # チャンネルを末尾に置くのは、有無で後続の桁がずれないようにするため。
 _fmt_probe() { logger --info --ch='ch1' 'hello'; }
