@@ -20,13 +20,13 @@ declare -gA STYLE STYLE_ERR
 # 負の値を設定することで、ログ出力を完全に抑制します。
 : "${LOG_LEVEL:=1}"
 
-# ログに表示する内容を変更
-: "${LOG_INFO_TS:=0}"
-: "${LOG_INFO_FILE:=1}"
-: "${LOG_INFO_FUNC:=1}"
-: "${LOG_INFO_CH:=1}"
+# ログ行に表示する内容
+: "${LOG_SHOW_TS:=0}"
+: "${LOG_SHOW_FILE:=1}"
+: "${LOG_SHOW_FUNC:=1}"
+: "${LOG_SHOW_CH:=1}"
 
-# スタックトレース設定
+# スタックトレースを出すレベル
 : "${LOG_STACKTRACE_FATAL:=1}"
 : "${LOG_STACKTRACE_ERROR:=1}"
 : "${LOG_STACKTRACE_WARN:=0}"
@@ -35,6 +35,7 @@ declare -gA STYLE STYLE_ERR
 : "${LOG_STACKTRACE_DEBUG:=0}"
 
 # ファイル名を絶対パスで出力
+#   前者はログ行 (LOG_SHOW_FILE=1 のとき)、後者はスタックトレースに効く。
 : "${LOG_ABSPATH:=0}"
 : "${LOG_STACKTRACE_ABSPATH:=1}"
 
@@ -59,7 +60,7 @@ log::_log_emit() {
   local -a meta=() # メタ情報は区切りを持たせずに集め、最後にまとめて繋ぐ。
 
   # タイムスタンプ
-  if (( LOG_INFO_TS )); then
+  if (( LOG_SHOW_TS )); then
     # date(1) のフォークを避けてビルトインで組み立てる。%z は +0900 の形で
     # 出るため、date -Iseconds と同じ +09:00 に直す。
     local date
@@ -79,14 +80,14 @@ log::_log_emit() {
   # `bash -c` の直下のように caller が何も返さない場合がある。read は EOF で
   # 非ゼロを返すため、受け流さないと set -e の下でシェルごと落ちる。
   read -r line subroutine file < <(caller 1) || true
-  if (( LOG_INFO_FILE )) && [[ -n "$file" ]]; then
+  if (( LOG_SHOW_FILE )) && [[ -n "$file" ]]; then
     fmt_file="$(log::_fmt_filename "$file" "$LOG_ABSPATH")"
     meta+=( "${style_level}${fmt_file}:${line}${rst}" )
   fi
-  if (( LOG_INFO_FUNC )) && [[ -n "$subroutine" && "$subroutine" != 'main' ]]; then
+  if (( LOG_SHOW_FUNC )) && [[ -n "$subroutine" && "$subroutine" != 'main' ]]; then
     meta+=( "${style_level}${subroutine}${rst}" )
   fi
-  if (( LOG_INFO_CH )) && [[ -n "$ch" ]]; then
+  if (( LOG_SHOW_CH )) && [[ -n "$ch" ]]; then
     meta+=( "${style_level}[${ch}]${rst}" )
   fi
   if (( brief )); then
