@@ -9,12 +9,13 @@
 declare -gA STYLE STYLE_ERR
 
 # ログレベル
-#   4: FATAL    致命的なエラー、対応が必要
-#   3: ERROR    一般的なエラー
-#   2: WARN     知らせる必要があるが、必ずしも対応する必要がない事象
-#   1: INFO     イベント
+#   5: FATAL    スクリプトの停止を伴う致命的なエラー
+#   4: ERROR    機能が満たされない可能性がある、致命的ではないエラー
+#   3: WARN     潜在的な問題の警告
+#   2: NOTICE   異常ではないが、重要なイベント
+#   1: INFO     一般的な運用上のメッセージ
 #   0: DEBUG    開発に必要な情報
-#  -1: OFF      ログ無効
+#  -1: OFF      ログ出力無効
 # 指定のレベル以上のログは出力されます。
 # 負の値を設定することで、ログ出力を完全に抑制します。
 : "${LOG_LEVEL:=1}"
@@ -22,13 +23,14 @@ declare -gA STYLE STYLE_ERR
 # ログに表示する内容を変更
 : "${LOG_INFO_TS:=0}"
 : "${LOG_INFO_FILE:=1}"
-: "${LOG_INFO_CH:=1}"
 : "${LOG_INFO_FUNC:=1}"
+: "${LOG_INFO_CH:=1}"
 
 # スタックトレース設定
 : "${LOG_TRACE_FATAL:=1}"
 : "${LOG_TRACE_ERROR:=1}"
 : "${LOG_TRACE_WARN:=0}"
+: "${LOG_TRACE_NOTICE:=0}"
 : "${LOG_TRACE_INFO:=0}"
 : "${LOG_TRACE_DEBUG:=0}"
 
@@ -50,67 +52,78 @@ log::_fmt_filename() {
 }
 
 log::_log_emit() {
+  # format: <timestamp> [<log level>] <meta>: <body>
+  # meta format: <filename> <subroutine> [<ch>]
+
   local level="$1" style_level="$2" brief="$3" ch="$4"; shift 4
-  local line file subroutine fmt_file
+  local style_ts="${STYLE_ERR[log_timestamp]:-}" rst="${STYLE_ERR[rst]:-}"
+  local line subroutine file fmt_file level_field
+  local section_ts section_level section_meta
+  local -a meta=() # メタ情報は区切りを持たせずに集め、最後にまとめて繋ぐ。
 
-  # `bash -c` の直下のように caller が何も返さない場合がある。read は EOF で
-  # 非ゼロを返すため、受け流さないと set -e の下でシェルごと落ちる。
-  read -r line subroutine file < <(caller 1) || true
-  fmt_file="$(log::_fmt_filename "$file" "$LOG_ABSPATH")"
-
-  local style_ts="${STYLE_ERR[log_timestamp]:-}"
-  local style_ch="${STYLE_ERR[log_ch]:-}"
-  local style_file="${STYLE_ERR[log_filename]:-}"
-  local style_func="${STYLE_ERR[log_funcname]:-}"
-  local rst="${STYLE_ERR[rst]:-}"
-  local date section_ts section_level section_func section_file section_ch
-
+  # タイムスタンプ
   if (( LOG_INFO_TS )); then
     # date(1) のフォークを避けてビルトインで組み立てる。%z は +0900 の形で
     # 出るため、date -Iseconds と同じ +09:00 に直す。
+    local date
     TZ='JST-9' printf -v date '%(%FT%T%z)T' -1
     date="${date%??}:${date: -2}"
-    section_ts="${style_ts}${date}${rst}"
-    section_level=" [${style_level}${level}${rst}]"
-  else
-    section_level="${style_level}${level}${rst}:"
+    section_ts="${style_ts}${date}${rst} "
   fi
 
-  if (( LOG_INFO_FILE && LOG_INFO_CH )); then
-    section_file=" ${style_file}${fmt_file}:${line}${rst}"
-    section_ch="${ch:+[${style_ch}${ch}${rst}]} -"
-  elif (( LOG_INFO_FILE )); then
-    section_file=" ${style_file}${fmt_file}:${line}${rst} -"
-  elif (( LOG_INFO_CH )); then
-    section_ch="${ch:+ ${style_ch}${ch}${rst} -}"
-  fi
+  # ログレベル
+  # レベルは最長の NOTICE に合わせて6桁の右詰めにする。
+  # 色を付ける前に詰めないと、エスケープシーケンスの分だけ桁がずれる。
+  printf -v level_field '%6s' "$level"
+  section_level="[${style_level}${level_field}${rst}]"
 
-  if (( LOG_INFO_FUNC )); then
-    section_func=" ${style_func}${subroutine}${rst}:"
+  # メタデータ
+  section_meta=
+  # `bash -c` の直下のように caller が何も返さない場合がある。read は EOF で
+  # 非ゼロを返すため、受け流さないと set -e の下でシェルごと落ちる。
+  read -r line subroutine file < <(caller 1) || true
+  if (( LOG_INFO_FILE )) && [[ -n "$file" ]]; then
+    fmt_file="$(log::_fmt_filename "$file" "$LOG_ABSPATH")"
+    meta+=( "${style_level}${fmt_file}:${line}${rst}" )
   fi
-
+  if (( LOG_INFO_FUNC )) && [[ -n "$subroutine" && "$subroutine" != 'main' ]]; then
+    meta+=( "${style_level}${subroutine}${rst}" )
+  fi
+  if (( LOG_INFO_CH )) && [[ -n "$ch" ]]; then
+    meta+=( "${style_level}[${ch}]${rst}" )
+  fi
   if (( brief )); then
-    section_file=
-    section_ch=
-    section_func=
+    meta=()
+  fi
+  if (( ${#meta[@]} )); then
+    local IFS=' '
+    section_meta=" ${meta[*]}:"
   fi
 
-  printf '%s%s%s%s%s %s\n' \
+  # 本文
+  # 色が無効なときは style_level が空文字になる。
+  # 空のまま rst を付けると余計なリセットが1つ出るので掛けるときだけ囲む。
+  local body="$*"
+  [[ -n "$style_level" ]] && body="${style_level}${body}${rst}"
+
+  printf '%s%s%s %s\n' \
     "${section_ts:-}" \
     "$section_level" \
-    "${section_file:-}" \
-    "${section_ch:-}" \
-    "${section_func:-}" \
-    "$*" >&2
+    "$section_meta" \
+    "$body" >&2
 }
 
 log::_log_stacktrace() {
   local i=1 line subroutine file fmt_file
+
+  printf 'stacktrace:\n' >&2
+
   while read -r line subroutine file < <(caller "$i"); do
     fmt_file="$(log::_fmt_filename "$file" "$LOG_TRACE_ABSPATH")"
-    printf '  #%d %s (%s)\n' \
-      "$i" \
-      "${STYLE_ERR[log_stacktrace_function]:-}${subroutine}${STYLE_ERR[rst]:-}" \
+    # 色を付けるのは位置だけ。関数名は地の色のまま残して、追いたい行を
+    # 1色で拾えるようにする。
+    printf '    at %s(%s)\n' \
+      "$subroutine" \
       "${STYLE_ERR[log_stacktrace_location]:-}${fmt_file}:${line}${STYLE_ERR[rst]:-}" >&2
     i=$(( i + 1 ))
   done
@@ -184,32 +197,38 @@ logger() {
       --) shift; break ;;
       --fatal)
         level='FATAL'
-        level_num=4
-        style="${STYLE_ERR[fatal]:-}"
+        level_num=5
+        style="${STYLE_ERR[log_fatal]:-}"
         stacktrace="$LOG_TRACE_FATAL"
         ;;
       --error)
         level='ERROR'
-        level_num=3
-        style="${STYLE_ERR[error]:-}"
+        level_num=4
+        style="${STYLE_ERR[log_error]:-}"
         stacktrace="$LOG_TRACE_ERROR"
         ;;
-      --warning)
-        level='WARNING'
-        level_num=2
-        style="${STYLE_ERR[warning]:-}"
+      --warn | --warning)
+        level='WARN'
+        level_num=3
+        style="${STYLE_ERR[log_warn]:-}"
         stacktrace="$LOG_TRACE_WARN"
+        ;;
+      --notice)
+        level='NOTICE'
+        level_num=2
+        style="${STYLE_ERR[log_notice]:-}"
+        stacktrace="$LOG_TRACE_NOTICE"
         ;;
       --info)
         level='INFO'
         level_num=1
-        style="${STYLE_ERR[info]:-}"
+        style="${STYLE_ERR[log_info]:-}"
         stacktrace="$LOG_TRACE_INFO"
         ;;
       --debug)
         level='DEBUG'
         level_num=0
-        style="${STYLE_ERR[debug]:-}"
+        style="${STYLE_ERR[log_debug]:-}"
         stacktrace="$LOG_TRACE_DEBUG"
         ;;
       -b|--brief) brief=1 ;;

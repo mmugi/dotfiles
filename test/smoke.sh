@@ -15,6 +15,11 @@ export DOTFILES_PATH
 # 出力を安定させる
 export TERMCAP_COLOR_MODE=never
 
+# 時刻は実行ごとに、位置はこのファイルを編集するたびに変わる。書式を比べる
+# テストでは落としておき、既定で出ること自体は環境から外した子シェルで確かめる。
+export LOG_INFO_TS=0
+export LOG_INFO_FILE=0
+
 # 色の有無はテスト内で TERMCAP_COLOR_MODE で切り替える。NO_COLOR は
 # TERMCAP_COLOR_MODE より優先されるため、実行環境の値を持ち込まない。
 unset NO_COLOR
@@ -249,16 +254,150 @@ check 'LOG_LEVEL=-1 でログ無効' \
 
 check_rc 'logger はレベル指定なしで失敗する' 1 logger 'no level'
 
+# 時刻は既定で出る。このファイルは冒頭で LOG_INFO_TS=0 を export している
+# ため、既定値を見るにはそれを環境から外した子シェルが要る。
+check '既定では時刻を出さない' '1' \
+  "$(env -u LOG_INFO_TS -u LOG_INFO_FILE bash -c "
+       source '${DOTFILES_PATH}/lib/bash/import.sh'
+       import log theme
+       theme::load
+       logger --info 'hello'" 2>&1 \
+     | grep -cE '^\[  INFO\] hello$')"
+
+# 時刻を出すと行頭に付く。書式は date -Iseconds と同じ。
+check 'LOG_INFO_TS=1 で時刻が付く' '1' \
+  "$(env -u LOG_INFO_FILE LOG_INFO_TS=1 bash -c "
+       source '${DOTFILES_PATH}/lib/bash/import.sh'
+       import log theme
+       theme::load
+       logger --info 'hello'" 2>&1 \
+     | grep -cE '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]+\+[0-9:]+ \[  INFO\] hello$')"
+
+# 回帰: `bash -c` の直下では caller が何も返さない。空のまま組み立てると
+#   位置が `::`、関数名が空のメタになって、区切りだけが出ていた。
+check 'caller が空でも余計な区切りを出さない' '0' \
+  "$(env -u LOG_INFO_TS -u LOG_INFO_FILE bash -c "
+       source '${DOTFILES_PATH}/lib/bash/import.sh'
+       import log theme
+       theme::load
+       logger --info 'hello'" 2>&1 \
+     | grep -cE '\] (::|:)')"
+
 # 回帰: caller が何も返さないと read が EOF で非ゼロを返す。受け流さないと
 #   set -e の下でシェルごと落ちて、ログが1行も出なかった。
 check 'set -e 下で caller が空でも落ちない' 'AFTER' \
-  "$(bash -c "
+  "$(env -u LOG_INFO_TS -u LOG_INFO_FILE bash -c "
        set -ueo pipefail
        source '${DOTFILES_PATH}/lib/bash/import.sh'
        import log theme
        theme::load
        logger --info 'hello'
        echo 'AFTER'" 2>/dev/null)"
+
+# 既定では位置も出る。関数の中から呼べば file:line 関数 の並びになる。
+check '既定で位置が出る' '1' \
+  "$(env -u LOG_INFO_TS -u LOG_INFO_FILE bash -c "
+       source '${DOTFILES_PATH}/lib/bash/import.sh'
+       import log theme
+       theme::load
+       f() { logger --info 'hello'; }; f" 2>&1 \
+     | grep -cE '\[  INFO\] bash:[0-9]+ f: hello$')"
+
+# レベル欄は6桁の右詰めを角括弧で囲む。詰め方を変えると本文の桁がずれる。
+check 'レベル欄は6桁で揃える' '[  INFO] hello' \
+  "$(LOG_INFO_FUNC=0 logger --info 'hello' 2>&1)"
+check 'レベル欄は最長でも6桁' '[NOTICE] hello' \
+  "$(LOG_INFO_FUNC=0 logger --notice 'hello' 2>&1)"
+
+# WARNING ではなく WARN。LOG_TRACE_WARN と名前を揃える。
+check 'warning は WARN と出る' '[  WARN] hello' \
+  "$(LOG_INFO_FUNC=0 logger --warn 'hello' 2>&1)"
+check '--warning も受ける' '[  WARN] hello' \
+  "$(LOG_INFO_FUNC=0 logger --warning 'hello' 2>&1)"
+
+# 本文もメタもレベルと同じ色で塗る。レベルによる例外は設けない。
+# 行全体で比べる。シーケンスを前置した grep だと、スタイルが空のときに
+# 単なる本文検索へ退化して素通りしてしまう。
+#
+# ライブラリは「スタイルが空なら囲まない」規則なので、期待値も同じ規則で
+# 組み立てる。テーマがキーを持つ前でも後でも、同じテストが意味を持つ。
+_wrap() {
+  # _wrap <スタイル> <文字列>
+  if [[ -n "$1" ]]; then
+    printf '%s%s%s' "$1" "$2" "${STYLE_ERR[rst]}"
+  else
+    printf '%s' "$2"
+  fi
+}
+
+TERMCAP_COLOR_MODE=always theme::load
+_s_err="${STYLE_ERR[log_error]:-}"
+_s_dbg="${STYLE_ERR[log_debug]:-}"
+_s_inf="${STYLE_ERR[log_info]:-}"
+_rst="${STYLE_ERR[rst]}"
+
+# レベル欄は空スタイルでも必ず rst で閉じる。本文は囲むときだけ。
+check 'error の本文はレベル色で塗る' \
+  "[${_s_err} ERROR${_rst}] $(_wrap "$_s_err" 'BODY')" \
+  "$(LOG_TRACE_ERROR=0 LOG_INFO_FUNC=0 logger --error 'BODY' 2>&1)"
+check 'debug の本文はレベル色で塗る' \
+  "[${_s_dbg} DEBUG${_rst}] $(_wrap "$_s_dbg" 'BODY')" \
+  "$(LOG_LEVEL=0 LOG_INFO_FUNC=0 logger --debug 'BODY' 2>&1)"
+check 'info の本文もレベル色で塗る' \
+  "[${_s_inf}  INFO${_rst}] $(_wrap "$_s_inf" 'BODY')" \
+  "$(LOG_INFO_FUNC=0 logger --info 'BODY' 2>&1)"
+
+# メタ (位置・関数名・チャンネル) もレベルと同じ色で塗り、区切りは塗らない。
+# log_filename / log_ch / log_funcname の個別指定は使わない。
+_color_probe() { logger --error --ch='CH' 'BODY'; }
+# メタとレベル欄は空スタイルでも rst を出す。条件が付くのは本文だけ。
+check 'メタはレベル色、区切りは素のまま' \
+  "[${_s_err} ERROR${_rst}] ${_s_err}_color_probe${_rst} ${_s_err}[CH]${_rst}: $(_wrap "$_s_err" 'BODY')" \
+  "$(LOG_TRACE_ERROR=0 _color_probe 2>&1)"
+# トレースは位置だけ色を付ける。関数名は地の色のまま残す。
+_trace_probe() { logger --error 'boom'; }
+_trace_line="$(LOG_TRACE_ABSPATH=0 _trace_probe 2>&1 | grep -m1 '^    at ' || true)"
+check 'トレースの位置は log_stacktrace_location で塗る' '1' \
+  "$(printf '%s' "$_trace_line" \
+     | grep -cF "(${STYLE_ERR[log_stacktrace_location]}")"
+check 'トレースの関数名は塗らない' '1' \
+  "$(printf '%s' "$_trace_line" | grep -cF 'at _trace_probe(')"
+
+check 'log_funcname は参照しない' '0' \
+  "$(grep -c 'log_funcname\|log_filename\|log_ch\b' \
+       "${DOTFILES_PATH}/lib/bash/log.sh" || true)"
+theme::load
+
+# notice は warn と info の間。既定の LOG_LEVEL=1 では出て、3 では落ちる。
+check 'notice は既定で出る' '1' \
+  "$(logger --notice 'note' 2>&1 | grep -c 'note')"
+check 'notice は LOG_LEVEL=3 で落ちる' '0' \
+  "$(LOG_LEVEL=3 logger --notice 'note' 2>&1 | grep -c 'note')"
+
+# メタは 位置 関数 [ch] の順に並び、全体をコロンで本文と区切る。
+# チャンネルを末尾に置くのは、有無で後続の桁がずれないようにするため。
+_fmt_probe() { logger --info --ch='ch1' 'hello'; }
+check 'メタは 関数 [ch] の順' '[  INFO] _fmt_probe [ch1]: hello' \
+  "$(_fmt_probe 2>&1)"
+
+# 回帰: チャンネルの有無で関数名の開始桁が動かない。ch を先頭に置いていた
+#   ころは、ch の無い行だけ関数名が左に寄っていた。
+_align_probe() {
+  logger --info --ch='ch1' 'with'
+  logger --info 'without'
+}
+check 'ch の有無で関数名の桁が動かない' '2' \
+  "$(_align_probe 2>&1 | grep -c '^\[  INFO\] _align_probe')"
+
+# 回帰: 区切りを関数名に付けていたころ、関数名が出ない行では区切りごと
+#   消えて、位置が本文と地続きになっていた。
+check '関数名が無くても区切りは出る' '1' \
+  "$(LOG_INFO_FILE=1 logger --info 'hello' 2>&1 \
+     | grep -cE '^\[  INFO\] smoke\.sh:[0-9]+: hello$')"
+check 'チャンネルだけでも区切りは出る' '[  INFO] [ch1]: hello' \
+  "$(LOG_INFO_FUNC=0 logger --info --ch='ch1' 'hello' 2>&1)"
+check 'メタが無ければ区切りも出ない' '[  INFO] hello' \
+  "$(LOG_INFO_FUNC=0 logger --info 'hello' 2>&1)"
 
 # 回帰: log は theme に依存しない。core.sh を消して escseq/theme も logger を
 #   使うようにしたため、theme::load 前に logger が落ちると全体が読み込めなくなる。
