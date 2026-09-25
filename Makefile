@@ -5,11 +5,12 @@ LIB_DIR       := $(DOTFILES_ROOT)/lib
 TEST_DIR      := $(DOTFILES_ROOT)/test
 CONFIG_DIR    := $(DOTFILES_ROOT)/configs
 SHELL         := /usr/bin/env bash
+.DEFAULT_GOAL := help
 
 # sh 版の配置スクリプトを検証するシェル。存在しないものは飛ばす。
 SH_TEST_SHELLS ?= /bin/sh /bin/dash /opt/homebrew/bin/bash
 
-.DEFAULT_GOAL := help
+.SUFFIXES:
 
 ## Makefile
 .PHONY: help
