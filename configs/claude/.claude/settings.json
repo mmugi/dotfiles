@@ -33,6 +33,9 @@
     "padding": 0,
     "refreshInterval": 10
   },
+  "enabledPlugins": {
+    "ponytail@ponytail": true
+  },
   "extraKnownMarketplaces": {
     "ponytail": {
       "source": {
@@ -42,7 +45,6 @@
     }
   },
   "theme": "auto",
-  "enabledPlugins": {
-    "ponytail@ponytail": true
-  }
+  "agentPushNotifEnabled": true,
+  "inputNeededNotifEnabled": true
 }
