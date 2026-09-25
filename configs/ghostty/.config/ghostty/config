@@ -1,8 +1,6 @@
 font-size = 12
 font-feature = -dlig
 font-family = "HackGen Console NF Regular"
-#font-family = "BigBlueTermPlus Nerd Font Mono"
-#font-family = "Fusion Pixel 10px Mono ja"
 
 #theme = aura
 #theme = "Apple System Colors"
