@@ -4,12 +4,19 @@ set -ueo pipefail
 
 # shellcheck source=/dev/null
 source "${DOTFILES_PATH:?}/lib/bash/import.sh"
-import msg theme util log dotfiles
+import msg theme cmd log
 
 theme::load
-msg::init
 
-util::chk -c brew
+# Brewfile の置き場所
+DOTFILES_BREWFILE_DIR="${DOTFILES_PATH}/misc/brew"
+
+# メッセージ中の強調。色が無効なときは空文字列になり、平文がそのまま出る。
+# 強調を終えるところは base を出し直して閉じる (rst だと地の色に落ちる)。
+hl="${STYLE[msg_highlight]}"
+base="${STYLE[normal]}"
+
+cmd::check brew
 
 if [[ ! -d "$DOTFILES_BREWFILE_DIR" ]]; then
   logger --fatal "directory not found: ${DOTFILES_BREWFILE_DIR}"
@@ -65,7 +72,7 @@ if [[ "$brewfile" == 'newfile' ]]; then
   fi
 fi
 
-msg "dumping all installed packages into <hl>${brewfile}</hl>..."
+msg "dumping all installed packages into ${hl}${brewfile}${base}..."
 HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_ENV_HINTS=1 \
   brew bundle dump --file "$brewfile" --no-describe --force
 msg::ok 'successfully dumped all packages:)'
