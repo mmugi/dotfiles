@@ -1,5 +1,4 @@
 .dotignore
-__pycache__/
 
 # configs/git/.config/git/ignore と同じ内容。
 # あちらは make install で ~/.config/git/ignore に配置される global gitignore で、

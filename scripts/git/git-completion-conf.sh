@@ -3,8 +3,8 @@
 set -ueo pipefail
 
 # shellcheck source=/dev/null
-source "${DOTFILES_PATH}/lib/bash/import.sh"
-import util msg theme
+source "${DOTFILES_PATH:?}/lib/bash/import.sh"
+import cmd msg theme
 
 if [[ -t 2 ]]; then
   # termcap.sh が参照する
@@ -13,7 +13,11 @@ if [[ -t 2 ]]; then
 fi
 
 theme::load
-msg::init
+
+# メッセージ中の強調。色が無効なときは空文字列になり、平文がそのまま出る。
+# 強調を終えるところは base を出し直して閉じる (rst だと地の色に落ちる)。
+hl="${STYLE[msg_highlight]}"
+base="${STYLE[normal]}"
 
 # gitに内包される git-completion をsourceするシェル設定を生成し、標準出力に
 # そのままコピー&ペーストできる形式で出力します。
@@ -66,7 +70,7 @@ _git_completion_conf_search_dirs() {
     )
   fi
 
-  if util::chk -cq brew && brew_prefix="$(brew --prefix git 2>/dev/null)"; then
+  if command -v brew >/dev/null 2>&1 && brew_prefix="$(brew --prefix git 2>/dev/null)"; then
     dirs+=(
       "${brew_prefix}/share/git-core"
       "${brew_prefix}/etc/bash_completion.d"
@@ -185,7 +189,7 @@ stdout_is_tty=0
 [[ -t 1 ]] && stdout_is_tty=1
 
 stdout_target=
-if (( ! stdout_is_tty )) && util::chk -cq lsof; then
+if (( ! stdout_is_tty )) && command -v lsof >/dev/null 2>&1; then
   stdout_target="$(lsof -p "$$" -a -d1 -Fn 2>/dev/null | awk '/^n/ { print substr($0, 2); exit }')"
 fi
 
@@ -197,13 +201,13 @@ config=
 {
   filename="${GIT_COMPLETION_CONF_FILENAME[$shell]}"
 
-  if util::chk -c git; then
-    msg "searching for <hl>${filename}</hl>..."
+  if cmd::check git; then
+    msg "searching for ${hl}${filename}${base}..."
     if _git_completion_conf_locate "$filename"; then
-      msg "generating git-completion configuration for <hl>${shell}</hl>..."
+      msg "generating git-completion configuration for ${hl}${shell}${base}..."
       config="$(_git_completion_conf_render_bash "$GIT_COMPLETION_CONF_RESULT")"
     else
-      msg::warning "${filename} not found."
+      msg::warn "${filename} not found."
     fi
   fi
 
@@ -211,9 +215,9 @@ config=
     rc_hint="${GIT_COMPLETION_CONF_RC_HINT[$shell]}"
 
     if (( stdout_is_tty )); then
-      msg::notice "add the following lines to your <hl>${rc_hint}</hl> (or equivalent)."
+      msg::notice "add the following lines to your ${hl}${rc_hint}${base} (or equivalent)."
     elif [[ -n "$stdout_target" ]]; then
-      msg::notice "stdout is redirected to <hl>${stdout_target}</hl>. writing the generated configuration directly to it."
+      msg::notice "stdout is redirected to ${hl}${stdout_target}${base}. writing the generated configuration directly to it."
     else
       msg::notice 'stdout is redirected. writing the generated configuration directly to it.'
     fi

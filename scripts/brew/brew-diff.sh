@@ -3,13 +3,15 @@
 set -ueo pipefail
 
 # shellcheck source=/dev/null
-source "${DOTFILES_PATH}/lib/bash/import.sh"
-import msg theme util log dotfiles
+source "${DOTFILES_PATH:?}/lib/bash/import.sh"
+import msg theme cmd log
 
 theme::load
-msg::init
 
-util::chk -c brew
+# Brewfile の置き場所
+DOTFILES_BREWFILE_DIR="${DOTFILES_PATH}/misc/brew"
+
+cmd::check brew
 
 if [[ ! -d "$DOTFILES_BREWFILE_DIR" ]]; then
   logger --fatal "directory not found: ${DOTFILES_BREWFILE_DIR}"
@@ -22,7 +24,7 @@ done < <(find "$DOTFILES_BREWFILE_DIR" -type f -print0 | sort -z)
 
 msg 'searching for brewfiles...'
 if (( ${#files[@]} == 0 )); then
-  msg::warning "no files found in ${DOTFILES_BREWFILE_DIR}"
+  msg::warn "no files found in ${DOTFILES_BREWFILE_DIR}"
   exit 1
 fi
 
@@ -42,7 +44,7 @@ dump="$(
     brew bundle dump --file=- --no-describe
 )"
 
-if util::chk -cq 'git'; then
+if command -v git >/dev/null 2>&1; then
   git diff "$brewfile" <(echo "$dump") && msg::ok 'no differences.'
 else
   diff -u "$brewfile" <(echo "$dump") && msg::ok 'no differences.'
