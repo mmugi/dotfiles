@@ -7,16 +7,14 @@ DOTFILES_REPO_HTTPS='https://github.com/mmugi/dotfiles'
 
 C_WARN=''
 C_ERR=''
-C_DIM=''
 C_RST=''
 if [ -t 2 ] && [ -z "${NO_COLOR:-}" ]; then
   C_WARN=$(printf '\033[33m')
   C_ERR=$(printf '\033[31m')
-  C_DIM=$(printf '\033[2m')
   C_RST=$(printf '\033[0m')
 fi
 
-progress() { printf '%s[>]%s %s\n' "$C_DIM"  "$C_RST" "$*" >&2; }
+progress() { printf '[>] %s\n' "$*" >&2; }
 warn()     { printf '%s[!]%s %s\n' "$C_WARN" "$C_RST" "$*" >&2; }
 die()      { printf '%s[x]%s %s\n' "$C_ERR"  "$C_RST" "$*" >&2; exit 1; }
 

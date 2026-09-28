@@ -61,7 +61,7 @@ if [ -t 2 ] && [ -z "${NO_COLOR:-}" ]; then
   DEPLOY_C_RST=$(printf '\033[0m')
 fi
 
-deploy_progress() { printf '%s[>]%s %s\n' "$DEPLOY_C_DIM"  "$DEPLOY_C_RST" "$*" >&2; }
+deploy_progress() { printf '[>] %s\n' "$*" >&2; }
 deploy_created()  { printf '%s[+]%s %s\n' "$DEPLOY_C_OK"   "$DEPLOY_C_RST" "$*" >&2; }
 deploy_removed()  { printf '%s[-]%s %s\n' "$DEPLOY_C_OK"   "$DEPLOY_C_RST" "$*" >&2; }
 deploy_skipped()  { printf '%s[=]%s %s\n' "$DEPLOY_C_DIM"  "$DEPLOY_C_RST" "$*" >&2; }
@@ -337,7 +337,7 @@ deploy_report_ignored() {
   printf '%s\n' "$ignored" | while IFS= read -r ign_dst; do
     deploy_skipped "ignored: $(deploy_tilde "$ign_dst")"
   done
-  deploy_skipped "${ign_count} path(s) ignored by .dotignore"
+  deploy_progress "${ign_count} path(s) ignored by .dotignore"
   return 0
 }
 
