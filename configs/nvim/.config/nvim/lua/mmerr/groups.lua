@@ -95,7 +95,7 @@ function M.setup(palette)
     -- cursorinfo
     CursorInfo = { fg = palette.lavender },
     CursorInfoInsert = { fg = palette.pink, italic = true },
-    CursorInfoVisual = { fg = palette.neon_green, italic = true },
+    CursorInfoVisual = { fg = palette.purple, italic = true },
     CursorInfoReplace = { fg = palette.tarquoise, italic = true },
   }
 end
