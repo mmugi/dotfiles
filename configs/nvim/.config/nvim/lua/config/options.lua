@@ -22,7 +22,7 @@ vim.opt.background = "dark"
 vim.opt.termguicolors = true
 vim.opt.cursorcolumn = true
 vim.opt.cursorline = true
-vim.opt.cursorlineopt = "number"
+vim.opt.cursorlineopt = "both"
 
 -- 6 multiple windows
 vim.opt.laststatus = 3

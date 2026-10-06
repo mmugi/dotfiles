@@ -18,8 +18,8 @@ function M.setup(palette)
     EndOfBuffer = { link = "LineNr" },
 
     -- cursor line
-    CursorLine = { bg = palette.dark_purple },
-    CursorColumn = { link = "CursorLine" },
+    CursorLine = { underline = true, sp = palette.purple },
+    CursorColumn = { bg = palette.dark_purple },
 
     -- sign
     SignColumn = { fg = palette.neon_pink },
