@@ -93,7 +93,6 @@ function M.setup(palette)
     InclineModified = { fg = palette.neon_pink },
 
     -- cursorinfo
-    CursorInfo = { fg = palette.lavender },
     CursorInfoInsert = { fg = palette.pink, italic = true },
     CursorInfoVisual = { fg = palette.purple, italic = true },
     CursorInfoReplace = { fg = palette.tarquoise, italic = true },

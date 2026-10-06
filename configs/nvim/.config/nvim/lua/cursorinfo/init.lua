@@ -9,7 +9,6 @@ local state = {
 
 local default_config = {
   highlights = {
-    CursorInfo = { link = "Comment", default = true },
     CursorInfoInsert = { link = "ModeMsg", default = true },
     CursorInfoVisual = { link = "ModeMsg", default = true},
     CursorInfoReplace = { link = "ModeMsg", default = true },
@@ -44,8 +43,6 @@ local function update()
 
   local line = vim.fn.line(".")
   local mode = vim.fn.mode()
-  local row, col = unpack(vim.api.nvim_win_get_cursor(0))
-  local total_lines = vim.api.nvim_buf_line_count(buf_id)
   local mode_text = nil
   local mode_text_hl = nil
 
@@ -78,13 +75,6 @@ local function update()
     mode_text = ""
   end
 
-  local text = string.format(
-    " %d/%d:%d ",
-    row,
-    total_lines,
-    col + 1
-  )
-
   vim.api.nvim_buf_set_extmark(
     buf_id,
     ns_id,
@@ -93,7 +83,6 @@ local function update()
     {
       virt_text = {
         { mode_text, mode_text_hl },
-        --{ text, "CursorInfo" },
       },
       virt_text_pos = "eol",
     }
@@ -161,7 +150,6 @@ function M.setup(opts)
   vim.api.nvim_create_user_command("CursorInfoDisable", M.disable, {})
   vim.api.nvim_create_user_command("CursorInfoToggle", M.toggle, {})
 
-  vim.api.nvim_set_hl(0, "CursorInfo", config.highlights.CursorInfo)
   vim.api.nvim_set_hl(0, "CursorInfoInsert", config.highlights.CursorInfoInsert)
   vim.api.nvim_set_hl(0, "CursorInfoVisual", config.highlights.CursorInfoVisual)
   vim.api.nvim_set_hl(0, "CursorInfoReplace", config.highlights.CursorInfoReplace)
