@@ -51,7 +51,7 @@ local function update()
   if mode:match("^i") then
     mode_text = " <<INSERT"
     mode_text_hl = "CursorInfoInsert"
-  elseif mode:match("[vV\22]") then
+  elseif mode:match("^[vV\22]") then
     local wc = vim.fn.wordcount()
     local visual_text = nil
 
