@@ -12,6 +12,7 @@ local default_config = {
     CursorInfo = { link = "Comment", default = true },
     CursorInfoInsert = { link = "ModeMsg", default = true },
     CursorInfoVisual = { link = "ModeMsg", default = true},
+    CursorInfoReplace = { link = "ModeMsg", default = true },
   },
 }
 
@@ -51,6 +52,9 @@ local function update()
   if mode:match("^i") then
     mode_text = " <<INSERT"
     mode_text_hl = "CursorInfoInsert"
+  elseif mode:match("^R") then
+    mode_text = " <<REPLACE"
+    mode_text_hl = "CursorInfoReplace"
   elseif mode:match("^[vV\22]") then
     local wc = vim.fn.wordcount()
     local visual_text = nil
@@ -160,6 +164,7 @@ function M.setup(opts)
   vim.api.nvim_set_hl(0, "CursorInfo", config.highlights.CursorInfo)
   vim.api.nvim_set_hl(0, "CursorInfoInsert", config.highlights.CursorInfoInsert)
   vim.api.nvim_set_hl(0, "CursorInfoVisual", config.highlights.CursorInfoVisual)
+  vim.api.nvim_set_hl(0, "CursorInfoReplace", config.highlights.CursorInfoReplace)
 end
 
 return M
