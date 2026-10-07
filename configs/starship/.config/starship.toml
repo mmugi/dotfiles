@@ -1,22 +1,24 @@
 # starship configs
 
 format = """
+$time\
 ($username(@$hostname):)\
 $directory\
 $git_branch\
 $git_status\
 $git_commit\
 $git_state\
-$time\
 (\
   (${env_var.KUBECTL_ENV} )\
 )\
 $battery\
 $shlvl\
+$character\
+"""
+
+right_format = """
 $cmd_duration\
 $status\
-$line_break\
-$character\
 """
 
 add_newline = false
@@ -27,8 +29,8 @@ charging_symbol = '🔌'
 discharging_symbol = '🪫'
 
 [character]
-success_symbol = '[>](bold green)'
-error_symbol = '[>](bold red)'
+success_symbol = '[>](purple)'
+error_symbol = '[>](red)'
 
 [cmd_duration]
 format = '⌛[$duration]($style) '
@@ -38,7 +40,7 @@ style = 'purple'
 truncation_length = 0
 truncation_symbol = '…/'
 truncate_to_repo = false
-style = 'purple'
+style = 'none'
 
 [env_var.KUBECTL_ENV]
 format = '[$env_value]($style)'
@@ -54,9 +56,8 @@ asia-northeast1 = 'tokyo'
 asia-northeast2 = 'osaka'
 
 [git_branch]
-format = '[$symbol$branch]($style)'
-symbol = ''
-style = 'gray'
+format = '[$branch]($style)'
+style = 'dimmed'
 
 [git_commit]
 commit_hash_length = 7
@@ -123,16 +124,17 @@ style = 'purple'
 
 [status]
 disabled = false
-format = '[$symbol$status(:$common_meaning$signal_name$maybe_int)]($style) '
+format = '[$status(:$common_meaning$signal_name)]($style) '
+pipestatus_format = '\[$pipestatus\] '
+pipestatus_segment_format = ' [$status(:$common_meaning$signal_name)]($style) '
 style = 'bold red'
-symbol = '🔥'
 pipestatus = true
 map_symbol = true
 
 [time]
 disabled = false
 format = '[$time]($style) '
-style = 'gray'
+style = 'dimmed'
 time_format = '%Y-%m-%dT%H:%M:%S'
 utc_time_offset = '+9'
 
