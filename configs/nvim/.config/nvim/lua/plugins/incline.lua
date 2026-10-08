@@ -41,6 +41,22 @@ return {
       return mini_icons.get(filestat.type, filename)
     end
 
+    vim.api.nvim_create_autocmd("FileChangedShell", {
+      callback = function(args)
+        if vim.v.fcs_reason == "conflict" then
+          vim.b[args.buf].incline_conflict = true
+        end
+        -- keep nvim's own warning and prompt
+        vim.v.fcs_choice = "ask"
+      end,
+    })
+
+    vim.api.nvim_create_autocmd({ "BufReadPost", "BufWritePost" }, {
+      callback = function(args)
+        vim.b[args.buf].incline_conflict = nil
+      end,
+    })
+
     local function get_cursor_info(props)
       if not cursor_info then
         return nil
@@ -93,6 +109,7 @@ return {
 
       local icon, icon_hl = get_icon(filepath)
       local modified = vim.bo[props.buf].modified
+      local conflict = vim.b[props.buf].incline_conflict
       local cursor_info = get_cursor_info(props)
       local mode, mode_hl = get_mode(props)
 
@@ -100,6 +117,7 @@ return {
         icon and { " ", icon, group = icon_hl } or "",
         { " ", filename, gui = modified and "italic" or "" },
         modified and { "*", group = "InclineModified" } or "",
+        conflict and { " CONFLICT!", group = "InclineConflict" } or "",
         cursor_info and { cursor_info, group = "LineNr" } or "",
         mode and { mode, group = mode_hl } or "",
       }
