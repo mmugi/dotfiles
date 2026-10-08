@@ -65,13 +65,13 @@ return {
       local cursor = vim.api.nvim_win_get_cursor(props.win)
       local row = cursor[1]
       local col = cursor[2] + 1
-      local total_lines = vim.fn.line("$")
+      local total_rows = vim.fn.line("$")
 
       return string.format(
         " [%d/%d:%d]",
         row,
-        col,
-        total_lines
+        total_rows,
+        col
       )
     end
 
