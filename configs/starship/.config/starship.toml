@@ -132,7 +132,7 @@ pipestatus = true
 map_symbol = true
 
 [time]
-disabled = false
+disabled = true
 format = '[$time]($style) '
 style = 'dimmed'
 time_format = '%Y-%m-%dT%H:%M:%S'
