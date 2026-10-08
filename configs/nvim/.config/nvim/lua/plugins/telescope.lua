@@ -31,6 +31,7 @@ return {
     { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
   },
   keys = {
+    { "<leader><leader>", "<cmd>Telescope buffers<cr>", desc = "Telescope buffers", mode = "n" },
     { "<leader>ft", "<cmd>Telescope builtin<cr>", desc = "Telescope builtin pickers", mode = "n" },
     { "<leader>fg", "<cmd>Telescope live_grep<cr>", desc = "Telescope live grep", mode = "n" },
     { "<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Telescope find files", mode = "n" },

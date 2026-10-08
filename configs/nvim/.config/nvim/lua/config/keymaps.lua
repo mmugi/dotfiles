@@ -9,6 +9,7 @@ vim.keymap.set('x', 'p', '"_dP')
 vim.keymap.set('n', '<leader>n', '<cmd>tabnext<cr>')
 vim.keymap.set('n', '<leader>p', '<cmd>tabprevious<cr>')
 vim.keymap.set("n", '<leader>bd', '<cmd>enew | bd#<cr>')
+vim.keymap.set('n', '<leader><leader>', '<cmd>buffers<cr>')
 
 vim.keymap.set('c', '<c-w>', '<c-f>', { desc = 'Open command line winodw' })
 vim.keymap.set('c', '<c-b>', '<left>', { desc = 'Emacs like left' })
