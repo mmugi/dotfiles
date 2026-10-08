@@ -65,7 +65,7 @@ return {
       local cursor = vim.api.nvim_win_get_cursor(props.win)
       local row = cursor[1]
       local col = cursor[2] + 1
-      local total_rows = vim.fn.line("$")
+      local total_rows = vim.api.nvim_buf_line_count(props.buf)
 
       return string.format(
         " [%d/%d:%d]",
