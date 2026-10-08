@@ -26,8 +26,8 @@ git-completion-conf: ## Generate git-completion shell config (default bash; TARG
 
 ## Shell
 .PHONY: shell-prompt-conf
-shell-prompt-conf: ## Generate shell prompt config (default bash; TARGET_SHELL to override).
-	@$(SCRIPT_DIR)/shell/generate-prompt-conf.sh --shell $(or $(TARGET_SHELL),bash)
+shell-prompt-conf: ## Generate bash prompt config.
+	@$(SCRIPT_DIR)/shell/generate-prompt-conf.sh
 
 ## Homebrew
 .PHONY: brew-diff brew-dump
