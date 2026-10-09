@@ -38,22 +38,12 @@ style = 'purple'
 
 [directory]
 truncation_length = 0
-truncation_symbol = '…/'
 truncate_to_repo = false
 style = 'none'
 
 [env_var.KUBECTL_ENV]
 format = '[$env_value]($style)'
 style = 'pink'
-
-[gcloud]
-disabled = true
-format = '[$symbol$active]($style) '
-symbol = '☁️'
-
-[gcloud.region_aliases]
-asia-northeast1 = 'tokyo'
-asia-northeast2 = 'osaka'
 
 [git_branch]
 format = '[$branch]($style)'
@@ -129,7 +119,6 @@ pipestatus_format = '\[$pipestatus\] '
 pipestatus_segment_format = ' [$status(:$common_meaning$signal_name)]($style) '
 style = 'bold red'
 pipestatus = true
-map_symbol = true
 
 [time]
 disabled = true
