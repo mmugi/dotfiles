@@ -57,7 +57,7 @@ find_git_prompt() {
 
 generate_prompt_conf() {
   local mode="$1"
-  local default_ps1='\w\[\e[38;2;148;140;243m\] >\[\e[m\] '
+  local default_ps1='[\D{%FT%T%z}] \u@\h \w \[\e[38;2;148;140;243m\]>\[\e[m\] '
 
   case "$mode" in
     default)
@@ -83,7 +83,7 @@ if [[ -r ${prompt_path} ]]; then
   export GIT_PS1_SHOWUNTRACKEDFILES=1
   export GIT_PS1_SHOWUPSTREAM='auto'
 
-  export PS1='\w\$(__git_ps1 "\[\e[2m\] (%s)\[\e[22m\]")\[\e[38;2;148;140;243m\] >\[\e[m\] '
+  export PS1='[\D{%FT%T%z}] \u@\h \w\$(__git_ps1 " \[\e[2m\](%s)\[\e[22m\]") \[\e[38;2;148;140;243m\]>\[\e[m\] '
 else
   export PS1='${default_ps1}'
 fi
