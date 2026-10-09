@@ -1,0 +1,15 @@
+# Sourced from ~/.bashrc. Keep host-specific settings in ~/.bashrc itself.
+
+# aliases
+alias ll='ls -AFlh'
+
+# completion
+if [[ -z ${BASH_COMPLETION_VERSINFO-} ]]; then
+  for f in /opt/homebrew/etc/profile.d/bash_completion.sh /usr/share/bash-completion/bash_completion; do
+    [[ -r $f ]] && { . "$f"; break; }
+  done
+  unset f
+fi
+
+# starship
+command -v starship >/dev/null && eval "$(starship init bash)"

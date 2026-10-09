@@ -25,9 +25,11 @@ git-completion-conf: ## Generate git-completion shell config (default bash; TARG
 	@$(SCRIPT_DIR)/git/git-completion-conf.sh --shell $(or $(TARGET_SHELL),bash)
 
 ## Shell
-.PHONY: shell-prompt-conf
+.PHONY: shell-prompt-conf shell-enable
 shell-prompt-conf: ## Generate bash prompt config.
 	@$(SCRIPT_DIR)/shell/generate-prompt-conf.sh
+shell-enable: ## Enable the dotfiles shell config from ~/.<shell>rc (TARGET_SHELL=bash|zsh required).
+	@$(SCRIPT_DIR)/shell/shell-enable.sh $(TARGET_SHELL)
 
 ## Homebrew
 .PHONY: brew-diff brew-dump

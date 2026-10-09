@@ -1,0 +1,12 @@
+# Sourced from ~/.zshrc. Keep host-specific settings in ~/.zshrc itself.
+
+# aliases
+alias ll='ls -AFhl'
+
+# completion
+if (( ! $+functions[compdef] )); then
+  autoload -Uz compinit && compinit
+fi
+
+# starship
+command -v starship >/dev/null && eval "$(starship init zsh)"
