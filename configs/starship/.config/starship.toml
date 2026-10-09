@@ -131,3 +131,4 @@ utc_time_offset = '+9'
 format = '[$user]($style)'
 show_always = false
 style_user = 'none'
+style_root = 'bold red'
