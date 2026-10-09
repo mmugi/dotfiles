@@ -18,7 +18,9 @@ help: ## Show this help message.
 	@$(SCRIPT_DIR)/make/help.sh "$(MAKEFILE)"
 
 ## Git
-.PHONY: git-sign git-completion-conf
+.PHONY: git-enable git-sign git-completion-conf
+git-enable: ## Enable the dotfiles git config from the global git config.
+	@$(SCRIPT_DIR)/git/git-enable.sh
 git-sign: ## Configure git commit signing settings.
 	@$(SCRIPT_DIR)/git/git-sign.sh
 git-completion-conf: ## Generate git-completion shell config (default bash; TARGET_SHELL to override).
