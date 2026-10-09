@@ -83,6 +83,16 @@ Each line is matched literally against the deployment path relative to your home
 
 Blank lines and lines starting with `#` are ignored.
 
+### > Enabling Configuration Files
+
+Some deployed configuration files are not read by anything on their own. They take effect only once the tool's main configuration file includes them, and each target below adds that include:
+
+| Target | Appends to |
+| --- | --- |
+| `make shell-enable TARGET_SHELL=bash` | `~/.bashrc` |
+| `make shell-enable TARGET_SHELL=zsh` | `~/.zshrc` |
+| `make git-enable` | The global git config, usually `~/.gitconfig` |
+
 ## Uninstallation
 
 To remove the installed dotfiles:
