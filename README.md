@@ -11,35 +11,19 @@ export DOTFILES_PATH="${HOME}/.dotfiles"
 curl https://raw.githubusercontent.com/mmugi/dotfiles/HEAD/install.sh | sh
 ```
 
-The script downloads this repository into that directory when it is not there yet, then deploys everything.
+The script downloads this repository there if it is missing, then creates symlinks in your home directory to the files under `configs/`. Missing intermediate directories are created with permission `700`. A directory that would end up empty is not created.
 
-Keep `DOTFILES_PATH` exported in your shell configuration. It names the installation to operate on rather than the location of any one checkout, so `uninstall.sh` and the scripts under `scripts/` read it instead of deriving a path, and fail when it is not set.
+Every destination is checked before anything is deployed. If one is already occupied, the installation reports it and stops without touching your files.
 
-### > Configuration Layout
+Keep `DOTFILES_PATH` exported in your shell configuration. `uninstall.sh` and the scripts under `scripts/` fail when it is not set.
 
-Configuration files live under `configs/`, one directory per package. Within a package, files are laid out exactly as they should appear relative to your home directory:
+### > Usage
 
-```plaintext
-configs
-├── git
-│   └── .config
-│       └── git
-│           └── config
-└── vim
-    └── .vimrc
-```
+#### Options
 
-`install.sh` walks every package and deploys each entry to the matching path under your home directory. Regular files become symlinks back into this repository, so editing a deployed file edits the file here. Missing intermediate directories are created with permission `700`. A directory that would end up holding nothing is not created at all.
+Both `install.sh` and `uninstall.sh` take the same options:
 
-Every package is checked before anything is deployed. If a destination is already occupied, the installation reports it and stops without touching your files.
-
-### > Installation Options
-
-#### Command Line
-
-Both `install.sh` and `uninstall.sh` take the same flags:
-
-| Flag | Description |
+| Option | Description |
 | --- | --- |
 | `-n`, `--dry-run` | Report what would happen without changing anything. |
 | `-v`, `--verbose` | Also report the paths that were left untouched, and why. |
@@ -47,27 +31,17 @@ Both `install.sh` and `uninstall.sh` take the same flags:
 
 By default only the paths that actually changed are reported. `--verbose` adds the ones that were skipped, such as a directory that already exists or a file excluded by `.dotignore`.
 
-#### Exit Status
-
-| Status | Meaning |
-| --- | --- |
-| `0` | Finished with nothing left to do. |
-| `1` | Stopped before touching anything: bad usage, missing `DOTFILES_PATH`, or a conflict found during the check. |
-| `2` | Ran, but something was left behind: a path that could not be placed, or one that is not owned by this repository. |
-
 #### Environment Variables
-
-You can customize the installation behavior by setting the following environment variables:
 
 | Variable | Description |
 | --- | --- |
-| `DOTFILES_PATH` | Where the dotfiles live. **Required**; there is no default. |
+| `DOTFILES_PATH` | Where the dotfiles live. Required. |
 | `DOTFILES_BRANCH` | Which branch to download (e.g. `dev`). Defaults to `trunk`. Only used when the repository is not there yet. |
 | `DOTFILES_IGNOREFILE` | Where the ignore list lives. Defaults to `${DOTFILES_PATH}/.dotignore`. |
 
 #### Ignoring Configuration Files
 
-If you prefer to keep your existing files, add a `.dotignore` file to your dotfiles directory listing the paths to skip:
+List the paths to skip in `.dotignore` in your dotfiles directory:
 
 ```plaintext
 # vim
@@ -79,13 +53,13 @@ If you prefer to keep your existing files, add a `.dotignore` file to your dotfi
 .config/nvim/
 ```
 
-Each line is matched literally against the deployment path relative to your home directory, anchored at the beginning, so `.` and `*` have no special meaning. It is a plain prefix: `.vim` would also match `.vimrc`, so add a trailing `/` when you mean a directory.
+Each line is a literal prefix of the path relative to your home directory. `.` and `*` have no special meaning, and `.vim` also matches `.vimrc`, so end a directory with `/`.
 
 Blank lines and lines starting with `#` are ignored.
 
 ### > Enabling Configuration Files
 
-Some deployed configuration files are not read by anything on their own. They take effect only once the tool's main configuration file includes them, and each target below adds that include:
+Some deployed configuration files are not read by anything on their own. They take effect only once the tool's main configuration file includes them. To use one, run its target below to add that include:
 
 | Target | Appends to |
 | --- | --- |
@@ -103,13 +77,27 @@ To remove the installed dotfiles:
 
 This removes the symlinks that the install process created, along with any directories left empty afterwards. The configuration files themselves live in this repository and are not deleted.
 
-**Uninstall with the same `DOTFILES_PATH` that was used to install.** Ownership is decided by comparing the symlink target against the path this repository would deploy, so after moving this repository elsewhere the old links are no longer seen as owned by it and are reported instead of removed.
+Uninstall with the same `DOTFILES_PATH` that was used to install. If this repository has moved, the old links are reported instead of removed.
 
 Anything that is not a symlink owned by this repository is left untouched and reported with a warning.
 
+## Configuration Layout
+
+Configuration files live under `configs/`, one directory per package. Within a package, files are laid out exactly as they should appear relative to your home directory:
+
+```plaintext
+configs
+├── git
+│   └── .config
+│       └── git
+│           └── config
+└── vim
+    └── .vimrc
+```
+
 ## Assorted Scripts
 
-The scripts under `scripts/` handle everything other than deploying. `make` wraps them for convenience, and lists what is available:
+The scripts under `scripts/` handle everything other than deploying. `make` runs them and lists what is available:
 
 ```shell
 cd "$DOTFILES_PATH" && make help
