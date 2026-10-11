@@ -2,21 +2,7 @@ font-size = 12
 font-feature = -dlig
 font-family = "HackGen Console NF Regular"
 
-#theme = aura
-#theme = "Apple System Colors"
-#theme = Carbonfox
-#theme = Cyberdyne
-#theme = Cyberpunk
-#theme = CyberpunkScarletProtocol
-#theme = "Electron Highlighter"
-#theme = "HaX0R BLUE"
-#theme = "Havn Skumring"
-#theme = Heeler
-#theme = Lavandula
-#theme = "Nocturnal Winter"
-theme = Rebecca
-#theme = "Shades Of Purple"
-#theme = Sugarplum
+theme = mmerr
 
 cursor-style = block
 cursor-style-blink = true
