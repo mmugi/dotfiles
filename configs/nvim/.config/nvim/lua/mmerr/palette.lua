@@ -3,7 +3,7 @@ return {
   fg = "#eff7fe",
   white = "#eff7fe",
   black = "#050a15",
-  gray = "#5e6164",
+  gray = "#6e7174",
   light_gray = "#b3bbc4",
   dark_gray = "#3e4245",
   light_gray = "#919ba1",
