@@ -45,7 +45,7 @@ function M.setup(palette)
     -- status line
     StatusLine = { link = "Normal" },
     StatusLineNC = { link = "StatusLine" },
-    StatusLineTerm = { fg = palette.black, bg = palette.tarquoise },
+    StatusLineTerm = { fg = palette.black, bg = palette.turquoise },
     StatusLineTermNC = { link = "StatusLineTerm" },
 
     -- float
@@ -62,7 +62,7 @@ function M.setup(palette)
     PmenuExtra = { link = "Pmenu" },
     PmenuExtraSel = { link = "PmenuSel" },
     PmenuSbar = { link = "Pmenu" },
-    PmenuThumb = { bg = palette.tarquoise },
+    PmenuThumb = { bg = palette.turquoise },
     PmenuBorder = { link = "Pmenu" },
 
     -- syntax
@@ -96,7 +96,7 @@ function M.setup(palette)
     -- cursorinfo
     CursorInfoInsert = { fg = palette.pink, italic = true },
     CursorInfoVisual = { fg = palette.purple, italic = true },
-    CursorInfoReplace = { fg = palette.tarquoise, italic = true },
+    CursorInfoReplace = { fg = palette.turquoise, italic = true },
   }
 end
 

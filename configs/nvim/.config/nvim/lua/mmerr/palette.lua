@@ -20,5 +20,5 @@ return {
   yellow = "#fcdc00",
   neon_green = "#c7f761",
   mint_green = "#c9f9dc",
-  tarquoise = "#0becca",
+  turquoise = "#0becca",
 }
