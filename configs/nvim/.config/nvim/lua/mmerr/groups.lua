@@ -2,6 +2,9 @@ local M = {}
 
 function M.setup(palette)
   return {
+    -- customs
+    ErrTrailingWhitespace = { fg = palette.white, bg = palette.red },
+
     -- editor (help highlight-groups)
     Normal = { fg = palette.fg, bg = palette.bg },
     NormalNC = { link = "Normal" },
@@ -115,12 +118,39 @@ function M.setup(palette)
     DiagnosticInfo = { fg = palette.blue },
     DiagnosticHint = { fg = palette.periwinkle },
     DiagnosticOk = { fg = palette.turquoise },
+
+    DiagnosticVirtualTextError = { link = "DiagnosticError" },
+    DiagnosticVirtualTextWarn = { link = "DiagnosticWarn" },
+    DiagnosticVirtualTextInfo = { link = "DiagnosticInfo" },
+    DiagnosticVirtualTextHint = { link = "DiagnosticHint" },
+    DiagnosticVirtualTextOk = { link = "DiagnosticOk" },
+
+    DiagnosticVirtualLinesError = { link = "DiagnosticError" },
+    DiagnosticVirtualLinesWarn = { link = "DiagnosticWarn" },
+    DiagnosticVirtualLinesInfo = { link = "DiagnosticInfo" },
+    DiagnosticVirtualLinesHint = { link = "DiagnosticHint" },
+    DiagnosticVirtualLinesOk = { link = "DiagnosticOk" },
+
     DiagnosticUnderlineError = { undercurl = true, sp = palette.red },
     DiagnosticUnderlineWarn = { undercurl = true, sp = palette.yellow },
     DiagnosticUnderlineInfo = { undercurl = true, sp = palette.blue },
     DiagnosticUnderlineHint = { undercurl = true, sp = palette.periwinkle },
     DiagnosticUnderlineOk = { undercurl = true, sp = palette.turquoise },
+
+    DiagnosticFloatingError = { link = "DiagnosticError" },
+    DiagnosticFloatingWarn = { link = "DiagnosticWarn" },
+    DiagnosticFloatingInfo = { link = "DiagnosticInfo" },
+    DiagnosticFloatingHint = { link = "DiagnosticHint" },
+    DiagnosticFloatingOk = { link = "DiagnosticOk" },
+
+    DiagnosticSignError = { link = "DiagnosticError" },
+    DiagnosticSignWarn = { link = "DiagnosticWarn" },
+    DiagnosticSignInfo = { link = "DiagnosticInfo" },
+    DiagnosticSignHint = { link = "DiagnosticHint" },
+    DiagnosticSignOk = { link = "DiagnosticOk" },
+
     DiagnosticDeprecated = { strikethrough = true, sp = palette.red },
+    DiagnosticUnnecessary = { link = "Comment" },
 
     -- syntax (help group-name)
     Comment = { fg = palette.gray },
@@ -180,9 +210,6 @@ function M.setup(palette)
     -- tree-sitter
     ["@variable"] = { fg = palette.fg },
     ["@constructor.lua"] = { link = "Delimiter" },
-
-    -- customs
-    ErrTrailingWhitespace = { fg = palette.white, bg = palette.red },
 
     -- telescope
     TelescopeNormal = { link = "NormalFloat" },
