@@ -21,6 +21,9 @@ function M.setup(palette)
     CursorLine = { underline = true, sp = palette.purple },
     CursorColumn = { bg = palette.dark_purple },
 
+    -- match paren
+    MatchParen = { fg = palette.white, bg = palette.blue_purple, bold = true },
+
     -- sign
     SignColumn = { fg = palette.neon_pink },
     CursorLineSign = { link = "SignColumn" },
@@ -51,6 +54,9 @@ function M.setup(palette)
     -- float
     NormalFloat = { link = "Normal" },
     FloatBorder = { link = "NormalFloat" },
+
+    -- title
+    Title = { fg = palette.skyblue, bold = true },
 
     -- pmenu
     Pmenu = { link = "Normal" },
