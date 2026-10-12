@@ -65,9 +65,48 @@ function M.setup(palette)
     PmenuThumb = { bg = palette.turquoise },
     PmenuBorder = { link = "Pmenu" },
 
-    -- syntax
-    NonText = { fg = palette.lavender },
+    -- syntax (help group-name)
+    Comment = { fg = palette.gray },
+
+    Constant = { fg = palette.turquoise },
+    String = { fg = palette.purple },
+    Character = { link = "String" },
+
+    Identifier = { fg = palette.fg },
+    Function = { fg = palette.fg },
+
+    Statement = { fg = palette.fg },
+    Operator = { fg = palette.fg },
+
+    PreProc = { fg = palette.pink },
+
+    Type = { fg = palette.fg },
+
+    Special = { fg = palette.blue },
+    Delimiter = { fg = palette.fg },
+    SpecialComment = { fg = palette.gray, italic = true, bold = true },
+    Debug = { fg = palette.lavender },
+
+    Underlined = { underline = true },
     Error = { fg = palette.scarlet },
+    Todo = { fg = palette.black, bg = palette.yellow, bold = true },
+
+    Added = { fg = palette.turquoise },
+    Changed = { fg = palette.pink },
+    Removed = { fg = palette.red },
+
+    NonText = { fg = palette.lavender },
+
+    -- syntax (sh)
+    shCommandSub = { fg = palette.fg },
+    shArithmetic = { fg = palette.fg },
+
+    -- syntax (python)
+    pythonDecoratorName = { link = "Define" },
+
+    -- tree-sitter
+    ["@variable"] = { fg = palette.fg },
+    ["@constructor.lua"] = { link = "Delimiter" },
 
     -- customs
     ErrTrailingWhitespace = { fg = palette.white, bg = palette.red },
