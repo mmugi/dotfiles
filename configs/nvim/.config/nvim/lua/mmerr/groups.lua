@@ -66,7 +66,7 @@ function M.setup(palette)
     ErrorMsg = { fg = palette.red },
     WarningMsg = { fg = palette.yellow },
     OkMsg = { fg = palette.turquoise },
-    MoreMsg = { fg = palette.fg, bold = true },
+    MoreMsg = { fg = palette.mint_green, bold = true },
     ModeMsg = { fg = palette.fg, bold = true },
     Question = { fg = palette.neon_green },
     StderrMsg = { link = "ErrorMsg" },
