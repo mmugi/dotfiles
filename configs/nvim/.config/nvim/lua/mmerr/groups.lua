@@ -40,6 +40,13 @@ function M.setup(palette)
     StatusLineTerm = { fg = palette.black, bg = palette.turquoise },
     StatusLineTermNC = { link = "StatusLineTerm" },
 
+    ErrorMsg = { fg = palette.red },
+    WarningMsg = { fg = palette.yellow },
+    OkMsg = { fg = palette.turquoise },
+    MoreMsg = { fg = palette.fg, bold = true },
+    ModeMsg = { fg = palette.fg, bold = true },
+    Question = { fg = palette.neon_green },
+
     NormalFloat = { link = "Normal" },
     FloatBorder = { link = "NormalFloat" },
     Title = { fg = palette.skyblue, bold = true },
