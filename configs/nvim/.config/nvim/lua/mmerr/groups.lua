@@ -152,6 +152,18 @@ function M.setup(palette)
     DiagnosticDeprecated = { strikethrough = true, sp = palette.red },
     DiagnosticUnnecessary = { link = "Comment" },
 
+    -- lsp (help lsp-highlight)
+    LspReferenceText = { bg = palette.dim_purple },
+    LspReferenceRead = { link = "LspReferenceText" },
+    LspReferenceWrite = { link = "LspReferenceText" },
+    LspReferenceTarget = { link = "LspReferenceText" },
+
+    LspInlayHint = { link = "NonText" },
+    LspCodeLens = { link = "NonText" },
+    LspCodeLensSeparator = { link = "LspCodeLens" },
+
+    LspSignatureActiveParameter = { link = "Visual" },
+
     -- syntax (help group-name)
     Comment = { fg = palette.gray },
 
