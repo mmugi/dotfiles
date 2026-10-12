@@ -24,7 +24,17 @@ return {
     vim.opt.fillchars = { stl = "─", stlnc = "─" }
     vim.opt.ruler = false
     vim.opt.showmode = false
-    vim.api.nvim_set_hl(0, "StatusLine", { link = "WinSeparator" })
+
+    -- ステータスラインを上下分割の区切り線として使う。
+    -- ステータスラインのハイライトグループ群を WinSeparator にリンクする。
+    local function link_statusline()
+      for _, group in ipairs({ "StatusLine", "StatusLineNC", "StatusLineTerm", "StatusLineTermNC" }) do
+        vim.api.nvim_set_hl(0, group, { link = "WinSeparator" })
+      end
+    end
+    link_statusline()
+    -- カラースキームを読み直すとリンクがリセットされるのでautocmdでリンクし直す
+    vim.api.nvim_create_autocmd("ColorScheme", { callback = link_statusline })
 
     local _, mini_icons = pcall(require, "mini.icons")
     local function get_icon(filepath)
