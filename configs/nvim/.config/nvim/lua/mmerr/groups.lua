@@ -26,6 +26,8 @@ function M.setup(palette)
     FoldColumn = { link = "SignColumn" },
     CursorLineFold = { link = "SignColumn" },
 
+    Directory = { fg = palette.blue },
+
     WinSeparator = { fg = palette.lavender },
     MsgSeparator = { link = "WinSeparator" },
 
