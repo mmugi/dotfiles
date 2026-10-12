@@ -30,6 +30,10 @@ vim.opt.winborder = "rounded"
 vim.opt.splitbelow = true
 vim.opt.splitright = true
 
+-- 11 messages and info
+vim.opt.showmode = false
+vim.opt.ruler = false
+
 -- 12 selecting text
 vim.opt.clipboard:append({ "unnamedplus" })
 

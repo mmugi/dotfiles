@@ -22,8 +22,6 @@ return {
     vim.opt.laststatus = 0
     vim.opt.statusline = "─"
     vim.opt.fillchars = { stl = "─", stlnc = "─" }
-    vim.opt.ruler = false
-    vim.opt.showmode = false
 
     -- ステータスラインを上下分割の区切り線として使う。
     -- ステータスラインのハイライトグループ群を WinSeparator にリンクする。
