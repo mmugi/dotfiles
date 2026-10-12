@@ -8,16 +8,24 @@ function M.setup(palette)
 
     Cursor = { fg = palette.black, bg = palette.purple },
     CursorIM = { link = "Cursor" },
-    --lCursor = {},
-    --TermCursor = {},
+    lCursor = { link = "Cursor" },
+    TermCursor = { reverse = true },
+
     CursorLine = { underline = true, sp = palette.purple },
     CursorColumn = { bg = palette.dark_purple },
+    ColorColumn = { bg = palette.dark_purple },
     MatchParen = { fg = palette.white, bg = palette.blue_purple, bold = true },
 
     LineNr = { fg = palette.lavender },
+    LineNrAbove = { link = "LineNr" },
+    LineNrBelow = { link = "LineNr" },
     CursorLineNr = { fg = palette.white },
+
     EndOfBuffer = { link = "LineNr" },
     NonText = { fg = palette.lavender },
+    Whitespace = { link = "NonText" },
+    SpecialKey = { link = "Special" },
+    Conceal = { fg = palette.gray },
 
     SignColumn = { fg = palette.neon_pink },
     CursorLineSign = { link = "SignColumn" },
@@ -27,6 +35,7 @@ function M.setup(palette)
     CursorLineFold = { link = "SignColumn" },
 
     Directory = { fg = palette.blue },
+    QuickFixLine = { fg = palette.white, bg = palette.blue_purple },
 
     WinSeparator = { fg = palette.lavender },
     MsgSeparator = { link = "WinSeparator" },
@@ -34,24 +43,39 @@ function M.setup(palette)
     Search = { fg = palette.white, bg = palette.muted_blue },
     CurSearch = { fg = palette.black, bg = palette.skyblue },
     IncSearch = { link = "CurSearch" },
+    Substitute = { link = "Search" },
 
     Visual = { fg = palette.white, bg = palette.purple },
+    VisualNOS = { link = "Visual" },
 
     StatusLine = { link = "Normal" },
     StatusLineNC = { link = "StatusLine" },
     StatusLineTerm = { fg = palette.black, bg = palette.turquoise },
     StatusLineTermNC = { link = "StatusLineTerm" },
+    WinBar = { link = "Normal" },
+    WinBarNC = { link = "NormalNC" },
+    TabLine = { fg = palette.lavender },
+    TabLineSel = { fg = palette.white, bold = true },
+    TabLineFill = { link = "TabLine" },
+    WildMenu = { link = "PmenuSel" },
 
+    MsgArea = {},
     ErrorMsg = { fg = palette.red },
     WarningMsg = { fg = palette.yellow },
     OkMsg = { fg = palette.turquoise },
     MoreMsg = { fg = palette.fg, bold = true },
     ModeMsg = { fg = palette.fg, bold = true },
     Question = { fg = palette.neon_green },
+    StderrMsg = { link = "ErrorMsg" },
+    StdoutMsg = {},
 
     NormalFloat = { link = "Normal" },
     FloatBorder = { link = "NormalFloat" },
     Title = { fg = palette.skyblue, bold = true },
+    FloatTitle = { link = "Title" },
+    FloatFooter = { link = "FloatTitle" },
+    FloatShadow = { bg = palette.black, blend = 80 },
+    FloatShadowThrough = { bg = palette.black, blend = 100 },
 
     Pmenu = { link = "Normal" },
     PmenuSel = { fg = palette.white, bg = palette.blue_purple },
@@ -64,11 +88,26 @@ function M.setup(palette)
     PmenuSbar = { link = "Pmenu" },
     PmenuThumb = { bg = palette.turquoise },
     PmenuBorder = { link = "Pmenu" },
+    PmenuShadow = { link = "FloatShadow" },
+    PmenuShadowThrough = { link = "FloatShadowThrough" },
+
+    ComplMatchIns = {},
+    ComplHint = { link = "NonText" },
+    ComplHintMore = { link = "MoreMsg" },
+    PreInsert = { link = "Added" },
+    SnippetTabstop = { link = "Visual" },
+    SnippetTabstopActive = { link = "SnippetTabstop" },
 
     DiffAdd = { bg = palette.dark_green },
     DiffChange = { bg = palette.dim_purple },
     DiffText = { fg = palette.black, bg = palette.purple },
+    DiffTextAdd = { link = "DiffText" },
     DiffDelete = { fg = palette.red, bg = palette.dark_red },
+
+    SpellBad = { undercurl = true, sp = palette.red },
+    SpellCap = { undercurl = true, sp = palette.yellow },
+    SpellLocal = { undercurl = true, sp = palette.turquoise },
+    SpellRare = { undercurl = true, sp = palette.skyblue },
 
     -- diagnostic (help diagnostic-highlights)
     DiagnosticError = { fg = palette.red },
