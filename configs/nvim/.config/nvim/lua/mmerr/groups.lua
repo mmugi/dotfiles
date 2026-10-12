@@ -78,6 +78,12 @@ function M.setup(palette)
     DiagnosticUnderlineOk = { undercurl = true, sp = palette.turquoise },
     DiagnosticDeprecated = { strikethrough = true, sp = palette.red },
 
+    -- diff
+    DiffAdd = { bg = palette.dark_green },
+    DiffChange = { bg = palette.dim_purple },
+    DiffText = { fg = palette.black, bg = palette.purple },
+    DiffDelete = { fg = palette.red, bg = palette.dark_red },
+
     -- syntax (help group-name)
     Comment = { fg = palette.gray },
 

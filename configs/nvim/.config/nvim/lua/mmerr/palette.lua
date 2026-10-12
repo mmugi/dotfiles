@@ -8,6 +8,7 @@ return {
   light_gray = "#919ba1",
   dark_gray = "#3e4245",
   red = "#ea5950",
+  dark_red = "#543345",
   scarlet = "#ff2400",
   pink = "#ec94ad",
   neon_pink = "#e26b8c",
@@ -20,8 +21,10 @@ return {
   purple = "#948cf3",
   rebeccapurple = "#663399",
   dark_purple = "#404c8b",
+  dim_purple = "#313966",
   yellow = "#fcdc00",
   neon_green = "#c7f761",
   mint_green = "#c9f9dc",
   turquoise = "#0becca",
+  dark_green = "#1c5846",
 }
