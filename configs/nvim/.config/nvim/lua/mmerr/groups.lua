@@ -65,6 +65,19 @@ function M.setup(palette)
     PmenuThumb = { bg = palette.turquoise },
     PmenuBorder = { link = "Pmenu" },
 
+    -- diagnostic
+    DiagnosticError = { fg = palette.red },
+    DiagnosticWarn = { fg = palette.yellow },
+    DiagnosticInfo = { fg = palette.blue },
+    DiagnosticHint = { fg = palette.periwinkle },
+    DiagnosticOk = { fg = palette.turquoise },
+    DiagnosticUnderlineError = { undercurl = true, sp = palette.red },
+    DiagnosticUnderlineWarn = { undercurl = true, sp = palette.yellow },
+    DiagnosticUnderlineInfo = { undercurl = true, sp = palette.blue },
+    DiagnosticUnderlineHint = { undercurl = true, sp = palette.periwinkle },
+    DiagnosticUnderlineOk = { undercurl = true, sp = palette.turquoise },
+    DiagnosticDeprecated = { strikethrough = true, sp = palette.red },
+
     -- syntax (help group-name)
     Comment = { fg = palette.gray },
 
