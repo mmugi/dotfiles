@@ -22,7 +22,7 @@ mmerr::setup() {
     ['neon_green']='#c7f761'
     ['mint_green']='#c9f9dc'
     ['turquoise']='#0becca'
-    ['gray']='#5e6164'
+    ['gray']='#6e7174'
   )
   declare -g -A THEME_STYLE=(
     ['normal']="$(escseq::sgr --default-fg)"
