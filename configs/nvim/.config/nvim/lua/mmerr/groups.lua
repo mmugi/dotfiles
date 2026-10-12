@@ -2,63 +2,48 @@ local M = {}
 
 function M.setup(palette)
   return {
-    -- normal
+    -- editor (help highlight-groups)
     Normal = { fg = palette.fg, bg = palette.bg },
     NormalNC = { link = "Normal" },
 
-    -- cursor
     Cursor = { fg = palette.black, bg = palette.purple },
     CursorIM = { link = "Cursor" },
     --lCursor = {},
     --TermCursor = {},
+    CursorLine = { underline = true, sp = palette.purple },
+    CursorColumn = { bg = palette.dark_purple },
+    MatchParen = { fg = palette.white, bg = palette.blue_purple, bold = true },
 
-    -- line number
     LineNr = { fg = palette.lavender },
     CursorLineNr = { fg = palette.white },
     EndOfBuffer = { link = "LineNr" },
+    NonText = { fg = palette.lavender },
 
-    -- cursor line
-    CursorLine = { underline = true, sp = palette.purple },
-    CursorColumn = { bg = palette.dark_purple },
-
-    -- match paren
-    MatchParen = { fg = palette.white, bg = palette.blue_purple, bold = true },
-
-    -- sign
     SignColumn = { fg = palette.neon_pink },
     CursorLineSign = { link = "SignColumn" },
 
-    -- fold
     Folded = { fg = palette.lavender },
     FoldColumn = { link = "SignColumn" },
     CursorLineFold = { link = "SignColumn" },
 
-    -- separator
     WinSeparator = { fg = palette.lavender },
     MsgSeparator = { link = "WinSeparator" },
 
-    -- search
     Search = { fg = palette.white, bg = palette.muted_blue },
     CurSearch = { fg = palette.black, bg = palette.skyblue },
     IncSearch = { link = "CurSearch" },
 
-    -- visual
     Visual = { fg = palette.white, bg = palette.purple },
 
-    -- status line
     StatusLine = { link = "Normal" },
     StatusLineNC = { link = "StatusLine" },
     StatusLineTerm = { fg = palette.black, bg = palette.turquoise },
     StatusLineTermNC = { link = "StatusLineTerm" },
 
-    -- float
     NormalFloat = { link = "Normal" },
     FloatBorder = { link = "NormalFloat" },
-
-    -- title
     Title = { fg = palette.skyblue, bold = true },
 
-    -- pmenu
     Pmenu = { link = "Normal" },
     PmenuSel = { fg = palette.white, bg = palette.blue_purple },
     PmenuMatch = { fg = palette.purple },
@@ -71,7 +56,12 @@ function M.setup(palette)
     PmenuThumb = { bg = palette.turquoise },
     PmenuBorder = { link = "Pmenu" },
 
-    -- diagnostic
+    DiffAdd = { bg = palette.dark_green },
+    DiffChange = { bg = palette.dim_purple },
+    DiffText = { fg = palette.black, bg = palette.purple },
+    DiffDelete = { fg = palette.red, bg = palette.dark_red },
+
+    -- diagnostic (help diagnostic-highlights)
     DiagnosticError = { fg = palette.red },
     DiagnosticWarn = { fg = palette.yellow },
     DiagnosticInfo = { fg = palette.blue },
@@ -83,12 +73,6 @@ function M.setup(palette)
     DiagnosticUnderlineHint = { undercurl = true, sp = palette.periwinkle },
     DiagnosticUnderlineOk = { undercurl = true, sp = palette.turquoise },
     DiagnosticDeprecated = { strikethrough = true, sp = palette.red },
-
-    -- diff
-    DiffAdd = { bg = palette.dark_green },
-    DiffChange = { bg = palette.dim_purple },
-    DiffText = { fg = palette.black, bg = palette.purple },
-    DiffDelete = { fg = palette.red, bg = palette.dark_red },
 
     -- syntax (help group-name)
     Comment = { fg = palette.gray },
@@ -119,8 +103,6 @@ function M.setup(palette)
     Added = { fg = palette.turquoise },
     Changed = { fg = palette.pink },
     Removed = { fg = palette.red },
-
-    NonText = { fg = palette.lavender },
 
     -- syntax (sh)
     shCommandSub = { fg = palette.fg },
