@@ -128,23 +128,41 @@ function M.setup(palette)
     Constant = { fg = palette.turquoise },
     String = { fg = palette.purple },
     Character = { link = "String" },
+    Number = { link = "Constant" },
+    Boolean = { link = "Constant" },
+    Float = { link = "Number" },
 
     Identifier = { fg = palette.fg },
     Function = { fg = palette.fg },
 
     Statement = { fg = palette.fg },
+    Conditional = { link = "Statement" },
+    Repeat = { link = "Statement" },
+    Label = { link = "Statement" },
     Operator = { fg = palette.fg },
+    Keyword = { link = "Statement" },
+    Exception = { link = "Statement" },
 
     PreProc = { fg = palette.pink },
+    Include = { link = "PreProc" },
+    Define = { link = "PreProc" },
+    Macro = { link = "PreProc" },
+    PreCondit = { link = "PreProc" },
 
     Type = { fg = palette.fg },
+    StorageClass = { link = "Type" },
+    Structure = { link = "Type" },
+    Typedef = { link = "Type" },
 
     Special = { fg = palette.blue },
+    SpecialChar = { link = "Special" },
+    Tag = { link = "Special" },
     Delimiter = { fg = palette.fg },
     SpecialComment = { fg = palette.gray, italic = true, bold = true },
     Debug = { fg = palette.lavender },
 
     Underlined = { underline = true },
+    Ignore = { link = "Normal" },
     Error = { fg = palette.scarlet },
     Todo = { fg = palette.black, bg = palette.yellow, bold = true },
 
