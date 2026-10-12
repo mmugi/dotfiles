@@ -1,0 +1,35 @@
+Syntax highlight sample for checking colorschemes (legacy diff syntax).
+
+--- a/menu.txt
++++ b/menu.txt
+@@ -1,13 +1,13 @@
+ plain   120
+-choco   140
++choco   150
+ matcha  154
+-melon   130
++melon   135
+ curry   180
+-anpan   100
++anpan   110
+ bagel   160
+-donut   90
++donut   95
+ scone   140
+-pretzel 170
++pretzel 175
+*** prices.txt
+--- prices.txt
+***************
+*** 1,5 ****
+! choco   140
+  matcha  154
+! melon   130
+  curry   180
+! anpan   100
+--- 1,5 ----
+! choco   150
+  matcha  154
+! melon   135
+  curry   180
+! anpan   110
