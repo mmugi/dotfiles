@@ -1,6 +1,4 @@
 local icon_enabled = true
-local cursor_info = false
-local mode = false
 
 return {
   "b0o/incline.nvim",
@@ -65,50 +63,6 @@ return {
       end,
     })
 
-    local function get_cursor_info(props)
-      if not cursor_info then
-        return nil
-      end
-
-      local cursor = vim.api.nvim_win_get_cursor(props.win)
-      local row = cursor[1]
-      local col = cursor[2] + 1
-      local total_rows = vim.api.nvim_buf_line_count(props.buf)
-
-      return string.format(
-        " [%d/%d:%d]",
-        row,
-        total_rows,
-        col
-      )
-    end
-
-    local function get_mode(props)
-      if not mode then
-        return nil
-      end
-
-      local focused = props.focused
-      local mode = vim.fn.mode()
-      local mode_text = nil
-      local hl_group = nil
-
-      if mode:match("^i") and focused then
-        mode_text = " <<INSERT"
-        hl_group = "InclineInsert"
-      elseif mode:match("[vV\22]") and focused then
-        local wc = vim.fn.wordcount()
-        mode_text = string.format(
-          " <<VISUAL %d lines, %d chars",
-          math.abs(vim.fn.line("v") - vim.fn.line(".")) + 1,
-          wc.visual_chars or 0
-        )
-        hl_group = "InclineVisual"
-      end
-
-      return mode_text, hl_group
-    end
-
     opts.render = function(props)
       local filepath = vim.api.nvim_buf_get_name(props.buf)
       local filename = vim.fn.fnamemodify(filepath, ":t")
@@ -118,16 +72,12 @@ return {
       local icon, icon_hl = get_icon(filepath)
       local modified = vim.bo[props.buf].modified
       local conflict = vim.b[props.buf].incline_conflict
-      local cursor_info = get_cursor_info(props)
-      local mode, mode_hl = get_mode(props)
 
       return {
         icon and { " ", icon, group = icon_hl } or "",
         { " ", filename, gui = modified and "italic" or "" },
         modified and { "*", group = "InclineModified" } or "",
         conflict and { " CONFLICT!", group = "InclineConflict" } or "",
-        cursor_info and { cursor_info, group = "LineNr" } or "",
-        mode and { mode, group = mode_hl } or "",
       }
     end
 
