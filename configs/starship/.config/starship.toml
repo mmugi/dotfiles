@@ -65,10 +65,10 @@ format = """
 [\
   [$conflicted](yellow)\
   [$deleted](red)\
-  [$renamed](green)\
+  [$renamed](turquoise)\
   [$modified](pink)\
   [$typechanged](gray)\
-  [$staged](green)\
+  [$staged](turquoise)\
   [$untracked](gray)\
   [$ahead_behind](sky)\
   [$stashed](blue)\
@@ -95,7 +95,7 @@ disabled = false
 
 [palettes.mypalette]
 blue = '#417cff'
-green = '#0becca'
+turquoise = '#0becca'
 pink = '#ec94ad'
 sky = '#7dbbfa'
 purple = '#948cf3'

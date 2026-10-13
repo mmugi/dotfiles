@@ -14,13 +14,13 @@ if [[ ! -f "$1" ]]; then
   exit 1
 fi
 
-GREEN=$(printf '\033[38;2;11;236;202m')
+TURQUOISE=$(printf '\033[38;2;11;236;202m')
 PURPLE=$(printf '\033[38;2;148;140;243m')
 RESET=$(printf '\033[0;39m')
 
 makefile="$1"
 
-printf 'Usage: %s\n' "make ${GREEN}<command>${RESET}"
+printf 'Usage: %s\n' "make ${TURQUOISE}<command>${RESET}"
 cat "$makefile" \
   | grep -E -e '^##' -e '(^.+): ##( *)(.+)' \
   | column -t -s: \

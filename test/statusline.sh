@@ -178,19 +178,19 @@ color_of() {
   printf '%s' "${BASH_REMATCH[1]}"
 }
 
-readonly GREEN='11;236;202'
+readonly TURQUOISE='11;236;202'
 readonly YELLOW='252;220;0'
 readonly RED='234;89;80'
 
 # ctx もレート制限も消費率で、多いほど危ない。向きが揃っていることが表示の前提なので、
 # 逆向きに戻すと必ずここが落ちる。
-check 'ctx 消費 20% は緑' "$GREEN"  "$(color_of ctx '{"context_window":{"used_percentage":20}}')"
-check 'ctx 消費 65% は黄' "$YELLOW" "$(color_of ctx '{"context_window":{"used_percentage":65}}')"
-check 'ctx 消費 90% は赤' "$RED"    "$(color_of ctx '{"context_window":{"used_percentage":90}}')"
+check 'ctx 消費 20% はターコイズ' "$TURQUOISE" "$(color_of ctx '{"context_window":{"used_percentage":20}}')"
+check 'ctx 消費 65% は黄'       "$YELLOW"    "$(color_of ctx '{"context_window":{"used_percentage":65}}')"
+check 'ctx 消費 90% は赤'       "$RED"       "$(color_of ctx '{"context_window":{"used_percentage":90}}')"
 
 # レート制限は ctx と同じ関数を通る。ラベルが変わっても向きが同じことだけ見る。
-check '5h 消費 20% は緑' "$GREEN" "$(color_of 5h '{"rate_limits":{"five_hour":{"used_percentage":20}}}')"
-check '5h 消費 90% は赤' "$RED"   "$(color_of 5h '{"rate_limits":{"five_hour":{"used_percentage":90}}}')"
+check '5h 消費 20% はターコイズ' "$TURQUOISE" "$(color_of 5h '{"rate_limits":{"five_hour":{"used_percentage":20}}}')"
+check '5h 消費 90% は赤'       "$RED"       "$(color_of 5h '{"rate_limits":{"five_hour":{"used_percentage":90}}}')"
 
 # --- jq が無い環境 ------------------------------------------------------------
 
