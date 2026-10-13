@@ -286,6 +286,8 @@ function M.setup(palette)
     ["@tag.builtin"] = { link = "Special" },
 
     ["@constructor.lua"] = { link = "Delimiter" },
+    ["@markup.heading.1.delimiter.vimdoc"] = { link = "NonText" },
+    ["@markup.heading.2.delimiter.vimdoc"] = { link = "NonText" },
 
     -- telescope
     TelescopeNormal = { link = "NormalFloat" },
