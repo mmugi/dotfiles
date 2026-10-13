@@ -263,6 +263,7 @@ function M.setup(palette)
 
     ["@keyword"] = { link = "Keyword" },
 
+    ["@punctuation"] = { link = "Delimiter" },
     ["@punctuation.special"] = { link = "Special" },
 
     ["@comment"] = { link = "Comment" },
@@ -271,6 +272,7 @@ function M.setup(palette)
     ["@comment.todo"] = { link = "Todo" },
     ["@comment.note"] = { link = "DiagnosticInfo" },
 
+    ["@markup"] = { link = "Special" },
     ["@markup.strong"] = { bold = true },
     ["@markup.italic"] = { italic = true },
     ["@markup.strikethrough"] = { strikethrough = true },
