@@ -5,8 +5,6 @@ return {
   pure_white = "#ffffff",
   black = "#050a15",
   gray = "#6e7174",
-  light_gray = "#919ba1",
-  dark_gray = "#3e4245",
   red = "#ea5950",
   dark_red = "#543345",
   scarlet = "#ff2400",
