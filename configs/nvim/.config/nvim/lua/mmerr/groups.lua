@@ -246,6 +246,9 @@ function M.setup(palette)
     CursorInfoInsert = { fg = palette.pink, italic = true },
     CursorInfoVisual = { fg = palette.purple, italic = true },
     CursorInfoReplace = { fg = palette.turquoise, italic = true },
+
+    -- columnguide
+    ColumnGuide = { fg = palette.bg_blue },
   }
 end
 
