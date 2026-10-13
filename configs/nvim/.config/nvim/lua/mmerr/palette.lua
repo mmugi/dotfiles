@@ -20,7 +20,7 @@ return {
   purple = "#948cf3",
   rebeccapurple = "#663399",
   bg_highlight = "#404c8b",
-  bg_blue = "#313966",
+  bg_blue = "#333366",
   yellow = "#fcdc00",
   lime = "#c7f761",
   mint = "#c9f9dc",
