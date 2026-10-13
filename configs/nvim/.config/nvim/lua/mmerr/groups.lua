@@ -219,8 +219,72 @@ function M.setup(palette)
     -- syntax (python)
     pythonDecoratorName = { link = "Define" },
 
-    -- tree-sitter
+    -- tree-sitter (help treesitter-highlight-groups)
     ["@variable"] = { fg = palette.fg },
+    ["@variable.builtin"] = { link = "Special" },
+    ["@variable.parameter.builtin"] = { link = "Special" },
+
+    ["@constant"] = { link = "Constant" },
+    ["@constant.builtin"] = { link = "Special" },
+
+    ["@module"] = { link = "Structure" },
+    ["@module.builtin"] = { link = "Special" },
+
+    ["@label"] = { link = "Label" },
+
+    ["@string"] = { link = "String" },
+    ["@string.regexp"] = { link = "@string.special" },
+    ["@string.escape"] = { link = "@string.special" },
+    ["@string.special"] = { link = "SpecialChar" },
+    ["@string.special.url"] = { link = "Underlined" },
+
+    ["@character"] = { link = "Character" },
+    ["@character.special"] = { link = "SpecialChar" },
+
+    ["@boolean"] = { link = "Boolean" },
+
+    ["@number"] = { link = "Number" },
+    ["@number.float"] = { link = "Float" },
+
+    ["@type"] = { link = "Type" },
+    ["@type.builtin"] = { link = "Special" },
+
+    ["@attribute"] = { link = "Macro" },
+    ["@attribute.builtin"] = { link = "Special" },
+
+    ["@property"] = { link = "Identifier" },
+
+    ["@function"] = { link = "Function" },
+    ["@function.builtin"] = { link = "Special" },
+
+    ["@constructor"] = { link = "Special" },
+
+    ["@operator"] = { link = "Operator" },
+
+    ["@keyword"] = { link = "Keyword" },
+
+    ["@punctuation.special"] = { link = "Special" },
+
+    ["@comment"] = { link = "Comment" },
+    ["@comment.error"] = { link = "DiagnosticError" },
+    ["@comment.warning"] = { link = "DiagnosticWarn" },
+    ["@comment.todo"] = { link = "Todo" },
+    ["@comment.note"] = { link = "DiagnosticInfo" },
+
+    ["@markup.strong"] = { bold = true },
+    ["@markup.italic"] = { italic = true },
+    ["@markup.strikethrough"] = { strikethrough = true },
+    ["@markup.underline"] = { underline = true },
+    ["@markup.heading"] = { link = "Title" },
+    ["@markup.link"] = { link = "Underlined" },
+
+    ["@diff.plus"] = { link = "Added" },
+    ["@diff.minus"] = { link = "Removed" },
+    ["@diff.delta"] = { link = "Changed" },
+
+    ["@tag"] = { link = "Tag" },
+    ["@tag.builtin"] = { link = "Special" },
+
     ["@constructor.lua"] = { link = "Delimiter" },
 
     -- telescope
