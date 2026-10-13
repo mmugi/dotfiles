@@ -3,26 +3,28 @@
 
 mmerr::setup() {
   declare -g -A THEME_PALETTE=(
-    ['white']='#eff7fe'
     ['black']='#050a15'
+    ['gray']='#6e7174'
+    ['white']='#eff7fe'
+
     ['red']='#ea5950'
     ['scarlet']='#ff2400'
-    ['pink']='#ec94ad'
-    ['rose']='#e26b8c'
-    ['navy']='#222641'
-    ['blue']='#417cff'
-    ['bg_slate']='#4f6e8d'
-    ['sky']='#7dbbfa'
-    ['iris']='#5f5fff'
-    ['lavender']='#6874b3'
-    ['purple']='#948cf3'
-    ['rebeccapurple']='#663399'
-    ['bg_lavender']='#404c8b'
     ['yellow']='#fcdc00'
     ['lime']='#c7f761'
     ['mint']='#c9f9dc'
     ['turquoise']='#0becca'
-    ['gray']='#6e7174'
+    ['sky']='#7dbbfa'
+    ['blue']='#417cff'
+    ['lavender']='#6874b3'
+    ['navy']='#222641'
+    ['iris']='#5f5fff'
+    ['purple']='#948cf3'
+    ['rebeccapurple']='#663399'
+    ['pink']='#ec94ad'
+    ['rose']='#e26b8c'
+
+    ['bg_slate']='#4f6e8d'
+    ['bg_lavender']='#404c8b'
   )
   declare -g -A THEME_STYLE=(
     ['normal']="$(escseq::sgr --default-fg)"
