@@ -20,7 +20,7 @@ require("lazy").setup({
   spec = {
     { import = "plugins" },
   },
-  install = { colorscheme = { "catppuccin" } },
+  install = { colorscheme = { "mmerr" } },
   ui = { border = "single" },
   checker = { enabled = true },
   change_detection = { notify = false },
