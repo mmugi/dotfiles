@@ -15,9 +15,9 @@ function M.setup(palette)
     TermCursor = { reverse = true },
 
     CursorLine = { underline = true, sp = palette.purple },
-    CursorColumn = { bg = palette.dark_purple },
-    ColorColumn = { bg = palette.dark_purple },
-    MatchParen = { fg = palette.white, bg = palette.blue_purple, bold = true },
+    CursorColumn = { bg = palette.bg_highlight },
+    ColorColumn = { bg = palette.bg_highlight },
+    MatchParen = { fg = palette.white, bg = palette.iris, bold = true },
 
     LineNr = { fg = palette.lavender },
     LineNrAbove = { link = "LineNr" },
@@ -30,7 +30,7 @@ function M.setup(palette)
     SpecialKey = { link = "Special" },
     Conceal = { fg = palette.gray },
 
-    SignColumn = { fg = palette.neon_pink },
+    SignColumn = { fg = palette.rose },
     CursorLineSign = { link = "SignColumn" },
 
     Folded = { fg = palette.lavender },
@@ -38,13 +38,13 @@ function M.setup(palette)
     CursorLineFold = { link = "SignColumn" },
 
     Directory = { fg = palette.blue },
-    QuickFixLine = { fg = palette.white, bg = palette.blue_purple },
+    QuickFixLine = { fg = palette.white, bg = palette.iris },
 
     WinSeparator = { fg = palette.lavender },
     MsgSeparator = { link = "WinSeparator" },
 
-    Search = { fg = palette.white, bg = palette.muted_blue },
-    CurSearch = { fg = palette.black, bg = palette.skyblue },
+    Search = { fg = palette.white, bg = palette.slate },
+    CurSearch = { fg = palette.black, bg = palette.sky },
     IncSearch = { link = "CurSearch" },
     Substitute = { link = "Search" },
 
@@ -66,24 +66,24 @@ function M.setup(palette)
     ErrorMsg = { fg = palette.red },
     WarningMsg = { fg = palette.yellow },
     OkMsg = { fg = palette.turquoise },
-    MoreMsg = { fg = palette.mint_green, bold = true },
+    MoreMsg = { fg = palette.mint, bold = true },
     ModeMsg = { fg = palette.fg, bold = true },
-    Question = { fg = palette.neon_green },
+    Question = { fg = palette.lime },
     StderrMsg = { link = "ErrorMsg" },
     StdoutMsg = {},
 
     NormalFloat = { link = "Normal" },
     FloatBorder = { link = "NormalFloat" },
-    Title = { fg = palette.skyblue, bold = true },
+    Title = { fg = palette.sky, bold = true },
     FloatTitle = { link = "Title" },
     FloatFooter = { link = "FloatTitle" },
     FloatShadow = { bg = palette.black, blend = 80 },
     FloatShadowThrough = { bg = palette.black, blend = 100 },
 
     Pmenu = { link = "Normal" },
-    PmenuSel = { fg = palette.white, bg = palette.blue_purple },
+    PmenuSel = { fg = palette.white, bg = palette.iris },
     PmenuMatch = { fg = palette.purple },
-    PmenuMatchSel = { fg = palette.white, bg = palette.blue_purple },
+    PmenuMatchSel = { fg = palette.white, bg = palette.iris },
     PmenuKind = { link = "Pmenu" },
     PmenuKindSel = { link = "PmenuSel" },
     PmenuExtra = { link = "Pmenu" },
@@ -101,16 +101,16 @@ function M.setup(palette)
     SnippetTabstop = { link = "Visual" },
     SnippetTabstopActive = { link = "SnippetTabstop" },
 
-    DiffAdd = { bg = palette.dark_green },
-    DiffChange = { bg = palette.dim_purple },
+    DiffAdd = { bg = palette.bg_green },
+    DiffChange = { bg = palette.bg_blue },
     DiffText = { fg = palette.black, bg = palette.purple },
     DiffTextAdd = { link = "DiffText" },
-    DiffDelete = { fg = palette.red, bg = palette.dark_red },
+    DiffDelete = { fg = palette.red, bg = palette.bg_red },
 
     SpellBad = { undercurl = true, sp = palette.red },
     SpellCap = { undercurl = true, sp = palette.yellow },
     SpellLocal = { undercurl = true, sp = palette.turquoise },
-    SpellRare = { undercurl = true, sp = palette.skyblue },
+    SpellRare = { undercurl = true, sp = palette.sky },
 
     -- diagnostic (help diagnostic-highlights)
     DiagnosticError = { fg = palette.red },
@@ -153,7 +153,7 @@ function M.setup(palette)
     DiagnosticUnnecessary = { link = "Comment" },
 
     -- lsp (help lsp-highlight)
-    LspReferenceText = { bg = palette.dim_purple },
+    LspReferenceText = { bg = palette.bg_blue },
     LspReferenceRead = { link = "LspReferenceText" },
     LspReferenceWrite = { link = "LspReferenceText" },
     LspReferenceTarget = { link = "LspReferenceText" },
@@ -227,7 +227,7 @@ function M.setup(palette)
     TelescopeNormal = { link = "NormalFloat" },
     TelescopeMatching = { fg = palette.purple },
     TelescopePreviewMatch = { link = "CurSearch" },
-    TelescopeSelection = { fg = palette.white, bg = palette.blue_purple },
+    TelescopeSelection = { fg = palette.white, bg = palette.iris },
     TelescopeBorder = { link = "FloatBorder" },
     TelescopePromptPrefix = { fg = palette.purple, bold = true },
     TelescopePromptCounter = { fg = palette.turquoise },
@@ -239,7 +239,7 @@ function M.setup(palette)
     -- incline
     InclineNormal = { fg = palette.white },
     InclineNormalNC = { fg = palette.lavender },
-    InclineModified = { fg = palette.neon_pink },
+    InclineModified = { fg = palette.rose },
     InclineConflict = { fg = palette.red, bold = true },
 
     -- cursorinfo

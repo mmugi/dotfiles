@@ -8,19 +8,19 @@ mmerr::setup() {
     ['red']='#ea5950'
     ['scarlet']='#ff2400'
     ['pink']='#ec94ad'
-    ['neon_pink']='#e26b8c'
+    ['rose']='#e26b8c'
     ['navy']='#222641'
     ['blue']='#417cff'
-    ['muted_blue']='#4f6e8d'
-    ['skyblue']='#7dbbfa'
-    ['blue_purple']='#5f5fff'
+    ['slate']='#4f6e8d'
+    ['sky']='#7dbbfa'
+    ['iris']='#5f5fff'
     ['lavender']='#6874b3'
     ['purple']='#948cf3'
     ['rebeccapurple']='#663399'
-    ['dark_purple']='#404c8b'
+    ['bg_highlight']='#404c8b'
     ['yellow']='#fcdc00'
-    ['neon_green']='#c7f761'
-    ['mint_green']='#c9f9dc'
+    ['lime']='#c7f761'
+    ['mint']='#c9f9dc'
     ['turquoise']='#0becca'
     ['gray']='#6e7174'
   )
@@ -38,7 +38,7 @@ mmerr::setup() {
     ['msg_warn']="$(escseq::sgr --fg-tc "${THEME_PALETTE['yellow']}")"
     ['msg_error']="$(escseq::sgr --fg-tc "${THEME_PALETTE['red']}")"
     ['msg_skipped']="$(escseq::sgr --fg-tc "${THEME_PALETTE['gray']}")"
-    ['msg_confirm']="$(escseq::sgr --fg-tc "${THEME_PALETTE['neon_green']}")"
+    ['msg_confirm']="$(escseq::sgr --fg-tc "${THEME_PALETTE['lime']}")"
 
     ['log_fatal']="$(escseq::sgr --fg-tc "${THEME_PALETTE['scarlet']}")"
     ['log_error']="$(escseq::sgr --fg-tc "${THEME_PALETTE['red']}")"
