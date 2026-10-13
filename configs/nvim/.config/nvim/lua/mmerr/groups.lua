@@ -278,7 +278,9 @@ function M.setup(palette)
     ["@markup.strikethrough"] = { strikethrough = true },
     ["@markup.underline"] = { underline = true },
     ["@markup.heading"] = { link = "Title" },
+    ["@markup.quote"] = { italic = true },
     ["@markup.link"] = { link = "Underlined" },
+    ["@markup.raw"] = { link = "String" },
 
     ["@diff.plus"] = { link = "Added" },
     ["@diff.minus"] = { link = "Removed" },
