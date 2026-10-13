@@ -14,7 +14,6 @@ return {
   mint = "#c9f9dc",
   turquoise = "#0becca",
   sky = "#7dbbfa",
-  slate = "#4f6e8d",
   blue = "#417cff",
   lavender = "#6874b3",
   navy = "#222641",
@@ -26,7 +25,8 @@ return {
   rose = "#e26b8c",
 
   bg_green = "#1c5846",
-  bg_highlight = "#404c8b",
+  bg_slate = "#4f6e8d",
+  bg_lavender = "#404c8b",
   bg_blue = "#333366",
   bg_red = "#543345",
 }

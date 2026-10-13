@@ -15,8 +15,8 @@ function M.setup(palette)
     TermCursor = { reverse = true },
 
     CursorLine = { underline = true, sp = palette.purple },
-    CursorColumn = { bg = palette.bg_highlight },
-    ColorColumn = { bg = palette.bg_highlight },
+    CursorColumn = { bg = palette.bg_lavender },
+    ColorColumn = { bg = palette.bg_lavender },
     MatchParen = { fg = palette.white, bg = palette.iris, bold = true },
 
     LineNr = { fg = palette.lavender },
@@ -43,7 +43,7 @@ function M.setup(palette)
     WinSeparator = { fg = palette.lavender },
     MsgSeparator = { link = "WinSeparator" },
 
-    Search = { fg = palette.white, bg = palette.slate },
+    Search = { fg = palette.white, bg = palette.bg_slate },
     CurSearch = { fg = palette.black, bg = palette.sky },
     IncSearch = { link = "CurSearch" },
     Substitute = { link = "Search" },
