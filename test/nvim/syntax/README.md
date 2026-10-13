@@ -9,6 +9,7 @@ No single language reaches every group, so the samples are split by highlighter 
 | `sample.c` | legacy syntax | PreProc family, Type family, Statement family, Constant family, Error |
 | `Sample.java` | legacy syntax | Typedef, Exception, SpecialComment |
 | `sample.lua` | Tree-sitter | `@variable`, Identifier, Function, Keyword, Special |
+| `sample.md` | Tree-sitter | `@markup.*` |
 | `sample.feature` | legacy syntax (Cucumber) | Tag, Define |
 | `sample.log` | legacy syntax | Debug, Underlined |
 | `sample.diff` | legacy syntax | Added, Changed, Removed |
