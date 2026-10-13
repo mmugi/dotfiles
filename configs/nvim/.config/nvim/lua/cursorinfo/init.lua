@@ -15,6 +15,22 @@ local default_config = {
   },
 }
 
+-- 挿入系モードから CTRL-O でノーマルに戻っている間の表示
+local pending_texts = {
+  I = "(insert)",
+  R = "(replace)",
+  V = "(vreplace)",
+}
+
+local visual_texts = {
+  v = "VISUAL",
+  V = "VISUAL-LINE",
+  ["\22"] = "VISUAL-BLOCK",
+  s = "SELECT",
+  S = "SELECT-LINE",
+  ["\19"] = "SELECT-BLOCK",
+}
+
 local function is_show()
   if not state.enabled then
     return false
@@ -42,31 +58,31 @@ local function update()
   end
 
   local line = vim.fn.line(".")
-  local mode = vim.fn.mode()
+  local mode = vim.fn.mode(1)
   local mode_text = nil
   local mode_text_hl = nil
 
   if mode:match("^i") then
     mode_text = " <<INSERT"
     mode_text_hl = "CursorInfoInsert"
+  elseif mode:match("^ni[IRV]") then
+    mode_text = " <<" .. pending_texts[mode:sub(3, 3)]
+    mode_text_hl = "CursorInfoInsert"
+  elseif mode:match("^Rv") then
+    mode_text = " <<VREPLACE"
+    mode_text_hl = "CursorInfoReplace"
   elseif mode:match("^R") then
     mode_text = " <<REPLACE"
     mode_text_hl = "CursorInfoReplace"
+  elseif mode:match("^[sS\19]") then
+    mode_text = " <<" .. visual_texts[mode:sub(1, 1)]
+    mode_text_hl = "CursorInfoVisual"
   elseif mode:match("^[vV\22]") then
     local wc = vim.fn.wordcount()
-    local visual_text = nil
-
-    if mode:match("v") then
-      visual_text = "VISUAL"
-    elseif mode:match("V") then
-      visual_text = "VISUAL-LINE"
-    elseif mode:match("\22") then
-      visual_text = "VISUAL-BLOCK"
-    end
 
     mode_text = string.format(
       " <<%s %d lines, %d chars",
-      visual_text,
+      visual_texts[mode:sub(1, 1)],
       math.abs(vim.fn.line("v") - vim.fn.line(".")) + 1,
       wc.visual_chars or 0
     )
