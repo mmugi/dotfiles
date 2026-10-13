@@ -103,7 +103,7 @@ function M.setup(palette)
 
     DiffAdd = { bg = palette.bg_green },
     DiffChange = { bg = palette.bg_blue },
-    DiffText = { fg = palette.black, bg = palette.purple },
+    DiffText = { fg = palette.white, bg = palette.pink },
     DiffTextAdd = { link = "DiffText" },
     DiffDelete = { fg = palette.red, bg = palette.bg_red },
 
