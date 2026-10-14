@@ -39,5 +39,5 @@ else
     GIT_PS1_SHOWUPSTREAM=auto
     PS1+='$(__git_ps1 " \[\e[2m\](%s)\[\e[22m\]")'
   fi
-  PS1+=' \[\e[38;2;148;140;243m\]>\[\e[m\] ' # purple #948cf3
+  PS1+=' \[\e[38;2;148;140;243m\]\$\[\e[m\] ' # purple #948cf3
 fi

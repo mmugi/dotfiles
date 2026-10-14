@@ -8,5 +8,9 @@ if (( ! $+functions[compdef] )); then
   autoload -Uz compinit && compinit
 fi
 
-# starship
-command -v starship >/dev/null && eval "$(starship init zsh)"
+# prompt
+if command -v starship >/dev/null; then
+  eval "$(starship init zsh)"
+else
+  PROMPT='[%D{%FT%T%z}] %n@%m %~ %F{#948cf3}%#%f ' # purple #948cf3
+fi
