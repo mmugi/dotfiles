@@ -20,7 +20,7 @@ if ! complete -p git &>/dev/null; then
 fi
 
 # prompt
-if ! command -v starship >/dev/null; then
+if command -v starship >/dev/null; then
   eval "$(starship init bash)"
 else
   # git-prompt may already be loaded, e.g. by bash-completion
