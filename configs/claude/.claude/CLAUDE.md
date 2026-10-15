@@ -18,8 +18,8 @@ Always respond in Japanese (日本語), regardless of the language the user writ
 - Conventional Commits に準拠し、scope は付けない
 - 件名は英語、本文は日本語で書く
 - type の後の説明は小文字で始めて命令形で書き、末尾にピリオドを付けない
-- 件名には何を追加・変更・削除したかを、実装の手段ではなく機能や設定の単位で書き、
-  `git log --oneline` がそのまま変更履歴として読めるようにする
+- 件名は CHANGELOG の1項目として書き、`git log --oneline` がそのまま変更履歴として
+  読めるようにする。実装の手段や変更後の結果の描写は書かない
 - fix の件名には、どう直したかではなく、何が直ったか（直した症状）を書く
 - type は上から判定し、最初に当てはまったものを使う
   1. fix: 不具合を直した
