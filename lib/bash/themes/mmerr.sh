@@ -15,7 +15,7 @@ mmerr::setup() {
     ['turquoise']='#0becca'
     ['sky']='#7dbbfa'
     ['blue']='#417cff'
-    ['lavender']='#6874b3'
+    ['dusk']='#6874b3'
     ['navy']='#222641'
     ['iris']='#5f5fff'
     ['purple']='#948cf3'
@@ -24,7 +24,7 @@ mmerr::setup() {
     ['rose']='#e26b8c'
 
     ['bg_slate']='#4f6e8d'
-    ['bg_lavender']='#404c8b'
+    ['bg_dusk']='#404c8b'
   )
   declare -g -A THEME_STYLE=(
     ['normal']="$(escseq::sgr --default-fg)"

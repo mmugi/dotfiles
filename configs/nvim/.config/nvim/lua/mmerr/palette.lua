@@ -15,7 +15,7 @@ return {
   turquoise = "#0becca",
   sky = "#7dbbfa",
   blue = "#417cff",
-  lavender = "#6874b3",
+  dusk = "#6874b3",
   navy = "#222641",
   periwinkle = "#b9bfff",
   iris = "#5f5fff",
@@ -26,7 +26,7 @@ return {
 
   bg_green = "#1c5846",
   bg_slate = "#4f6e8d",
-  bg_lavender = "#404c8b",
+  bg_dusk = "#404c8b",
   bg_blue = "#333366",
   bg_red = "#543345",
 }

@@ -15,17 +15,17 @@ function M.setup(palette)
     TermCursor = { reverse = true },
 
     CursorLine = { underline = true, sp = palette.purple },
-    CursorColumn = { bg = palette.bg_lavender },
-    ColorColumn = { bg = palette.bg_lavender },
+    CursorColumn = { bg = palette.bg_dusk },
+    ColorColumn = { bg = palette.bg_dusk },
     MatchParen = { fg = palette.white, bg = palette.iris, bold = true },
 
-    LineNr = { fg = palette.lavender },
+    LineNr = { fg = palette.dusk },
     LineNrAbove = { link = "LineNr" },
     LineNrBelow = { link = "LineNr" },
     CursorLineNr = { fg = palette.white },
 
     EndOfBuffer = { link = "LineNr" },
-    NonText = { fg = palette.lavender },
+    NonText = { fg = palette.dusk },
     Whitespace = { link = "NonText" },
     SpecialKey = { link = "Special" },
     Conceal = { fg = palette.gray },
@@ -33,14 +33,14 @@ function M.setup(palette)
     SignColumn = { fg = palette.rose },
     CursorLineSign = { link = "SignColumn" },
 
-    Folded = { fg = palette.lavender },
+    Folded = { fg = palette.dusk },
     FoldColumn = { link = "SignColumn" },
     CursorLineFold = { link = "SignColumn" },
 
     Directory = { fg = palette.blue },
     QuickFixLine = { fg = palette.white, bg = palette.iris },
 
-    WinSeparator = { fg = palette.lavender },
+    WinSeparator = { fg = palette.dusk },
     MsgSeparator = { link = "WinSeparator" },
 
     Search = { fg = palette.white, bg = palette.bg_slate },
@@ -57,7 +57,7 @@ function M.setup(palette)
     StatusLineTermNC = { link = "StatusLineTerm" },
     WinBar = { link = "Normal" },
     WinBarNC = { link = "NormalNC" },
-    TabLine = { fg = palette.lavender },
+    TabLine = { fg = palette.dusk },
     TabLineSel = { fg = palette.white, bold = true },
     TabLineFill = { link = "TabLine" },
     WildMenu = { link = "PmenuSel" },
@@ -201,7 +201,7 @@ function M.setup(palette)
     Tag = { link = "Special" },
     Delimiter = { fg = palette.fg },
     SpecialComment = { fg = palette.gray, italic = true, bold = true },
-    Debug = { fg = palette.lavender },
+    Debug = { fg = palette.dusk },
 
     Underlined = { underline = true },
     Ignore = { link = "Normal" },
@@ -308,7 +308,7 @@ function M.setup(palette)
 
     -- incline
     InclineNormal = { fg = palette.white },
-    InclineNormalNC = { fg = palette.lavender },
+    InclineNormalNC = { fg = palette.dusk },
     InclineModified = { fg = palette.rose },
     InclineConflict = { fg = palette.red, bold = true },
 
