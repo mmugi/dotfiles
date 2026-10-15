@@ -29,15 +29,8 @@ function M.load()
   local palette = require("mmerr.palette")
   local groups = require("mmerr.groups").setup(palette)
 
-  if vim.g.colors_name then
-    vim.cmd("highlight clear")
-  end
-
-  if vim.fn.exists("syntax_on") then
-    vim.cmd("syntax reset")
-  end
-
   vim.opt.background = "dark"
+  vim.cmd("highlight clear")
   vim.opt.termguicolors = true
   vim.g.colors_name = "mmerr"
 
