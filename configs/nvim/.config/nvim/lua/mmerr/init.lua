@@ -4,6 +4,7 @@ M.default_options = {
   transparent_bg = false,
   terminal_colors = true,
   overrides = {},
+  palette_overrides = {},
 }
 
 M.options = vim.deepcopy(M.default_options)
@@ -26,7 +27,7 @@ function M.setup(opts)
 end
 
 function M.load()
-  local palette = require("mmerr.palette")
+  local palette = vim.tbl_extend("force", require("mmerr.palette"), M.options.palette_overrides)
   local groups = require("mmerr.groups").setup(palette)
 
   vim.opt.background = "dark"
