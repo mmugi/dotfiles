@@ -301,9 +301,9 @@ function M.setup(palette)
     TelescopeTitle = { bold = true },
     TelescopeResultsMethod = { link = "Function" },
     TelescopeResultsStruct = { link = "Structure" },
-    --TelescopeResultsDiffDelete = { fg = palette.red },
-    --TelescopeResultsDiffChange = { fg = palette.yellow },
-    --TelescopeResultsDiffAdd = { fg = palette.pink },
+    TelescopeResultsDiffAdd = { link = "Added" },
+    TelescopeResultsDiffChange = { link = "Changed" },
+    TelescopeResultsDiffDelete = { link = "Removed" },
 
     -- incline
     InclineNormal = { fg = palette.white },
