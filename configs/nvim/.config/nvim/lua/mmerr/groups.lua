@@ -299,6 +299,8 @@ function M.setup(palette)
     TelescopePromptPrefix = { fg = palette.purple, bold = true },
     TelescopePromptCounter = { fg = palette.turquoise },
     TelescopeTitle = { bold = true },
+    TelescopeResultsMethod = { link = "Function" },
+    TelescopeResultsStruct = { link = "Structure" },
     --TelescopeResultsDiffDelete = { fg = palette.red },
     --TelescopeResultsDiffChange = { fg = palette.yellow },
     --TelescopeResultsDiffAdd = { fg = palette.pink },
