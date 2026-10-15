@@ -205,7 +205,7 @@ function M.setup(palette)
 
     Underlined = { underline = true },
     Ignore = { link = "Normal" },
-    Error = { fg = palette.scarlet },
+    Error = { fg = palette.amaranth },
     Todo = { fg = palette.black, bg = palette.yellow, bold = true },
 
     Added = { fg = palette.turquoise },

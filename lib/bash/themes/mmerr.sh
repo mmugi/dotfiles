@@ -8,7 +8,6 @@ mmerr::setup() {
     ['white']='#eff7fe'
 
     ['red']='#ea5950'
-    ['scarlet']='#ff2400'
     ['yellow']='#fcdc00'
     ['lime']='#c7f761'
     ['mint']='#c9f9dc'
@@ -22,6 +21,7 @@ mmerr::setup() {
     ['rebeccapurple']='#663399'
     ['pink']='#ec94ad'
     ['rose']='#e26b8c'
+    ['amaranth']='#ff1438'
 
     ['bg_slate']='#4f6e8d'
     ['bg_dusk']='#404c8b'
@@ -42,7 +42,7 @@ mmerr::setup() {
     ['msg_skipped']="$(escseq::sgr --fg-tc "${THEME_PALETTE['gray']}")"
     ['msg_confirm']="$(escseq::sgr --fg-tc "${THEME_PALETTE['lime']}")"
 
-    ['log_fatal']="$(escseq::sgr --fg-tc "${THEME_PALETTE['scarlet']}")"
+    ['log_fatal']="$(escseq::sgr --fg-tc "${THEME_PALETTE['amaranth']}")"
     ['log_error']="$(escseq::sgr --fg-tc "${THEME_PALETTE['red']}")"
     ['log_warn']="$(escseq::sgr --fg-tc "${THEME_PALETTE['yellow']}")"
     ['log_notice']="$(escseq::sgr --fg-tc "${THEME_PALETTE['blue']}")"

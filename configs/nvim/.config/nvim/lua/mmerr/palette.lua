@@ -8,7 +8,6 @@ return {
   pure_white = "#ffffff",
 
   red = "#ea5950",
-  scarlet = "#ff2400",
   yellow = "#fcdc00",
   lime = "#c7f761",
   mint = "#c9f9dc",
@@ -23,6 +22,7 @@ return {
   rebeccapurple = "#663399",
   pink = "#ec94ad",
   rose = "#e26b8c",
+  amaranth = "#ff1438",
 
   bg_green = "#1c5846",
   bg_slate = "#4f6e8d",
