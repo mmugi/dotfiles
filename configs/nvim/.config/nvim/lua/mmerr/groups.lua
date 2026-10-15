@@ -2,9 +2,6 @@ local M = {}
 
 function M.setup(palette)
   return {
-    -- customs
-    ErrTrailingWhitespace = { fg = palette.white, bg = palette.red },
-
     -- editor (help highlight-groups)
     Normal = { fg = palette.fg, bg = palette.bg },
     NormalNC = { link = "Normal" },
@@ -311,14 +308,6 @@ function M.setup(palette)
     InclineNormalNC = { fg = palette.dusk },
     InclineModified = { fg = palette.rose },
     InclineConflict = { fg = palette.red, bold = true },
-
-    -- cursorinfo
-    CursorInfoInsert = { fg = palette.pink, italic = true },
-    CursorInfoVisual = { fg = palette.purple, italic = true },
-    CursorInfoReplace = { fg = palette.turquoise, italic = true },
-
-    -- columnguide
-    ColumnGuide = { fg = palette.bg_blue },
   }
 end
 
