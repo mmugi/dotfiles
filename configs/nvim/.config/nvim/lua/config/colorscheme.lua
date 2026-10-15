@@ -1,6 +1,6 @@
 require("mmerr").setup({
   transparent_bg = true,
-  overrides = function(palette)
+  highlight_overrides = function(palette)
     return {
       ErrTrailingWhitespace = { fg = palette.white, bg = palette.red },
 

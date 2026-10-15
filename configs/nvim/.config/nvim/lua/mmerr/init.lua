@@ -3,7 +3,7 @@ local M = {}
 M.default_options = {
   transparent_bg = false,
   terminal_colors = true,
-  overrides = {},
+  highlight_overrides = {},
   palette_overrides = {},
 }
 
@@ -43,10 +43,10 @@ function M.load()
   end
 
   -- override highlight groups
-  if type(M.options.overrides) == "table" then
-    override_groups(groups, M.options.overrides)
-  elseif type(M.options.overrides) == "function" then
-    override_groups(groups, M.options.overrides(palette))
+  if type(M.options.highlight_overrides) == "table" then
+    override_groups(groups, M.options.highlight_overrides)
+  elseif type(M.options.highlight_overrides) == "function" then
+    override_groups(groups, M.options.highlight_overrides(palette))
   end
 
   -- apply theme
