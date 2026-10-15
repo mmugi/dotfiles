@@ -17,7 +17,7 @@ return {
   blue = "#417cff",
   dusk = "#6874b3",
   navy = "#222641",
-  periwinkle = "#b9bfff",
+  lavender = "#b9bfff",
   iris = "#5f5fff",
   purple = "#948cf3",
   rebeccapurple = "#663399",

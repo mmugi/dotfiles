@@ -116,7 +116,7 @@ function M.setup(palette)
     DiagnosticError = { fg = palette.red },
     DiagnosticWarn = { fg = palette.yellow },
     DiagnosticInfo = { fg = palette.blue },
-    DiagnosticHint = { fg = palette.periwinkle },
+    DiagnosticHint = { fg = palette.lavender },
     DiagnosticOk = { fg = palette.turquoise },
 
     DiagnosticVirtualTextError = { link = "DiagnosticError" },
@@ -134,7 +134,7 @@ function M.setup(palette)
     DiagnosticUnderlineError = { undercurl = true, sp = palette.red },
     DiagnosticUnderlineWarn = { undercurl = true, sp = palette.yellow },
     DiagnosticUnderlineInfo = { undercurl = true, sp = palette.blue },
-    DiagnosticUnderlineHint = { undercurl = true, sp = palette.periwinkle },
+    DiagnosticUnderlineHint = { undercurl = true, sp = palette.lavender },
     DiagnosticUnderlineOk = { undercurl = true, sp = palette.turquoise },
 
     DiagnosticFloatingError = { link = "DiagnosticError" },
