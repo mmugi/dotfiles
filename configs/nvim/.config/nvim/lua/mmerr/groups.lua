@@ -306,8 +306,6 @@ function M.setup(palette)
     -- incline
     InclineNormal = { fg = palette.white },
     InclineNormalNC = { fg = palette.dusk },
-    InclineModified = { fg = palette.rose },
-    InclineConflict = { fg = palette.red, bold = true },
   }
 end
 

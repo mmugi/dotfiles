@@ -9,6 +9,9 @@ require("mmerr").setup({
       CursorInfoReplace = { fg = palette.turquoise, italic = true },
 
       ColumnGuide = { fg = palette.bg_blue },
+
+      InclineModified = { fg = palette.rose },
+      InclineConflict = { fg = palette.red, bold = true },
     }
   end,
 })
