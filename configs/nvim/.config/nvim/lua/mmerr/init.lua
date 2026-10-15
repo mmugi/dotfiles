@@ -2,6 +2,7 @@ local M = {}
 
 M.default_options = {
   transparent_bg = false,
+  terminal_colors = true,
   overrides = {},
 }
 
@@ -57,6 +58,31 @@ function M.load()
   -- apply theme
   for k, v in pairs(groups) do
     vim.api.nvim_set_hl(0, k, v)
+  end
+
+  -- set ANSI colors for :terminal
+  if M.options.terminal_colors then
+    local terminal_colors = {
+      palette.black,
+      palette.red,
+      palette.turquoise,
+      palette.yellow,
+      palette.blue,
+      palette.rose,
+      palette.purple,
+      palette.white,
+      palette.gray,
+      palette.scarlet,
+      palette.mint,
+      palette.yellow,
+      palette.sky,
+      palette.pink,
+      palette.lavender,
+      palette.pure_white,
+    }
+    for i, color in ipairs(terminal_colors) do
+      vim.g["terminal_color_" .. (i - 1)] = color
+    end
   end
 end
 
