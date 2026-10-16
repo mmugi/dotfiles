@@ -24,9 +24,7 @@ return {
   rose = "#e26b8c",
   amaranth = "#ff1438",
 
-  bg_green = "#1c5846",
   bg_slate = "#4f6e8d",
   bg_dusk = "#404c8b",
   bg_blue = "#333366",
-  bg_red = "#543345",
 }
