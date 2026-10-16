@@ -193,7 +193,7 @@ function M.setup(palette)
     Structure = { link = "Type" },
     Typedef = { link = "Type" },
 
-    Special = { fg = palette.blue },
+    Special = { fg = palette.turquoise },
     SpecialChar = { link = "Special" },
     Tag = { link = "Special" },
     Delimiter = { fg = palette.fg },
