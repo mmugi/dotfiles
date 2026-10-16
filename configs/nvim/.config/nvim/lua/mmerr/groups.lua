@@ -100,7 +100,7 @@ function M.setup(palette)
 
     DiffAdd = { fg = palette.black, bg = palette.turquoise },
     DiffChange = { fg = palette.white, bg = palette.bg_blue },
-    DiffDelete = { fg = palette.white, bg = palette.amaranth },
+    DiffDelete = { fg = palette.white, bg = palette.folly },
     DiffText = { fg = palette.white, bg = palette.blue },
     DiffTextAdd = { link = "DiffText" },
 
@@ -313,7 +313,7 @@ function M.setup(palette)
     GitSignsVirtLnum = { link = "LineNr" },
     GitSignsAddInline = { fg = palette.turquoise, bg = palette.black },
     GitSignsChangeInline = { link = "GitSignsAddInline" },
-    GitSignsDeleteInline = { fg = palette.amaranth, bg = palette.white },
+    GitSignsDeleteInline = { fg = palette.folly, bg = palette.white },
   }
 end
 

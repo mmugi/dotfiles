@@ -66,7 +66,7 @@ function M.load()
       palette.purple,
       palette.white,
       palette.gray,
-      palette.amaranth,
+      palette.folly,
       palette.mint,
       palette.yellow,
       palette.sky,

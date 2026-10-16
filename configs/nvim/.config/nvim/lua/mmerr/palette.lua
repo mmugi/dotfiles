@@ -22,7 +22,7 @@ return {
   rebeccapurple = "#663399",
   pink = "#ec94ad",
   rose = "#e26b8c",
-  amaranth = "#fe0045",
+  folly = "#fe0045",
 
   bg_slate = "#4f6e8d",
   bg_dusk = "#404c8b",
