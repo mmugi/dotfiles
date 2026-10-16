@@ -98,11 +98,11 @@ function M.setup(palette)
     SnippetTabstop = { link = "Visual" },
     SnippetTabstopActive = { link = "SnippetTabstop" },
 
-    DiffAdd = { bg = palette.bg_green },
-    DiffChange = { bg = palette.bg_blue },
-    DiffText = { fg = palette.white, bg = palette.pink },
+    DiffAdd = { fg = palette.black, bg = palette.turquoise },
+    DiffChange = { fg = palette.white, bg = palette.bg_blue },
+    DiffDelete = { fg = palette.white, bg = palette.amaranth },
+    DiffText = { fg = palette.white, bg = palette.blue },
     DiffTextAdd = { link = "DiffText" },
-    DiffDelete = { fg = palette.red, bg = palette.bg_red },
 
     SpellBad = { undercurl = true, sp = palette.red },
     SpellCap = { undercurl = true, sp = palette.yellow },
@@ -206,7 +206,7 @@ function M.setup(palette)
     Todo = { fg = palette.black, bg = palette.yellow, bold = true },
 
     Added = { fg = palette.turquoise },
-    Changed = { fg = palette.pink },
+    Changed = { fg = palette.blue },
     Removed = { fg = palette.red },
 
     -- syntax (sh)
@@ -308,6 +308,12 @@ function M.setup(palette)
     -- incline
     InclineNormal = { fg = palette.white },
     InclineNormalNC = { fg = palette.dusk },
+
+    -- gitsigns
+    GitSignsVirtLnum = { link = "LineNr" },
+    GitSignsAddInline = { fg = palette.turquoise, bg = palette.black },
+    GitSignsChangeInline = { link = "GitSignsAddInline" },
+    GitSignsDeleteInline = { fg = palette.amaranth, bg = palette.white },
   }
 end
 
