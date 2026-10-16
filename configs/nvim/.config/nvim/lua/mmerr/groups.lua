@@ -45,7 +45,7 @@ function M.setup(palette)
     IncSearch = { link = "CurSearch" },
     Substitute = { link = "Search" },
 
-    Visual = { fg = palette.white, bg = palette.purple },
+    Visual = { fg = palette.black, bg = palette.lime },
     VisualNOS = { link = "Visual" },
 
     StatusLine = { link = "Normal" },
