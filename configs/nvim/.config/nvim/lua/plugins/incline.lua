@@ -19,7 +19,7 @@ return {
   config = function(_, opts)
     vim.opt.laststatus = 0
     vim.opt.statusline = "─"
-    vim.opt.fillchars = { stl = "─", stlnc = "─" }
+    vim.opt.fillchars:append({ stl = "─", stlnc = "─" })
 
     -- ステータスラインを上下分割の区切り線として使う。
     -- ステータスラインのハイライトグループ群を WinSeparator にリンクする。
