@@ -167,7 +167,7 @@ function M.setup(palette)
     Constant = { fg = palette.turquoise },
     String = { fg = palette.purple },
     Character = { link = "String" },
-    Number = { link = "Constant" },
+    Number = { fg = palette.mint },
     Boolean = { link = "Constant" },
     Float = { link = "Number" },
 
