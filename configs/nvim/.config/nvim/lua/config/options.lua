@@ -15,6 +15,10 @@ vim.opt.listchars = {
   tab = '>-',
   trail = '-',
 }
+vim.opt.fillchars = {
+  foldclose = '▸',
+  foldopen = '▾',
+}
 vim.opt.number = true
 
 -- 5 syntax, highlighting and spelling
