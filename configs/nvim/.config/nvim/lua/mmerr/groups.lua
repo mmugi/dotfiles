@@ -71,7 +71,7 @@ function M.setup(palette)
 
     NormalFloat = { link = "Normal" },
     FloatBorder = { link = "NormalFloat" },
-    Title = { fg = palette.sky, bold = true },
+    Title = { fg = palette.cyan, bold = true },
     FloatTitle = { link = "Title" },
     FloatFooter = { link = "FloatTitle" },
     FloatShadow = { bg = palette.black, blend = 80 },

@@ -12,6 +12,7 @@ return {
   lime = "#c7f761",
   mint = "#c9f9dc",
   turquoise = "#0becca",
+  cyan = "#59fbff",
   sky = "#7dbbfa",
   blue = "#417cff",
   dusk = "#6874b3",
