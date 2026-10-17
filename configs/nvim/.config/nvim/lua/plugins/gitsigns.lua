@@ -35,9 +35,9 @@ return {
   'lewis6991/gitsigns.nvim',
   lazy = false,
   keys = {
-    { "<leader>gg", "<cmd>Gitsigns next_hunk<cr>", mode = "n" },
-    { "<leader>GG", "<cmd>Gitsigns prev_hunk<cr>", mode = "n" },
     { "<leader>gd", toggle_preview_hunk_inline, mode = "n" },
-    { "<leader>ga", "<cmd>Gitsigns stage_hunk<cr>", mode = "n" },
+    { "<leader>gD", "<cmd>Gitsigns diffthis<cr>", mode = "n" },
+    { "<leader>gn", "<cmd>Gitsigns next_hunk<cr>", mode = "n" },
+    { "<leader>gp", "<cmd>Gitsigns prev_hunk<cr>", mode = "n" },
   },
 }
