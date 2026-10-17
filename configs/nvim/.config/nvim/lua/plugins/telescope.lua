@@ -54,8 +54,8 @@ return {
         horizontal = { preview_width = 0.55 },
         vertical = { preview_height = 0.4, mirror = true },
       },
-      selection_caret = "",
-      entry_prefix = "" ,
+      selection_caret = "* ",
+      entry_prefix = "  ",
       --path_display = {
       --  filename_first = { reverse_directories = false }
       --},
