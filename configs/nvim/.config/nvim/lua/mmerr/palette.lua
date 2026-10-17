@@ -22,7 +22,7 @@ return {
   purple = "#948cf3",
   rebeccapurple = "#663399",
   pink = "#ec94ad",
-  rose = "#e26b8c",
+  rose = "#ff5890",
   folly = "#fe0045",
 
   bg_slate = "#4f6e8d",
