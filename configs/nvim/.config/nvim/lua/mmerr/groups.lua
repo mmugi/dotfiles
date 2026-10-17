@@ -35,7 +35,7 @@ function M.setup(palette)
     CursorLineFold = { link = "SignColumn" },
 
     Directory = { fg = palette.blue },
-    QuickFixLine = { fg = palette.white, bg = palette.iris },
+    QuickFixLine = { bg = palette.bg_blue },
 
     WinSeparator = { fg = palette.dusk },
     MsgSeparator = { link = "WinSeparator" },
