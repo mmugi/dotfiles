@@ -16,8 +16,8 @@ palette = 14=#b9bfff
 palette = 15=#ffffff
 background = #222641
 foreground = #eff7fe
-cursor-color = #948cf3
-cursor-text = #050a15
+cursor-color = #417cff
+cursor-text = #eff7fe
 selection-background = #948cf3
 selection-foreground = #eff7fe
 split-divider-color = #417cff

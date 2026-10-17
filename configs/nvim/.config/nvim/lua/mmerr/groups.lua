@@ -6,7 +6,7 @@ function M.setup(palette)
     Normal = { fg = palette.fg, bg = palette.bg },
     NormalNC = { link = "Normal" },
 
-    Cursor = { fg = palette.black, bg = palette.purple },
+    Cursor = { fg = palette.white, bg = palette.blue },
     CursorIM = { link = "Cursor" },
     lCursor = { link = "Cursor" },
     TermCursor = { reverse = true },
