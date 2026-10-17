@@ -62,7 +62,7 @@ function M.load()
       palette.turquoise,
       palette.yellow,
       palette.blue,
-      palette.rose,
+      palette.pink,
       palette.purple,
       palette.white,
       palette.gray,
@@ -70,7 +70,7 @@ function M.load()
       palette.mint,
       palette.yellow,
       palette.sky,
-      palette.pink,
+      palette.rose,
       palette.lavender,
       palette.pure_white,
     }
