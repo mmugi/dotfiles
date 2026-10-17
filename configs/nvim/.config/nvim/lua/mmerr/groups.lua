@@ -80,7 +80,7 @@ function M.setup(palette)
     Pmenu = { link = "Normal" },
     PmenuSel = { fg = palette.white, bg = palette.iris },
     PmenuMatch = { fg = palette.purple },
-    PmenuMatchSel = { fg = palette.white, bg = palette.iris },
+    PmenuMatchSel = { fg = palette.lavender, bg = palette.iris },
     PmenuKind = { link = "Pmenu" },
     PmenuKindSel = { link = "PmenuSel" },
     PmenuExtra = { link = "Pmenu" },
