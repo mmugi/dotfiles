@@ -12,6 +12,8 @@ M.options = vim.deepcopy(M.default_options)
 -- groups with a defined bg that should be explicitly set to transparent
 local TRANSPARENT_HIGHLIGHT_GROUPS = {
   "Normal",
+  "NormalFloat",
+  "Pmenu",
 }
 
 local function override_groups(groups, overrides)

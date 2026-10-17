@@ -69,7 +69,7 @@ function M.setup(palette)
     StderrMsg = { link = "ErrorMsg" },
     StdoutMsg = {},
 
-    NormalFloat = { link = "Normal" },
+    NormalFloat = { fg = palette.fg, bg = palette.bg_dusk },
     FloatBorder = { link = "NormalFloat" },
     Title = { fg = palette.cyan, bold = true },
     FloatTitle = { link = "Title" },
@@ -77,7 +77,7 @@ function M.setup(palette)
     FloatShadow = { bg = palette.black, blend = 80 },
     FloatShadowThrough = { bg = palette.black, blend = 100 },
 
-    Pmenu = { link = "Normal" },
+    Pmenu = { fg = palette.fg, bg = palette.bg_dusk },
     PmenuSel = { fg = palette.white, bg = palette.iris },
     PmenuMatch = { fg = palette.purple },
     PmenuMatchSel = { fg = palette.lavender, bg = palette.iris },
