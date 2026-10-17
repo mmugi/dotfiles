@@ -14,7 +14,7 @@ function M.setup(palette)
     CursorLine = { underline = true, sp = palette.purple },
     CursorColumn = { bg = palette.bg_dusk },
     ColorColumn = { bg = palette.bg_dusk },
-    MatchParen = { fg = palette.white, bg = palette.iris, bold = true },
+    MatchParen = { fg = palette.black, bg = palette.rose },
 
     LineNr = { fg = palette.dusk },
     LineNrAbove = { link = "LineNr" },
