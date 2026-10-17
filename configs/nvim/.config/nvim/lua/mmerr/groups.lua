@@ -19,7 +19,7 @@ function M.setup(palette)
     LineNr = { fg = palette.dusk },
     LineNrAbove = { link = "LineNr" },
     LineNrBelow = { link = "LineNr" },
-    CursorLineNr = { fg = palette.white },
+    CursorLineNr = { fg = palette.fg },
 
     EndOfBuffer = { link = "LineNr" },
     NonText = { fg = palette.dusk },
@@ -55,7 +55,7 @@ function M.setup(palette)
     WinBar = { link = "Normal" },
     WinBarNC = { link = "NormalNC" },
     TabLine = { fg = palette.dusk },
-    TabLineSel = { fg = palette.white, bold = true },
+    TabLineSel = { fg = palette.fg, bold = true },
     TabLineFill = { link = "TabLine" },
     WildMenu = { link = "PmenuSel" },
 
@@ -307,7 +307,7 @@ function M.setup(palette)
     TelescopeResultsDiffDelete = { link = "Removed" },
 
     -- incline
-    InclineNormal = { fg = palette.white },
+    InclineNormal = { fg = palette.fg },
     InclineNormalNC = { fg = palette.dusk },
 
     -- gitsigns
