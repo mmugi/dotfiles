@@ -62,19 +62,6 @@ silent! set wildmode=longest,full:noselect
 silent! set wildoptions=pum,fuzzy
 set cmdwinheight=15
 
-" highlights
-highlight SpecialKey ctermbg=red ctermfg=black
-highlight EndOfBuffer ctermbg=none
-highlight LineNr ctermbg=none
-highlight CursorLineNr ctermbg=none cterm=underline
-highlight CursorLine ctermbg=none cterm=underline
-highlight Normal ctermbg=none
-highlight TabLine ctermbg=white ctermfg=black cterm=none
-highlight TabLineSel ctermbg=63 ctermfg=white cterm=bold
-highlight TabLineFill ctermbg=none cterm=none
-highlight VertSplit ctermbg=none ctermfg=61 cterm=none
-highlight StatusLine ctermbg=63 ctermfg=white cterm=none
-
 " highlight the cursor only in the current window
 augroup vimrc_cursor
   autocmd!
