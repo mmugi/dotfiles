@@ -23,7 +23,6 @@ mmerr::setup() {
     ['rose']='#ff5890'
     ['folly']='#fe0045'
 
-    ['bg_slate']='#4f6e8d'
     ['bg_dusk']='#404c8b'
   )
   declare -g -A THEME_STYLE=(
