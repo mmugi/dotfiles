@@ -40,10 +40,10 @@ function M.setup(palette)
     WinSeparator = { fg = palette.dusk },
     MsgSeparator = { link = "WinSeparator" },
 
-    Search = { fg = palette.white, bg = palette.bg_slate },
-    CurSearch = { fg = palette.black, bg = palette.sky },
+    Search = { fg = palette.black, bg = palette.pink },
+    CurSearch = { fg = palette.white, bg = palette.folly },
     IncSearch = { link = "CurSearch" },
-    Substitute = { link = "Search" },
+    Substitute = { link = "CurSearch" },
 
     Visual = { fg = palette.black, bg = palette.lime },
     VisualNOS = { link = "Visual" },
