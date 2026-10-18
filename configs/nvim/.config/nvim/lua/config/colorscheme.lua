@@ -10,7 +10,7 @@ require("mmerr").setup({
 
       ColumnGuide = { fg = palette.bg_blue },
 
-      InclineModified = { fg = palette.rose },
+      InclineModified = { fg = palette.pink },
       InclineConflict = { fg = palette.red, bold = true },
     }
   end,
