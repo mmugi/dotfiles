@@ -161,6 +161,8 @@ function M.setup(palette)
 
     LspSignatureActiveParameter = { link = "Visual" },
 
+    ["@lsp.typemod.keyword.documentation"] = { link = "SpecialComment" },
+
     -- syntax (help group-name)
     Comment = { fg = palette.gray },
 
