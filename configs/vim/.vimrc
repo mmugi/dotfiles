@@ -69,6 +69,14 @@ augroup vimrc_cursor
   autocmd WinEnter * setlocal cursorline cursorcolumn
 augroup END
 
+" highlight trailing whitespace in normal file buffers
+highlight ErrTrailingWhitespace ctermfg=7 ctermbg=1
+augroup vimrc_trailing_whitespace
+  autocmd!
+  autocmd BufEnter,BufWinEnter,WinEnter *
+    \ execute &buftype == '' ? 'match ErrTrailingWhitespace /\s\+$/' : 'match none'
+augroup END
+
 " keymaps
 let mapleader = "\<space>"
 let maplocalleader = "\\"
