@@ -22,6 +22,8 @@ set background=dark
 set hlsearch
 set cursorcolumn
 set cursorline
+silent! colorscheme quiet
+highlight Normal ctermbg=NONE
 
 " 6 multiple windows
 set laststatus=2
