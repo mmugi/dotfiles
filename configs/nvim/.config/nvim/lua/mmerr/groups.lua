@@ -296,6 +296,7 @@ function M.setup(palette)
     TelescopeNormal = { link = "NormalFloat" },
     TelescopeMatching = { fg = palette.purple },
     TelescopePreviewMatch = { link = "CurSearch" },
+    TelescopePreviewLine = { link = "TelescopePreviewMatch" },
     TelescopeSelection = { bg = palette.bg_blue },
     TelescopeSelectionCaret = { fg = palette.rose, bg = palette.bg_blue },
     TelescopeBorder = { link = "FloatBorder" },
