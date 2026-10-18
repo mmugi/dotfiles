@@ -1,4 +1,5 @@
-return {
+---@class mmerr.Palette
+local palette = {
   bg = "#222641",
   fg = "#eff7fe",
 
@@ -30,3 +31,5 @@ return {
   bg_dusk = "#404c8b",
   bg_blue = "#333366",
 }
+
+return palette

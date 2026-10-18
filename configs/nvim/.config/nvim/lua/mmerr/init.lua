@@ -1,5 +1,11 @@
 local M = {}
 
+---@class mmerr.Config
+---@field transparent_bg? boolean
+---@field terminal_colors? boolean
+---@field highlight_overrides? table<string, vim.api.keyset.highlight>|fun(palette: mmerr.Palette): table<string, vim.api.keyset.highlight>
+---@field palette_overrides? mmerr.Palette
+
 M.default_options = {
   transparent_bg = false,
   terminal_colors = true,
@@ -23,6 +29,7 @@ local function override_groups(groups, overrides)
   return groups
 end
 
+---@param opts? mmerr.Config
 function M.setup(opts)
   -- set user options
   M.options = vim.tbl_deep_extend("force", M.default_options, opts or {})
