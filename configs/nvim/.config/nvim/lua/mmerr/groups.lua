@@ -169,7 +169,7 @@ function M.setup(palette)
     Constant = { fg = palette.turquoise },
     String = { fg = palette.purple },
     Character = { link = "String" },
-    Number = { fg = palette.mint },
+    Number = { fg = palette.lavender },
     Boolean = { link = "Constant" },
     Float = { link = "Number" },
 
@@ -184,13 +184,13 @@ function M.setup(palette)
     Keyword = { link = "Statement" },
     Exception = { link = "Statement" },
 
-    PreProc = { fg = palette.pink },
+    PreProc = { fg = palette.mint },
     Include = { link = "PreProc" },
     Define = { link = "PreProc" },
     Macro = { link = "PreProc" },
     PreCondit = { link = "PreProc" },
 
-    Type = { fg = palette.fg },
+    Type = { fg = palette.pink },
     StorageClass = { link = "Type" },
     Structure = { link = "Type" },
     Typedef = { link = "Type" },
