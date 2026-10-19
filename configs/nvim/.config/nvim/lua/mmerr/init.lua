@@ -35,8 +35,13 @@ function M.setup(opts)
   M.options = vim.tbl_deep_extend("force", M.default_options, opts or {})
 end
 
+---@return mmerr.Palette
+function M.get_palette()
+  return vim.tbl_extend("force", require("mmerr.palette"), M.options.palette_overrides)
+end
+
 function M.load()
-  local palette = vim.tbl_extend("force", require("mmerr.palette"), M.options.palette_overrides)
+  local palette = M.get_palette()
   local groups = require("mmerr.groups").setup(palette)
 
   vim.opt.background = "dark"
