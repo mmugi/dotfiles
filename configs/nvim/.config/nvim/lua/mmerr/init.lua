@@ -3,14 +3,14 @@ local M = {}
 ---@class mmerr.Config
 ---@field transparent_bg? boolean
 ---@field terminal_colors? boolean
----@field highlight_overrides? table<string, vim.api.keyset.highlight>|fun(palette: mmerr.Palette): table<string, vim.api.keyset.highlight>
 ---@field palette_overrides? mmerr.Palette
+---@field highlight_overrides? table<string, vim.api.keyset.highlight>|fun(palette: mmerr.Palette): table<string, vim.api.keyset.highlight>
 
 M.default_options = {
   transparent_bg = false,
   terminal_colors = true,
-  highlight_overrides = {},
   palette_overrides = {},
+  highlight_overrides = {},
 }
 
 M.options = vim.deepcopy(M.default_options)
