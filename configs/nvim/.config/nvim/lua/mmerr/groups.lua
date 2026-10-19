@@ -69,7 +69,7 @@ function M.setup(palette)
     StderrMsg = { link = "ErrorMsg" },
     StdoutMsg = {},
 
-    NormalFloat = { fg = palette.fg, bg = palette.bg_gray },
+    NormalFloat = { fg = palette.fg, bg = palette.bg_charcoal },
     FloatBorder = { link = "NormalFloat" },
     Title = { fg = palette.cyan, bold = true },
     FloatTitle = { link = "Title" },
@@ -77,7 +77,7 @@ function M.setup(palette)
     FloatShadow = { bg = palette.black, blend = 80 },
     FloatShadowThrough = { bg = palette.black, blend = 100 },
 
-    Pmenu = { fg = palette.fg, bg = palette.bg_gray },
+    Pmenu = { fg = palette.fg, bg = palette.bg_charcoal },
     PmenuSel = { fg = palette.white, bg = palette.iris },
     PmenuMatch = { fg = palette.purple },
     PmenuMatchSel = { fg = palette.lavender, bg = palette.iris },
@@ -297,8 +297,8 @@ function M.setup(palette)
     TelescopeMatching = { fg = palette.purple },
     TelescopePreviewMatch = { link = "CurSearch" },
     TelescopePreviewLine = { link = "TelescopePreviewMatch" },
-    TelescopeSelection = { bg = palette.bg_gray },
-    TelescopeSelectionCaret = { fg = palette.pink, bg = palette.bg_gray },
+    TelescopeSelection = { bg = palette.bg_charcoal },
+    TelescopeSelectionCaret = { fg = palette.pink, bg = palette.bg_charcoal },
     TelescopeBorder = { link = "FloatBorder" },
     TelescopePromptPrefix = { fg = palette.pink },
     TelescopePromptCounter = { fg = palette.gray },
