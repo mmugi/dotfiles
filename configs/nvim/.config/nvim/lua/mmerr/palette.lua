@@ -27,6 +27,7 @@ local palette = {
   folly = "#fe0045",
 
   bg_charcoal = "#202029",
+  bg_gray = "#41414a",
   bg_dusk = "#404c8b",
   bg_blue = "#333366",
 }
