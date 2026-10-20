@@ -26,7 +26,7 @@ quick-terminal-position = center
 quick-terminal-size = 80%,80%
 quick-terminal-autohide = true
 
-shell-integration-features = no-cursor
+shell-integration-features = no-cursor,ssh-env
 
 custom-shader = shaders/cursor_trail.glsl
 
