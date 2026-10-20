@@ -11,3 +11,10 @@ type brew >/dev/null; and eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # starship
 type starship >/dev/null; and starship init fish | source
+
+# eza
+if type eza >/dev/null
+    alias l eza
+    alias ls eza
+    alias ll 'eza -alF=auto'
+end
