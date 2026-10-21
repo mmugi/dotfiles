@@ -63,7 +63,13 @@ return {
     },
     pickers = {
       live_grep = { additional_args = { "--follow", "--hidden" } },
-      find_files = { follow = true, hidden = true },
+      find_files = {
+        find_command = vim.fn.executable("fd") == 1
+            and { "fd", "--type", "f", "--color", "never", "--exclude", ".git", "--exclude", "/Library" }
+          or nil,
+        follow = true,
+        hidden = true,
+      },
       builtin = { previewer = false, theme = "dropdown", use_default_opts = true },
       commands = { theme = "dropdown" },
       command_history = { theme = "dropdown" },
@@ -94,6 +100,7 @@ return {
       },
     }
     require("telescope").setup(opts)
+    pcall(require("telescope").load_extension, "fzf")
 
     vim.api.nvim_create_autocmd("FileType", {
       pattern = "TelescopePrompt",
