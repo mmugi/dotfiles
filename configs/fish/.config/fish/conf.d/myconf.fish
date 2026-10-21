@@ -3,17 +3,17 @@ set -g GHQ_SELECTOR_OPTS '--reverse'
 
 # jethrokuan/fzf
 set -g FZF_DEFAULT_OPTS '--reverse --height 50%'
-type fd >/dev/null; and set -g FZF_FIND_FILE_COMMAND \
+command -q fd; and set -g FZF_FIND_FILE_COMMAND \
         "fd --follow --hidden --exclude .git/ . \$dir | perl -pe 's#^\.\/##'"
 
 # homebrew
-type brew >/dev/null; and eval "$(/opt/homebrew/bin/brew shellenv)"
+command -q brew; and eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # starship
-type starship >/dev/null; and starship init fish | source
+command -q starship; and starship init fish | source
 
 # eza
-if type eza >/dev/null
+if command -q eza
     alias l eza
     alias ls eza
     alias ll 'eza -alF=auto'
