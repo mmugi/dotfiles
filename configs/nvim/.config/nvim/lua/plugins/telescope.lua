@@ -35,7 +35,7 @@ return {
     { "<leader>ft", "<cmd>Telescope builtin<cr>", desc = "Telescope builtin pickers", mode = "n" },
     { "<leader>fg", "<cmd>Telescope live_grep<cr>", desc = "Telescope live grep", mode = "n" },
     { "<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Telescope find files", mode = "n" },
-    { "<leader>fc", "<cmd>Telescope command_history<cr>", desc = "Telescope command history", mode = "n" },
+    { "<leader>f:", "<cmd>Telescope command_history<cr>", desc = "Telescope command history", mode = "n" },
     { "<leader>fs", "<cmd>Telescope search_history<cr>", desc = "Telescope search history", mode = "n" },
     { "<leader>fb", "<cmd>Telescope buffers<cr>", desc = "Telescope buffers", mode = "n" },
     { "<leader>fm", "<cmd>Telescope marks<cr>", desc = "Telescope marks", mode = "n" },
