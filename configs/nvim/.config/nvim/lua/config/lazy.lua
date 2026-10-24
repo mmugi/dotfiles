@@ -20,6 +20,11 @@ require("lazy").setup({
   spec = {
     { import = "plugins" },
   },
+  dev = {
+    path = "~/git/github.com/mmugi",
+    patterns = { "github.com/mmugi/" },
+    fallback = true,
+  },
   install = { colorscheme = { "mmerr" } },
   ui = { border = "single" },
   checker = { enabled = true },
