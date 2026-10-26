@@ -10,6 +10,7 @@ Always respond in Japanese (日本語), regardless of the language the user writ
 - コミット直前に `git status` を見せ、未ステージの変更があれば含めるか確認する。黙って巻き込まない。
 - レビュー中に利用者がファイルを修正することがある。ディスク上の変更は意図的なものと
   して扱い、勝手に戻さない。壊れている場合だけ指摘する。
+- 担当はコミットまで。`git push` は指示された場合も実行しない。push は利用者の作業とする。
 
 ## Commit Messages
 
