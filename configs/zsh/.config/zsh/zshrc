@@ -1,0 +1,30 @@
+# Sourced from ~/.zshrc. Keep host-specific settings in ~/.zshrc itself.
+
+# aliases
+alias ll='ls -AFhl'
+
+# completion
+if (( ! $+functions[compdef] )); then
+  autoload -Uz compinit && compinit
+fi
+
+# prompt
+if command -v starship >/dev/null; then
+  eval "$(starship init zsh)"
+else
+  for f in /Library/Developer/CommandLineTools/usr/share/git-core/git-prompt.sh /Applications/Xcode.app/Contents/Developer/usr/share/git-core/git-prompt.sh /opt/homebrew/etc/bash_completion.d/git-prompt.sh /usr/lib/git-core/git-sh-prompt /usr/share/git-core/contrib/completion/git-prompt.sh; do
+    [[ -r $f ]] && { . "$f"; break; }
+  done
+  unset f
+
+  PROMPT='[%D{%FT%T%z}] %n@%m %~'
+  if (( $+functions[__git_ps1] )); then
+    setopt PROMPT_SUBST
+    GIT_PS1_SHOWDIRTYSTATE=1
+    GIT_PS1_SHOWSTASHSTATE=1
+    GIT_PS1_SHOWUNTRACKEDFILES=1
+    GIT_PS1_SHOWUPSTREAM=auto
+    PROMPT+=$'%{\e[2m%}$(__git_ps1 " (%s)")%{\e[22m%}'
+  fi
+  PROMPT+=' %F{#948cf3}%#%f ' # purple #948cf3
+fi

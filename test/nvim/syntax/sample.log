@@ -1,0 +1,10 @@
+INFO  oven warming up
+DEBUG oven sensor ok
+DEBUG tray 3 is full
+WARN  oven door open
+ERROR order fetch failed https://bakery.example.com/orders
+DEBUG retry https://bakery.example.com/orders
+DEBUG peer 192.0.2.10 accepted, docs at https://bakery.example.com/docs
+INFO  register synced
+DEBUG done, see https://bakery.example.com/status
+vim: set filetype=log:

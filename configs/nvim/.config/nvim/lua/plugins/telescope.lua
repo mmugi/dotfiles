@@ -31,10 +31,11 @@ return {
     { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
   },
   keys = {
+    { "<leader><leader>", "<cmd>Telescope buffers<cr>", desc = "Telescope buffers", mode = "n" },
     { "<leader>ft", "<cmd>Telescope builtin<cr>", desc = "Telescope builtin pickers", mode = "n" },
     { "<leader>fg", "<cmd>Telescope live_grep<cr>", desc = "Telescope live grep", mode = "n" },
     { "<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Telescope find files", mode = "n" },
-    { "<leader>fc", "<cmd>Telescope command_history<cr>", desc = "Telescope command history", mode = "n" },
+    { "<leader>f:", "<cmd>Telescope command_history<cr>", desc = "Telescope command history", mode = "n" },
     { "<leader>fs", "<cmd>Telescope search_history<cr>", desc = "Telescope search history", mode = "n" },
     { "<leader>fb", "<cmd>Telescope buffers<cr>", desc = "Telescope buffers", mode = "n" },
     { "<leader>fm", "<cmd>Telescope marks<cr>", desc = "Telescope marks", mode = "n" },
@@ -53,8 +54,8 @@ return {
         horizontal = { preview_width = 0.55 },
         vertical = { preview_height = 0.4, mirror = true },
       },
-      selection_caret = "",
-      entry_prefix = "" ,
+      selection_caret = "* ",
+      entry_prefix = "  ",
       --path_display = {
       --  filename_first = { reverse_directories = false }
       --},
@@ -62,7 +63,13 @@ return {
     },
     pickers = {
       live_grep = { additional_args = { "--follow", "--hidden" } },
-      find_files = { follow = true, hidden = true },
+      find_files = {
+        find_command = vim.fn.executable("fd") == 1
+            and { "fd", "--type", "f", "--color", "never", "--exclude", ".git", "--exclude", "/Library" }
+          or nil,
+        follow = true,
+        hidden = true,
+      },
       builtin = { previewer = false, theme = "dropdown", use_default_opts = true },
       commands = { theme = "dropdown" },
       command_history = { theme = "dropdown" },
@@ -93,5 +100,13 @@ return {
       },
     }
     require("telescope").setup(opts)
+    pcall(require("telescope").load_extension, "fzf")
+
+    vim.api.nvim_create_autocmd("FileType", {
+      pattern = "TelescopePrompt",
+      callback = function()
+        vim.opt_local.cursorline = false
+      end,
+    })
   end,
 }

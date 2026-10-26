@@ -18,16 +18,16 @@ help: ## Show this help message.
 	@$(SCRIPT_DIR)/make/help.sh "$(MAKEFILE)"
 
 ## Git
-.PHONY: git-sign git-completion-conf
+.PHONY: git-enable git-sign
+git-enable: ## Enable the dotfiles git config from the global git config.
+	@$(SCRIPT_DIR)/git/git-enable.sh
 git-sign: ## Configure git commit signing settings.
 	@$(SCRIPT_DIR)/git/git-sign.sh
-git-completion-conf: ## Generate git-completion shell config (default bash; TARGET_SHELL to override).
-	@$(SCRIPT_DIR)/git/git-completion-conf.sh --shell $(or $(TARGET_SHELL),bash)
 
 ## Shell
-.PHONY: shell-prompt-conf
-shell-prompt-conf: ## Generate shell prompt config (default bash; TARGET_SHELL to override).
-	@$(SCRIPT_DIR)/shell/generate-prompt-conf.sh --shell $(or $(TARGET_SHELL),bash)
+.PHONY: shell-enable
+shell-enable: ## Enable the dotfiles shell config from ~/.<shell>rc (TARGET_SHELL=bash|zsh required).
+	@$(SCRIPT_DIR)/shell/shell-enable.sh $(TARGET_SHELL)
 
 ## Homebrew
 .PHONY: brew-diff brew-dump

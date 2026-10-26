@@ -9,10 +9,26 @@ local state = {
 
 local default_config = {
   highlights = {
-    CursorInfo = { link = "Comment", default = true },
     CursorInfoInsert = { link = "ModeMsg", default = true },
     CursorInfoVisual = { link = "ModeMsg", default = true},
+    CursorInfoReplace = { link = "ModeMsg", default = true },
   },
+}
+
+-- 挿入系モードから CTRL-O でノーマルに戻っている間の表示
+local pending_texts = {
+  I = "(insert)",
+  R = "(replace)",
+  V = "(vreplace)",
+}
+
+local visual_texts = {
+  v = "VISUAL",
+  V = "VISUAL-LINE",
+  ["\22"] = "VISUAL-BLOCK",
+  s = "SELECT",
+  S = "SELECT-LINE",
+  ["\19"] = "SELECT-BLOCK",
 }
 
 local function is_show()
@@ -42,30 +58,31 @@ local function update()
   end
 
   local line = vim.fn.line(".")
-  local mode = vim.fn.mode()
-  local row, col = unpack(vim.api.nvim_win_get_cursor(0))
-  local total_lines = vim.api.nvim_buf_line_count(buf_id)
+  local mode = vim.fn.mode(1)
   local mode_text = nil
   local mode_text_hl = nil
 
   if mode:match("^i") then
     mode_text = " <<INSERT"
     mode_text_hl = "CursorInfoInsert"
-  elseif mode:match("[vV\22]") then
+  elseif mode:match("^ni[IRV]") then
+    mode_text = " <<" .. pending_texts[mode:sub(3, 3)]
+    mode_text_hl = "CursorInfoInsert"
+  elseif mode:match("^Rv") then
+    mode_text = " <<VREPLACE"
+    mode_text_hl = "CursorInfoReplace"
+  elseif mode:match("^R") then
+    mode_text = " <<REPLACE"
+    mode_text_hl = "CursorInfoReplace"
+  elseif mode:match("^[sS\19]") then
+    mode_text = " <<" .. visual_texts[mode:sub(1, 1)]
+    mode_text_hl = "CursorInfoVisual"
+  elseif mode:match("^[vV\22]") then
     local wc = vim.fn.wordcount()
-    local visual_text = nil
-
-    if mode:match("v") then
-      visual_text = "VISUAL"
-    elseif mode:match("V") then
-      visual_text = "VISUAL-LINE"
-    elseif mode:match("\22") then
-      visual_text = "VISUAL-BLOCK"
-    end
 
     mode_text = string.format(
       " <<%s %d lines, %d chars",
-      visual_text,
+      visual_texts[mode:sub(1, 1)],
       math.abs(vim.fn.line("v") - vim.fn.line(".")) + 1,
       wc.visual_chars or 0
     )
@@ -73,13 +90,6 @@ local function update()
   else
     mode_text = ""
   end
-
-  local text = string.format(
-    " %d/%d:%d ",
-    row,
-    total_lines,
-    col + 1
-  )
 
   vim.api.nvim_buf_set_extmark(
     buf_id,
@@ -89,7 +99,6 @@ local function update()
     {
       virt_text = {
         { mode_text, mode_text_hl },
-        --{ text, "CursorInfo" },
       },
       virt_text_pos = "eol",
     }
@@ -157,9 +166,9 @@ function M.setup(opts)
   vim.api.nvim_create_user_command("CursorInfoDisable", M.disable, {})
   vim.api.nvim_create_user_command("CursorInfoToggle", M.toggle, {})
 
-  vim.api.nvim_set_hl(0, "CursorInfo", config.highlights.CursorInfo)
   vim.api.nvim_set_hl(0, "CursorInfoInsert", config.highlights.CursorInfoInsert)
   vim.api.nvim_set_hl(0, "CursorInfoVisual", config.highlights.CursorInfoVisual)
+  vim.api.nvim_set_hl(0, "CursorInfoReplace", config.highlights.CursorInfoReplace)
 end
 
 return M

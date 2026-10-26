@@ -15,6 +15,10 @@ vim.opt.listchars = {
   tab = '>-',
   trail = '-',
 }
+vim.opt.fillchars = {
+  foldclose = '▸',
+  foldopen = '▾',
+}
 vim.opt.number = true
 
 -- 5 syntax, highlighting and spelling
@@ -22,13 +26,17 @@ vim.opt.background = "dark"
 vim.opt.termguicolors = true
 vim.opt.cursorcolumn = true
 vim.opt.cursorline = true
-vim.opt.cursorlineopt = "number"
+vim.opt.cursorlineopt = "both"
 
 -- 6 multiple windows
 vim.opt.laststatus = 3
 vim.opt.winborder = "rounded"
 vim.opt.splitbelow = true
 vim.opt.splitright = true
+
+-- 11 messages and info
+vim.opt.showmode = false
+vim.opt.ruler = false
 
 -- 12 selecting text
 vim.opt.clipboard:append({ "unnamedplus" })

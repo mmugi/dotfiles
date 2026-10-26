@@ -18,3 +18,5 @@
 	ll = log --graph --date=iso --decorate=full --stat
 	s = status --short --branch
 	ss = status
+[ghq]
+	root = ~/git

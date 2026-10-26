@@ -7,16 +7,14 @@ DOTFILES_REPO_HTTPS='https://github.com/mmugi/dotfiles'
 
 C_WARN=''
 C_ERR=''
-C_DIM=''
 C_RST=''
 if [ -t 2 ] && [ -z "${NO_COLOR:-}" ]; then
   C_WARN=$(printf '\033[33m')
   C_ERR=$(printf '\033[31m')
-  C_DIM=$(printf '\033[2m')
   C_RST=$(printf '\033[0m')
 fi
 
-progress() { printf '%s[>]%s %s\n' "$C_DIM"  "$C_RST" "$*" >&2; }
+progress() { printf '[>] %s\n' "$*" >&2; }
 warn()     { printf '%s[!]%s %s\n' "$C_WARN" "$C_RST" "$*" >&2; }
 die()      { printf '%s[x]%s %s\n' "$C_ERR"  "$C_RST" "$*" >&2; exit 1; }
 
@@ -37,7 +35,7 @@ usage: install.sh [-n|--dry-run] [-v|--verbose] [-h|--help]
 environment:
 
   DOTFILES_PATH        dotfiles の置き場所 (必須)
-  DOTFILES_BRANCH      取得するブランチ (既定: trunk)
+  DOTFILES_BRANCH      取得するブランチ (既定: リポジトリの既定ブランチ)
   DOTFILES_IGNOREFILE  除外リスト (既定: ${DOTFILES_PATH}/.dotignore)
   NO_COLOR             設定されていれば色を付けない
 USAGE
@@ -100,7 +98,7 @@ ensure_repo() {
     die "${DOTFILES_PATH} is not empty and has no configs directory"
   fi
 
-  branch="${DOTFILES_BRANCH:-trunk}"
+  branch="${DOTFILES_BRANCH:-HEAD}"
   tarball="${DOTFILES_REPO_HTTPS}/archive/${branch}.tar.gz"
 
   downloader=$(pick_downloader) || die 'cannot download the repository'
@@ -108,7 +106,7 @@ ensure_repo() {
   progress "downloading dotfiles into ${DOTFILES_PATH}..."
 
   if [ "$downloader" = git ]; then
-    git clone --recursive -b "$branch" "$DOTFILES_URL" "$DOTFILES_PATH" \
+    git clone --recursive ${DOTFILES_BRANCH:+-b "$DOTFILES_BRANCH"} "$DOTFILES_URL" "$DOTFILES_PATH" \
       || die 'failed to clone the repository'
     return 0
   fi

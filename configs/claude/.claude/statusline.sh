@@ -20,12 +20,12 @@ C_RST='' C_BRANCH='' C_STAGED='' C_MODIFIED='' C_DIM='' C_WARN='' C_ERR=''
 if [[ -z "${NO_COLOR:-}" ]]; then
   # 出力先は端末ではなく Claude なので [ -t 1 ] では判定できない。NO_COLOR だけを見る。
   C_RST=$'\033[0m'
-  C_BRANCH=$'\033[38;2;148;140;243m'   # purple #948cf3
-  C_STAGED=$'\033[38;2;11;236;202m'    # green  #0becca
-  C_MODIFIED=$'\033[38;2;236;148;173m' # pink   #ec94ad
-  C_DIM=$'\033[38;2;94;97;100m'        # gray   #5e6164
-  C_WARN=$'\033[38;2;252;220;0m'       # yellow #fcdc00
-  C_ERR=$'\033[38;2;234;89;80m'        # red    #ea5950
+  C_BRANCH=$'\033[38;2;148;140;243m'   # purple    #948cf3
+  C_STAGED=$'\033[38;2;11;236;202m'    # turquoise #0becca
+  C_MODIFIED=$'\033[38;2;236;148;173m' # pink      #ec94ad
+  C_DIM=$'\033[38;2;110;113;116m'      # gray      #6e7174
+  C_WARN=$'\033[38;2;252;220;0m'       # yellow    #fcdc00
+  C_ERR=$'\033[38;2;234;89;80m'        # red       #ea5950
 fi
 
 # 項目の区切り。Claude 本体が mode を出す行と同じ「空白・中黒・空白」に合わせる。

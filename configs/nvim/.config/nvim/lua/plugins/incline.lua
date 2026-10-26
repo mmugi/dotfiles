@@ -1,6 +1,4 @@
 local icon_enabled = true
-local cursor_info = false
-local mode = false
 
 return {
   "b0o/incline.nvim",
@@ -21,10 +19,18 @@ return {
   config = function(_, opts)
     vim.opt.laststatus = 0
     vim.opt.statusline = "─"
-    vim.opt.fillchars = { stl = "─", stlnc = "─" }
-    vim.opt.ruler = false
-    vim.opt.showmode = false
-    vim.api.nvim_set_hl(0, "StatusLine", { link = "WinSeparator" })
+    vim.opt.fillchars:append({ stl = "─", stlnc = "─" })
+
+    -- ステータスラインを上下分割の区切り線として使う。
+    -- ステータスラインのハイライトグループ群を WinSeparator にリンクする。
+    local function link_statusline()
+      for _, group in ipairs({ "StatusLine", "StatusLineNC", "StatusLineTerm", "StatusLineTermNC" }) do
+        vim.api.nvim_set_hl(0, group, { link = "WinSeparator" })
+      end
+    end
+    link_statusline()
+    -- カラースキームを読み直すとリンクがリセットされるのでautocmdでリンクし直す
+    vim.api.nvim_create_autocmd("ColorScheme", { callback = link_statusline })
 
     local _, mini_icons = pcall(require, "mini.icons")
     local function get_icon(filepath)
@@ -41,49 +47,21 @@ return {
       return mini_icons.get(filestat.type, filename)
     end
 
-    local function get_cursor_info(props)
-      if not cursor_info then
-        return nil
-      end
+    vim.api.nvim_create_autocmd("FileChangedShell", {
+      callback = function(args)
+        if vim.v.fcs_reason == "conflict" then
+          vim.b[args.buf].incline_conflict = true
+        end
+        -- keep nvim's own warning and prompt
+        vim.v.fcs_choice = "ask"
+      end,
+    })
 
-      local cursor = vim.api.nvim_win_get_cursor(props.win)
-      local row = cursor[1]
-      local col = cursor[2] + 1
-      local total_lines = vim.fn.line("$")
-
-      return string.format(
-        " [%d/%d:%d]",
-        row,
-        col,
-        total_lines
-      )
-    end
-
-    local function get_mode(props)
-      if not mode then
-        return nil
-      end
-
-      local focused = props.focused
-      local mode = vim.fn.mode()
-      local mode_text = nil
-      local hl_group = nil
-
-      if mode:match("^i") and focused then
-        mode_text = " <<INSERT"
-        hl_group = "InclineInsert"
-      elseif mode:match("[vV\22]") and focused then
-        local wc = vim.fn.wordcount()
-        mode_text = string.format(
-          " <<VISUAL %d lines, %d chars",
-          math.abs(vim.fn.line("v") - vim.fn.line(".")) + 1,
-          wc.visual_chars or 0
-        )
-        hl_group = "InclineVisual"
-      end
-
-      return mode_text, hl_group
-    end
+    vim.api.nvim_create_autocmd({ "BufReadPost", "BufWritePost" }, {
+      callback = function(args)
+        vim.b[args.buf].incline_conflict = nil
+      end,
+    })
 
     opts.render = function(props)
       local filepath = vim.api.nvim_buf_get_name(props.buf)
@@ -93,15 +71,13 @@ return {
 
       local icon, icon_hl = get_icon(filepath)
       local modified = vim.bo[props.buf].modified
-      local cursor_info = get_cursor_info(props)
-      local mode, mode_hl = get_mode(props)
+      local conflict = vim.b[props.buf].incline_conflict
 
       return {
         icon and { " ", icon, group = icon_hl } or "",
         { " ", filename, gui = modified and "italic" or "" },
         modified and { "*", group = "InclineModified" } or "",
-        cursor_info and { cursor_info, group = "LineNr" } or "",
-        mode and { mode, group = mode_hl } or "",
+        conflict and { " CONFLICT!", group = "InclineConflict" } or "",
       }
     end
 

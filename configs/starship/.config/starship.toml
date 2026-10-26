@@ -1,22 +1,24 @@
 # starship configs
 
 format = """
-($username(@$hostname):)\
+$time\
+($username$hostname )\
 $directory\
 $git_branch\
 $git_status\
 $git_commit\
 $git_state\
-$time\
 (\
   (${env_var.KUBECTL_ENV} )\
 )\
 $battery\
 $shlvl\
+$character\
+"""
+
+right_format = """
 $cmd_duration\
 $status\
-$line_break\
-$character\
 """
 
 add_newline = false
@@ -27,60 +29,48 @@ charging_symbol = '🔌'
 discharging_symbol = '🪫'
 
 [character]
-success_symbol = '[>](bold green)'
-error_symbol = '[>](bold red)'
+success_symbol = '[>](purple)'
+error_symbol = '[>](red)'
 
 [cmd_duration]
 format = '⌛[$duration]($style) '
-style = 'purple'
+style = 'gray'
 
 [directory]
 truncation_length = 0
-truncation_symbol = '…/'
 truncate_to_repo = false
-style = 'purple'
+style = 'none'
 
 [env_var.KUBECTL_ENV]
 format = '[$env_value]($style)'
 style = 'pink'
 
-[gcloud]
-disabled = true
-format = '[$symbol$active]($style) '
-symbol = '☁️'
-
-[gcloud.region_aliases]
-asia-northeast1 = 'tokyo'
-asia-northeast2 = 'osaka'
-
 [git_branch]
-format = '[$symbol$branch]($style)'
-symbol = ''
+format = '[$branch]($style)'
 style = 'gray'
 
 [git_commit]
 commit_hash_length = 7
 format = '[#$hash(:$tag)]($style) '
-style = 'purple'
+style = 'yellow'
 tag_disabled = false
 tag_symbol = ''
 
 [git_state]
 format = '[*$state(\($progress_current/$progress_total\))*]($style) '
-cherry_pick = '[🍒PICKING](bold pink)'
-style = 'bold'
+style = 'bold yellow'
 
 [git_status]
 format = """
 [\
   [$conflicted](yellow)\
   [$deleted](red)\
-  [$renamed](sky)\
+  [$renamed](turquoise)\
   [$modified](pink)\
   [$typechanged](gray)\
-  [$staged](green)\
-  [$untracked](bright-black)\
-  [$ahead_behind](mint)\
+  [$staged](turquoise)\
+  [$untracked](gray)\
+  [$ahead_behind](sky)\
   [$stashed](blue)\
 ]($style) \
 """
@@ -97,46 +87,46 @@ stashed = '='
 [hostname]
 disabled = false
 ssh_only = true
-format = '[$hostname]($style)'
-style = 'purple'
+format = '[@$hostname]($style)'
+style = 'none'
 
 [line_break]
 disabled = false
 
 [palettes.mypalette]
 blue = '#417cff'
-mint = '#c9f9dc'
-green = '#0becca'
+turquoise = '#0becca'
 pink = '#ec94ad'
 sky = '#7dbbfa'
 purple = '#948cf3'
 red = '#ea5950'
 yellow = '#fcdc00'
-gray = '#5e6164'
+gray = '#6e7174'
 
 [shlvl]
 disabled = false
 threshold = 3
 format = '[\[$symbol$shlvl\]]($style) '
 symbol = ''
-style = 'purple'
+style = 'gray'
 
 [status]
 disabled = false
-format = '[$symbol$status(:$common_meaning$signal_name$maybe_int)]($style) '
+format = '[$status(:$common_meaning$signal_name)]($style) '
+pipestatus_format = '\[$pipestatus\] '
+pipestatus_segment_format = ' [$status(:$common_meaning$signal_name)]($style) '
 style = 'bold red'
-symbol = '🔥'
 pipestatus = true
-map_symbol = true
 
 [time]
-disabled = false
-format = '[$time]($style) '
-style = 'gray'
-time_format = '%Y-%m-%dT%H:%M:%S'
+disabled = true
+format = '[\[$time\]]($style) '
+style = 'none'
+time_format = '%Y-%m-%dT%H:%M:%S%z'
 utc_time_offset = '+9'
 
 [username]
 format = '[$user]($style)'
 show_always = false
-style_user = 'purple'
+style_user = 'none'
+style_root = 'bold red'

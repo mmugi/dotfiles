@@ -3,6 +3,7 @@
     "defaultMode": "auto"
   },
   "model": "opus",
+  "attribution": false,
   "hooks": {
     "Notification": [
       {

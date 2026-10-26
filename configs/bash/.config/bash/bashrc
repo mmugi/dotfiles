@@ -1,0 +1,43 @@
+# Sourced from ~/.bashrc. Keep host-specific settings in ~/.bashrc itself.
+
+# aliases
+alias ll='ls -AFlh'
+
+# completion
+if [[ -z ${BASH_COMPLETION_VERSINFO-} ]]; then
+  for f in /opt/homebrew/etc/profile.d/bash_completion.sh /usr/share/bash-completion/bash_completion; do
+    [[ -r $f ]] && { . "$f"; break; }
+  done
+  unset f
+fi
+
+# git completion bundled with Apple's git, outside bash-completion's search path
+if ! complete -p git &>/dev/null; then
+  for f in /Library/Developer/CommandLineTools/usr/share/git-core/git-completion.bash /Applications/Xcode.app/Contents/Developer/usr/share/git-core/git-completion.bash; do
+    [[ -r $f ]] && { . "$f"; break; }
+  done
+  unset f
+fi
+
+# prompt
+if command -v starship >/dev/null; then
+  eval "$(starship init bash)"
+else
+  # git-prompt may already be loaded, e.g. by bash-completion
+  if ! declare -F __git_ps1 >/dev/null; then
+    for f in /Library/Developer/CommandLineTools/usr/share/git-core/git-prompt.sh /Applications/Xcode.app/Contents/Developer/usr/share/git-core/git-prompt.sh /opt/homebrew/etc/bash_completion.d/git-prompt.sh /usr/lib/git-core/git-sh-prompt /usr/share/git-core/contrib/completion/git-prompt.sh; do
+      [[ -r $f ]] && { . "$f"; break; }
+    done
+    unset f
+  fi
+
+  PS1='[\D{%FT%T%z}] \u@\h \w'
+  if declare -F __git_ps1 >/dev/null; then
+    GIT_PS1_SHOWDIRTYSTATE=1
+    GIT_PS1_SHOWSTASHSTATE=1
+    GIT_PS1_SHOWUNTRACKEDFILES=1
+    GIT_PS1_SHOWUPSTREAM=auto
+    PS1+='$(__git_ps1 " \[\e[2m\](%s)\[\e[22m\]")'
+  fi
+  PS1+=' \[\e[38;2;148;140;243m\]\$\[\e[m\] ' # purple #948cf3
+fi
