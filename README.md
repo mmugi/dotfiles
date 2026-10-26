@@ -36,7 +36,7 @@ By default only the paths that actually changed are reported. `--verbose` adds t
 | Variable | Description |
 | --- | --- |
 | `DOTFILES_PATH` | Where the dotfiles live. Required. |
-| `DOTFILES_BRANCH` | Which branch to download (e.g. `dev`). Defaults to `trunk`. Only used when the repository is not there yet. |
+| `DOTFILES_BRANCH` | Which branch to download (e.g. `dev`). Defaults to the repository's default branch. Only used when the repository is not there yet. |
 | `DOTFILES_IGNOREFILE` | Where the ignore list lives. Defaults to `${DOTFILES_PATH}/.dotignore`. |
 
 #### Ignoring Configuration Files
