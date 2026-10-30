@@ -3,7 +3,7 @@
 [fetch]
 	prune = true
 [merge]
-	ff = false
+	ff = only
 [pull]
 	ff = only
 [push]
