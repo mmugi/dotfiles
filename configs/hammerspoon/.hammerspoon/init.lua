@@ -400,18 +400,16 @@ prefixMode:bind({}, '2', windowAction(function(win) selectLayout(win, layouts.si
 prefixMode:bind({}, '3', windowAction(function(win) selectLayout(win, layouts.thirds) end))
 prefixMode:bind({}, '4', windowAction(function(win) selectLayout(win, layouts.quarters) end))
 
-prefixMode:bind({}, 'left', windowAction(function(win, entry)
-  moveInLayout(win, 'left', entry)
-end))
-prefixMode:bind({}, 'right', windowAction(function(win, entry)
-  moveInLayout(win, 'right', entry)
-end))
-prefixMode:bind({}, 'up', windowAction(function(win, entry)
-  moveInLayout(win, 'up', entry)
-end))
-prefixMode:bind({}, 'down', windowAction(function(win, entry)
-  moveInLayout(win, 'down', entry)
-end))
+---@type table<string, Direction>
+local moveKeys = {
+  left = 'left', right = 'right', up = 'up', down = 'down',
+  h = 'left', l = 'right', k = 'up', j = 'down'
+}
+for key, direction in pairs(moveKeys) do
+  prefixMode:bind({}, key, windowAction(function(win, entry)
+    moveInLayout(win, direction, entry)
+  end))
+end
 
 prefixMode:bind({}, 'c', function()
   windowAction(resizeToTerminal)()
