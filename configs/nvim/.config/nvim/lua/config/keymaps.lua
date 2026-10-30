@@ -17,10 +17,16 @@ vim.keymap.set('n', '<c-j>', '<cmd>wincmd j<cr>')
 vim.keymap.set('n', '<c-k>', '<cmd>wincmd k<cr>')
 vim.keymap.set('n', '<c-l>', '<cmd>wincmd l<cr>')
 
-vim.keymap.set('n', '<m-k>', '<cmd>resize +2<cr>')
-vim.keymap.set('n', '<m-j>', '<cmd>resize -2<cr>')
-vim.keymap.set('n', '<m-h>', '<cmd>vertical resize -2<cr>')
-vim.keymap.set('n', '<m-l>', '<cmd>vertical resize +2<cr>')
+-- jl方向にウィンドウがない場合は増減の符号を反転(端のウィンドウは動く境界線が逆になるため)。
+local function resize_window(direction)
+  local vertical = direction == 'h' or direction == 'l'
+  local step = (direction == 'j' or direction == 'l') and 2 or -2
+  local has_next = vim.fn.winnr(vertical and 'l' or 'j') ~= vim.fn.winnr()
+  vim.cmd(string.format('%sresize %+d', vertical and 'vertical ' or '', has_next and step or -step))
+end
+for _, direction in ipairs({ 'h', 'j', 'k', 'l' }) do
+  vim.keymap.set('n', '<m-' .. direction .. '>', function() resize_window(direction) end)
+end
 
 vim.keymap.set('i', '<esc>', function()
   return vim.fn.complete_info({ 'selected' }).selected ~= -1 and '<c-e>' or '<esc>'
