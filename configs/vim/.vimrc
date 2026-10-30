@@ -46,6 +46,7 @@ set clipboard=unnamed
 " 13 editing text
 set backspace=indent,eol,start
 set nrformats=bin,hex
+silent! set completeopt=menu,menuone,noinsert,fuzzy,popup
 
 " 14 tabs and indenting
 set tabstop=4
@@ -109,6 +110,29 @@ nnoremap <silent> <c-h> :wincmd h<cr>
 nnoremap <silent> <c-j> :wincmd j<cr>
 nnoremap <silent> <c-k> :wincmd k<cr>
 nnoremap <silent> <c-l> :wincmd l<cr>
+
+" flip the sign when there is no window toward j/l (the border of an edge window moves the other way)
+function! s:resize_window(direction) abort
+  let vertical = a:direction ==# 'h' || a:direction ==# 'l'
+  let step = a:direction ==# 'j' || a:direction ==# 'l' ? 2 : -2
+  let has_next = winnr(vertical ? 'l' : 'j') != winnr()
+  execute printf('%sresize %+d', vertical ? 'vertical ' : '', has_next ? step : -step)
+endfunction
+for s:direction in ['h', 'j', 'k', 'l']
+  " terminals send alt+key as <esc>+key, which vim does not read as <m-key> by itself
+  execute "set <m-" . s:direction . ">=\e" . s:direction
+  execute printf('nnoremap <silent> <m-%s> <cmd>call <sid>resize_window(%s)<cr>',
+    \ s:direction, string(s:direction))
+endfor
+
+inoremap <expr> <esc> complete_info(['selected']).selected != -1 ? "\<c-e>" : "\<esc>"
+inoremap <expr> <cr> complete_info(['selected']).selected != -1 ? "\<c-y>" : "\<cr>"
+inoremap <tab> <c-n>
+inoremap <s-tab> <c-p>
+
+" <esc> sent from a mapping executes the command, so quit with <c-c>
+cnoremap <expr> <esc> wildmenumode() ? "\<c-e>" : "\<c-c>"
+cnoremap <expr> <cr> wildmenumode() ? "\<c-y>" : "\<cr>"
 
 cnoremap <c-w> <c-f>
 cnoremap <c-b> <left>
