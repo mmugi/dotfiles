@@ -35,6 +35,28 @@ vim.keymap.set('i', '<cr>', function()
   return vim.fn.complete_info({ 'selected' }).selected ~= -1 and '<c-y>' or '<cr>'
 end, { expr = true, desc = 'Accept the selected completion without newline' })
 
+-- Neovim 既定の <Tab> にあるスニペットジャンプは上書きで消えるため、同じ判定をここに入れる。
+vim.keymap.set('i', '<tab>', function()
+  if vim.fn.pumvisible() == 0 and vim.snippet.active({ direction = 1 }) then
+    return '<cmd>lua vim.snippet.jump(1)<cr>'
+  end
+  return '<c-n>'
+end, { expr = true, desc = 'Open or select next completion, or jump snippet' })
+vim.keymap.set('i', '<s-tab>', function()
+  if vim.fn.pumvisible() == 0 and vim.snippet.active({ direction = -1 }) then
+    return '<cmd>lua vim.snippet.jump(-1)<cr>'
+  end
+  return '<c-p>'
+end, { expr = true, desc = 'Open or select previous completion, or jump snippet back' })
+
+-- マッピングから送った <esc> はコマンドを実行してしまうため <c-c> で抜ける。
+vim.keymap.set('c', '<esc>', function()
+  return vim.fn.wildmenumode() == 1 and '<c-e>' or '<c-c>'
+end, { expr = true, desc = 'Close the completion' })
+vim.keymap.set('c', '<cr>', function()
+  return vim.fn.wildmenumode() == 1 and '<c-y>' or '<cr>'
+end, { expr = true, desc = 'Accept the completion without executing' })
+
 vim.keymap.set('c', '<c-w>', '<c-f>', { desc = 'Open command line winodw' })
 vim.keymap.set('c', '<c-b>', '<left>', { desc = 'Emacs like left' })
 vim.keymap.set('c', '<c-f>', '<right>', { desc = 'Emacs like right' })
