@@ -22,6 +22,13 @@ vim.keymap.set('n', '<m-j>', '<cmd>resize -2<cr>')
 vim.keymap.set('n', '<m-h>', '<cmd>vertical resize -2<cr>')
 vim.keymap.set('n', '<m-l>', '<cmd>vertical resize +2<cr>')
 
+vim.keymap.set('i', '<esc>', function()
+  return vim.fn.complete_info({ 'selected' }).selected ~= -1 and '<c-e>' or '<esc>'
+end, { expr = true, desc = 'Cancel the selected completion' })
+vim.keymap.set('i', '<cr>', function()
+  return vim.fn.complete_info({ 'selected' }).selected ~= -1 and '<c-y>' or '<cr>'
+end, { expr = true, desc = 'Accept the selected completion without newline' })
+
 vim.keymap.set('c', '<c-w>', '<c-f>', { desc = 'Open command line winodw' })
 vim.keymap.set('c', '<c-b>', '<left>', { desc = 'Emacs like left' })
 vim.keymap.set('c', '<c-f>', '<right>', { desc = 'Emacs like right' })
