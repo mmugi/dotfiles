@@ -42,8 +42,8 @@ cask "font-hackgen-nerd"
 cask "ghostty"
 cask "google-chrome"
 cask "google-japanese-ime"
+cask "hammerspoon"
 cask "notion"
-cask "rectangle"
 cask "visual-studio-code"
 mas "Kindle", id: 302584613
 mas "LINE", id: 539883307
