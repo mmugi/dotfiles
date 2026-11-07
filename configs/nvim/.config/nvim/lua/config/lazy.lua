@@ -26,7 +26,12 @@ require("lazy").setup({
     fallback = true,
   },
   install = { colorscheme = { "mmerr" } },
-  ui = { border = "single" },
+  ui = {
+    -- "single" と同じ文字で、枠線を LazyNormal の色にする
+    border = vim.tbl_map(function(c)
+      return { c, "LazyNormal" }
+    end, { "┌", "─", "┐", "│", "┘", "─", "└", "│" }),
+  },
   checker = { enabled = true },
   change_detection = { notify = false },
 })
