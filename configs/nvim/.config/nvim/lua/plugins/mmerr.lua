@@ -2,21 +2,22 @@ return {
   "mmugi/mmerr.nvim",
   lazy = false,
   priority = 1000,
+  init = function()
+    vim.g.mmerr_autoreload = true
+  end,
   opts = {
     transparent_bg = true,
-    highlight_overrides = function(palette)
-      return {
-        ErrTrailingWhitespace = { fg = palette.white, bg = palette.red },
+    edit_highlights = function(groups, palette)
+      groups.ErrTrailingWhitespace = { fg = palette.white, bg = palette.red }
 
-        CursorInfoInsert = { fg = palette.pink, italic = true },
-        CursorInfoVisual = { fg = palette.lime, italic = true },
-        CursorInfoReplace = { fg = palette.turquoise, italic = true },
+      groups.CursorInfoInsert = { fg = palette.folly, italic = true }
+      groups.CursorInfoVisual = { fg = palette.green, italic = true }
+      groups.CursorInfoReplace = { link = "CursorInfoInsert" }
 
-        ColumnGuide = { fg = palette.bg_blue },
+      groups.ColumnGuide = { fg = palette.koamaru }
 
-        InclineModified = { fg = palette.pink },
-        InclineConflict = { fg = palette.red, bold = true },
-      }
+      groups.InclineModified = { fg = palette.pink }
+      groups.InclineConflict = { fg = palette.red, bold = true }
     end,
   },
 }
