@@ -165,6 +165,8 @@ end
 --   rects: rects に位置と大きさ (x, y, w, h) を画面に対する割合で並べる。
 --          左右キーで順に巡り、上キーで最大化、下キーで restore する。
 --   free:  大きさはそのままで、矢印キーの向きに moveStep ずつ動かす。
+--          shift と一緒に押すと、中心はそのままで上下キーで高さ、左右キーで幅を
+--          scaleStep 倍ずつ変える。
 ---@type table<string, Layout>
 local layouts = {
   maximized = { type = 'spans', horizontalSpans = { { x = 0, w = 1 } } },
@@ -363,6 +365,22 @@ local function moveFreely(win, direction)
   win:setFrame(frame)
 end
 
+local scaleStep = 1.05
+
+---@type table<Direction, { w: number, h: number }>
+local scaleFactors = {
+  left = { w = 1 / scaleStep, h = 1 },
+  right = { w = scaleStep, h = 1 },
+  up = { w = 1, h = scaleStep },
+  down = { w = 1, h = 1 / scaleStep },
+}
+
+---@param win hs.window
+---@param direction Direction
+local function resizeAroundCenter(win, direction)
+  win:setFrame(win:frame():scale(scaleFactors[direction]))
+end
+
 ---@type table<string, Mover>
 local movers = {
   grid = moveInGrid,
@@ -443,6 +461,14 @@ for key, direction in pairs(moveKeys) do
     if currentLayout.type == 'free' then pressedfn() end
   end
   prefixMode:bind({}, key, pressedfn, nil, repeatfn)
+end
+
+for key, direction in pairs(moveKeys) do
+  local resizefn = windowAction(function(win)
+    -- free でだけリサイズを許可。
+    if currentLayout.type == 'free' then resizeAroundCenter(win, direction) end
+  end)
+  prefixMode:bind({ 'shift' }, key, resizefn, nil, resizefn)
 end
 
 prefixMode:bind({}, 'c', function()
