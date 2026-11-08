@@ -425,8 +425,8 @@ local prefixMode = hs.hotkey.modal.new()
 
 -- initialize
 function prefixMode:entered()
-  currentLayout = layouts.sides
-  showPrefixModeAlert('sides')
+  currentLayout = layouts.move
+  showPrefixModeAlert('move')
 end
 
 -- finalize
