@@ -52,6 +52,9 @@ vim.opt.shiftwidth = 2
 vim.opt.softtabstop = 0
 vim.opt.expandtab = true
 
+-- 19 the swap file
+vim.opt.updatetime = 500
+
 -- 20 command line editing
 vim.opt.wildmode = "longest,full:noselect"
 vim.opt.wildoptions = "pum,fuzzy"
