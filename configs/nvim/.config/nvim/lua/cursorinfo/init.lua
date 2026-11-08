@@ -78,13 +78,17 @@ local function update()
     mode_text = " <<" .. visual_texts[mode:sub(1, 1)]
     mode_text_hl = "CursorInfoVisual"
   elseif mode:match("^[vV\22]") then
-    local wc = vim.fn.wordcount()
+    -- getregion は改行を含まない行のリストを返すので、改行は数えない
+    local chars = 0
+    for _, text in ipairs(vim.fn.getregion(vim.fn.getpos("v"), vim.fn.getpos("."), { type = mode:sub(1, 1) })) do
+      chars = chars + vim.fn.strchars(text)
+    end
 
     mode_text = string.format(
       " <<%s %d lines, %d chars",
       visual_texts[mode:sub(1, 1)],
       math.abs(vim.fn.line("v") - vim.fn.line(".")) + 1,
-      wc.visual_chars or 0
+      chars
     )
     mode_text_hl = "CursorInfoVisual"
   else
