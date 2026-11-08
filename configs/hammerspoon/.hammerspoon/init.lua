@@ -145,15 +145,6 @@ local function snap(win, direction, entry)
   win:setFrame(nextScreen(screen, direction):fromUnitRect(opposite))
 end
 
-local terminalSize = { w = 1100, h = 850 }
-
----@param win hs.window
-local function resizeToTerminal(win)
-  local frame = win:frame()
-  frame.w, frame.h = terminalSize.w, terminalSize.h
-  win:setFrameInScreenBounds(frame)
-end
-
 -- ---- layouts ---------------------------------------------------------------
 
 -- プレフィックスモードの windowAction で使用する配置表。type で動かし方が決まる。
@@ -470,8 +461,3 @@ for key, direction in pairs(moveKeys) do
   end)
   prefixMode:bind({ 'shift' }, key, resizefn, nil, resizefn)
 end
-
-prefixMode:bind({}, 'c', function()
-  windowAction(resizeToTerminal)()
-  prefixMode:exit()
-end)
