@@ -389,10 +389,10 @@ function prefixMode:exited()
 end
 
 -- enter prefix mode
-hs.hotkey.bind({ 'ctrl', 'cmd' }, 'a', function() prefixMode:enter() end)
+hs.hotkey.bind({ 'ctrl', 'cmd' }, 'space', function() prefixMode:enter() end)
 
 -- exit prefix mode
-prefixMode:bind({ 'ctrl', 'cmd' }, 'a', function() prefixMode:exit() end)
+prefixMode:bind({ 'ctrl', 'cmd' }, 'space', function() prefixMode:exit() end)
 prefixMode:bind({}, 'escape', function() prefixMode:exit() end)
 
 prefixMode:bind({}, '1', windowAction(function(win) selectLayout(win, layouts.maximized) end))
