@@ -396,6 +396,10 @@ hs.hotkey.bind({ 'cmd' }, 'left', windowAction(function(win, entry) snap(win, 'l
 hs.hotkey.bind({ 'cmd' }, 'right', windowAction(function(win, entry) snap(win, 'right', entry) end))
 hs.hotkey.bind({ 'cmd' }, 'up', windowAction(function(win, entry) snap(win, 'up', entry) end))
 hs.hotkey.bind({ 'cmd' }, 'down', windowAction(function(win, entry) snap(win, 'down', entry) end))
+hs.hotkey.bind({ 'ctrl', 'cmd' }, 'h', windowAction(function(win, entry) snap(win, 'left', entry) end))
+hs.hotkey.bind({ 'ctrl', 'cmd' }, 'l', windowAction(function(win, entry) snap(win, 'right', entry) end))
+hs.hotkey.bind({ 'ctrl', 'cmd' }, 'k', windowAction(function(win, entry) snap(win, 'up', entry) end))
+hs.hotkey.bind({ 'ctrl', 'cmd' }, 'j', windowAction(function(win, entry) snap(win, 'down', entry) end))
 
 -- ---- prefix mode -----------------------------------------------------------
 
