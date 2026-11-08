@@ -74,7 +74,7 @@ hs.alert.defaultStyle.fillColor = { hex = '#2f8672', alpha = 0.5 }
 hs.alert.defaultStyle.textSize = 20
 hs.alert.defaultStyle.textColor = { hex = '#59fbff' }
 
-local prefixModeAlertText = 'Awaiting key...'
+local prefixModeAlertText = 'awaiting key...'
 
 -- ---- window actions --------------------------------------------------------
 
@@ -359,10 +359,17 @@ local function moveInLayout(win, direction, entry)
   movers[currentLayout.type](win, direction, entry)
 end
 
+---@param name string
+local function showPrefixModeAlert(name)
+  hs.alert.closeAll()
+  hs.alert.show('[' .. name .. ']\n' .. prefixModeAlertText, true)
+end
+
 ---@param win hs.window
----@param selected Layout
-local function selectLayout(win, selected)
-  currentLayout = selected
+---@param name string
+local function selectLayout(win, name)
+  currentLayout = layouts[name]
+  showPrefixModeAlert(name)
   moveInLayout(win)
 end
 
@@ -380,7 +387,7 @@ local prefixMode = hs.hotkey.modal.new()
 -- initialize
 function prefixMode:entered()
   currentLayout = layouts.sides
-  hs.alert.show(prefixModeAlertText, true)
+  showPrefixModeAlert('sides')
 end
 
 -- finalize
@@ -395,10 +402,10 @@ hs.hotkey.bind({ 'ctrl', 'cmd' }, 'space', function() prefixMode:enter() end)
 prefixMode:bind({ 'ctrl', 'cmd' }, 'space', function() prefixMode:exit() end)
 prefixMode:bind({}, 'escape', function() prefixMode:exit() end)
 
-prefixMode:bind({}, '1', windowAction(function(win) selectLayout(win, layouts.maximized) end))
-prefixMode:bind({}, '2', windowAction(function(win) selectLayout(win, layouts.sides) end))
-prefixMode:bind({}, '3', windowAction(function(win) selectLayout(win, layouts.thirds) end))
-prefixMode:bind({}, '4', windowAction(function(win) selectLayout(win, layouts.quarters) end))
+prefixMode:bind({}, '1', windowAction(function(win) selectLayout(win, 'maximized') end))
+prefixMode:bind({}, '2', windowAction(function(win) selectLayout(win, 'sides') end))
+prefixMode:bind({}, '3', windowAction(function(win) selectLayout(win, 'thirds') end))
+prefixMode:bind({}, '4', windowAction(function(win) selectLayout(win, 'quarters') end))
 
 ---@type table<string, Direction>
 local moveKeys = {
