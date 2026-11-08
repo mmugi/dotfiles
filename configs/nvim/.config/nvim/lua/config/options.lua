@@ -56,7 +56,7 @@ vim.opt.expandtab = true
 vim.opt.updatetime = 500
 
 -- 20 command line editing
-vim.opt.wildmode = "longest,full:noselect"
+vim.opt.wildmode = "longest,full"
 vim.opt.wildoptions = "pum,fuzzy"
 vim.opt.wildmenu = true
 vim.opt.cmdwinheight = 15
