@@ -11,6 +11,9 @@ vim.keymap.set('n', '<leader>p', '<cmd>tabprevious<cr>')
 vim.keymap.set("n", '<leader>bd', '<cmd>enew | bd#<cr>')
 vim.keymap.set('n', '<leader><leader>', '<cmd>buffers<cr>')
 vim.keymap.set('n', '<esc><esc>', '<cmd>nohlsearch<cr>')
+for _, release in ipairs({ '<LeftRelease>', '<2-LeftRelease>', '<3-LeftRelease>', '<4-LeftRelease>' }) do
+  vim.keymap.set('x', release, release .. 'y', { desc = 'Copy the mouse selection on release' })
+end
 
 vim.keymap.set('n', '<c-h>', '<cmd>wincmd h<cr>')
 vim.keymap.set('n', '<c-j>', '<cmd>wincmd j<cr>')
