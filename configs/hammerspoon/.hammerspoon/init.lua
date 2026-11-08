@@ -57,7 +57,10 @@ if hs.spoons.isInstalled('EmmyLua') then hs.loadSpoon('EmmyLua') end
 ---@field type 'rects'
 ---@field rects UnitRect[]
 
----@alias Layout GridLayout|SpansLayout|RectsLayout
+---@class FreeLayout
+---@field type 'free'
+
+---@alias Layout GridLayout|SpansLayout|RectsLayout|FreeLayout
 ---@alias Direction 'left'|'right'|'up'|'down'
 ---@alias Mover fun(win: hs.window, direction: Direction?, entry: FrameEntry?)
 
@@ -161,6 +164,7 @@ end
 --          左右キーで順に巡り、上下キーで高さを調整する。
 --   rects: rects に位置と大きさ (x, y, w, h) を画面に対する割合で並べる。
 --          左右キーで順に巡り、上キーで最大化、下キーで restore する。
+--   free:  大きさはそのままで、矢印キーの向きに moveStep ずつ動かす。
 ---@type table<string, Layout>
 local layouts = {
   maximized = { type = 'spans', horizontalSpans = { { x = 0, w = 1 } } },
@@ -178,6 +182,7 @@ local layouts = {
     { x = 2 / 3, w = 1 / 3 },
   } },
   quarters = { type = 'grid', cols = { 0.5, 0.5 }, rows = { 0.5, 0.5 } },
+  move = { type = 'free' },
 }
 
 ---@type Layout
@@ -347,11 +352,23 @@ local function moveInRects(win, direction, entry)
   win:setFrame(destScreen:fromUnitRect(rect))
 end
 
+local moveStep = 30
+
+---@type Mover
+local function moveFreely(win, direction)
+  if not direction then return end
+  local offset = indexOffsets[direction]
+  local frame = win:frame()
+  frame.x, frame.y = frame.x + offset.x * moveStep, frame.y + offset.y * moveStep
+  win:setFrame(frame)
+end
+
 ---@type table<string, Mover>
 local movers = {
   grid = moveInGrid,
   spans = moveInSpans,
-  rects = moveInRects
+  rects = moveInRects,
+  free = moveFreely,
 }
 
 ---@type Mover
@@ -406,6 +423,7 @@ prefixMode:bind({}, '1', windowAction(function(win) selectLayout(win, 'maximized
 prefixMode:bind({}, '2', windowAction(function(win) selectLayout(win, 'sides') end))
 prefixMode:bind({}, '3', windowAction(function(win) selectLayout(win, 'thirds') end))
 prefixMode:bind({}, '4', windowAction(function(win) selectLayout(win, 'quarters') end))
+prefixMode:bind({}, 'w', windowAction(function(win) selectLayout(win, 'move') end))
 
 ---@type table<string, Direction>
 local moveKeys = {
@@ -413,9 +431,14 @@ local moveKeys = {
   h = 'left', l = 'right', k = 'up', j = 'down'
 }
 for key, direction in pairs(moveKeys) do
-  prefixMode:bind({}, key, windowAction(function(win, entry)
+  local pressedfn = windowAction(function(win, entry)
     moveInLayout(win, direction, entry)
-  end))
+  end)
+  local repeatfn = function()
+    -- free でだけリピートを許可。
+    if currentLayout.type == 'free' then pressedfn() end
+  end
+  prefixMode:bind({}, key, pressedfn, nil, repeatfn)
 end
 
 prefixMode:bind({}, 'c', function()
