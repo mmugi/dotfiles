@@ -4,7 +4,13 @@
 export EZA_CONFIG_DIR="${HOME}/.config/eza"
 
 # aliases
-alias ll='ls -AFhl'
+if command -v eza >/dev/null; then
+  alias l='eza'
+  alias ls='eza'
+  alias ll="eza -algF=auto --time-style='+%Y-%m-%d %H:%M'"
+else
+  alias ll='ls -AFhl'
+fi
 
 # completion
 if (( ! $+functions[compdef] )); then

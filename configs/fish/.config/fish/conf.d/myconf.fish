@@ -17,5 +17,5 @@ if command -q eza
     set -gx EZA_CONFIG_DIR ~/.config/eza
     alias l eza
     alias ls eza
-    alias ll 'eza -alF=auto'
+    alias ll "eza -algF=auto --time-style='+%Y-%m-%d %H:%M'"
 end
