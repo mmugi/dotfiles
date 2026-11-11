@@ -8,12 +8,12 @@ palette = 6=#948cf3
 palette = 7=#eff7fe
 palette = 8=#6e7174
 palette = 9=#fe0045
-palette = 10=#c9f9dc
+palette = 10=#2ffc85
 palette = 11=#fcdc00
-palette = 12=#7dbbfa
+palette = 12=#57d3e8
 palette = 13=#ff5890
 palette = 14=#b9bfff
-palette = 15=#ffffff
+palette = 15=#c9f9dc
 background = #222641
 foreground = #eff7fe
 cursor-color = #417cff
