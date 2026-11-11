@@ -1,0 +1,91 @@
+filekinds:
+  normal: {}
+  directory: { foreground: Blue, is_bold: true }
+  symlink: { foreground: Cyan, is_bold: true }
+  pipe: { foreground: Yellow, is_bold: true }
+  block_device: { foreground: Yellow, is_bold: true }
+  char_device: { foreground: Yellow, is_bold: true }
+  socket: { foreground: Yellow, is_bold: true }
+  special: { foreground: Red, is_bold: true }
+  executable: { foreground: Green, is_bold: true }
+  mount_point: { foreground: Blue, is_bold: true, is_underline: true }
+perms:
+  user_read: &default { foreground: Default, is_bold: false, is_underline: false }
+  user_write: *default
+  user_execute_file: *default
+  user_execute_other: *default
+  group_read: *default
+  group_write: *default
+  group_execute: *default
+  other_read: *default
+  other_write: *default
+  other_execute: *default
+  special_user_file: { foreground: Purple, is_bold: true }
+  special_other: { foreground: Purple, is_bold: true }
+  attribute: {}
+size:
+  major: *default
+  minor: *default
+  number_byte: *default
+  number_kilo: *default
+  number_mega: *default
+  number_giga: *default
+  number_huge: *default
+  unit_byte: *default
+  unit_kilo: *default
+  unit_mega: *default
+  unit_giga: *default
+  unit_huge: *default
+users:
+  user_you: *default
+  user_root: *default
+  user_other: *default
+  group_yours: *default
+  group_other: *default
+  group_root: *default
+links:
+  normal: *default
+  multi_link_file: { foreground: Cyan, background: Default, is_bold: true }
+git:
+  new: { foreground: LightGreen }
+  modified: { foreground: Blue }
+  deleted: { foreground: Red }
+  renamed: { foreground: Yellow }
+  typechange: { foreground: LightBlue }
+  ignored: { is_dimmed: true }
+  conflicted: { foreground: LightRed }
+git_repo:
+  branch_main: { foreground: LightGreen }
+  branch_other: { foreground: Yellow }
+  git_clean: { foreground: LightGreen }
+  git_dirty: { foreground: Yellow, is_bold: true }
+security_context:
+  none: {}
+  selinux:
+    colon: { is_dimmed: true }
+    user: { foreground: Blue }
+    role: { foreground: Green }
+    typ: { foreground: Yellow }
+    range: { foreground: Cyan }
+file_type:
+  image: &app { foreground: Purple, is_bold: false }
+  video: *app
+  music: *app
+  lossless: *app
+  crypto: *default
+  document: *app
+  compressed: { foreground: LightRed }
+  temp: { is_dimmed: true }
+  compiled: *default
+  build: { foreground: LightGray, is_bold: false, is_underline: true }
+  source: *default
+punctuation: { foreground: DarkGray, is_bold: true }
+date: { foreground: DarkGray }
+inode: *default
+header: { is_bold: true, is_underline: false }
+octal: *default
+flags: {}
+symlink_path: { foreground: Cyan }
+control_char: { foreground: Red }
+broken_symlink: { foreground: Red }
+broken_path_overlay: { is_underline: true }

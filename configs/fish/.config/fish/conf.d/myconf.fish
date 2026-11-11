@@ -14,6 +14,7 @@ command -q starship; and starship init fish | source
 
 # eza
 if command -q eza
+    set -gx EZA_CONFIG_DIR ~/.config/eza
     alias l eza
     alias ls eza
     alias ll 'eza -alF=auto'

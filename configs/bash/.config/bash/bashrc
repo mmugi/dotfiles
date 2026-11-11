@@ -1,5 +1,8 @@
 # Sourced from ~/.bashrc. Keep host-specific settings in ~/.bashrc itself.
 
+# eza
+export EZA_CONFIG_DIR="${HOME}/.config/eza"
+
 # aliases
 alias ll='ls -AFlh'
 
