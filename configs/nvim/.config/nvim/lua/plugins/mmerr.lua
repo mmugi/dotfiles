@@ -9,6 +9,7 @@ return {
     transparent_bg = true,
     edit_highlights = function(groups, palette)
       groups.ErrTrailingWhitespace = { fg = palette.white, bg = palette.red }
+      groups.VisualMatch = { link = "LspReferenceText" }
 
       groups.CursorInfoInsert = { fg = palette.folly, italic = true }
       groups.CursorInfoVisual = { fg = palette.green, italic = true }
