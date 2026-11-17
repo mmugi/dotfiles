@@ -24,7 +24,7 @@ vim.opt.number = true
 -- 5 syntax, highlighting and spelling
 vim.opt.background = "dark"
 vim.opt.termguicolors = true
-vim.opt.cursorcolumn = true
+vim.opt.cursorcolumn = false
 vim.opt.cursorline = true
 vim.opt.cursorlineopt = "both"
 
