@@ -4,9 +4,9 @@ return {
   ---@type oil.SetupOpts
   opts = {
     keymaps = {
-      ['<C-p>'] = {
-        'actions.preview',
-        opts = { split = 'belowright' },
+      ["<C-p>"] = {
+        "actions.preview",
+        opts = { split = "belowright" },
       },
     },
     view_options = {

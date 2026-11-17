@@ -9,15 +9,15 @@ vim.opt.ignorecase = true
 vim.opt.cmdheight = 1
 vim.opt.list = true
 vim.opt.listchars = {
-  extends = '»',
-  nbsp = '%',
-  precedes = '«',
-  tab = '>-',
-  trail = '-',
+  extends = "»",
+  nbsp = "%",
+  precedes = "«",
+  tab = ">-",
+  trail = "-",
 }
 vim.opt.fillchars = {
-  foldclose = '▸',
-  foldopen = '▾',
+  foldclose = "▸",
+  foldopen = "▾",
 }
 vim.opt.number = true
 
@@ -43,7 +43,7 @@ vim.opt.clipboard:append({ "unnamedplus" })
 
 -- 13 editing text
 vim.opt.complete:append({ "o" })
-vim.opt.completeopt = { 'menu', 'menuone', 'noinsert', 'fuzzy', 'popup' }
+vim.opt.completeopt = { "menu", "menuone", "noinsert", "fuzzy", "popup" }
 vim.opt.pumborder = "rounded"
 
 -- 14 tabs and indenting

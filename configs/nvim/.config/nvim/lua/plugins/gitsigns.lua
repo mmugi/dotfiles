@@ -1,5 +1,5 @@
 return {
-  'lewis6991/gitsigns.nvim',
+  "lewis6991/gitsigns.nvim",
   lazy = false,
   keys = {
     { "<leader>gd", "<cmd>Gitsigns preview_hunk<cr>", mode = "n" },
