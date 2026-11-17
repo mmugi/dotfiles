@@ -136,6 +136,13 @@ vim.api.nvim_create_user_command("CursorInfoEnable", enable, {})
 vim.api.nvim_create_user_command("CursorInfoDisable", disable, {})
 vim.api.nvim_create_user_command("CursorInfoToggle", toggle, {})
 
-for name, opts in pairs(highlights) do
-  vim.api.nvim_set_hl(0, name, opts)
+local function set_highlights()
+  for name, opts in pairs(highlights) do
+    vim.api.nvim_set_hl(0, name, opts)
+  end
 end
+
+-- colorscheme が読み込み時に hi clear する場合、デフォルトのハイライトグループ
+-- が消えるので autocmd で設定し直す。
+set_highlights()
+vim.api.nvim_create_autocmd("ColorScheme", { callback = set_highlights })
