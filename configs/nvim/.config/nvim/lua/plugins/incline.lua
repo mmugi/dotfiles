@@ -4,7 +4,7 @@ return {
   "b0o/incline.nvim",
   event = "VeryLazy",
   dependencies = {
-    { "nvim-mini/mini.icons", opts = {} }
+    { "nvim-mini/mini.icons", opts = {} },
   },
   opts = {
     window = {

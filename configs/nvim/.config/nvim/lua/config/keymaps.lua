@@ -12,8 +12,15 @@ vim.keymap.set("n", "<leader>bd", "<cmd>enew | bd#<cr>")
 vim.keymap.set("n", "<leader><leader>", "<cmd>buffers<cr>")
 vim.keymap.set("n", "<esc><esc>", "<cmd>nohlsearch<cr>")
 
-for _, release in ipairs({ "<LeftRelease>", "<2-LeftRelease>", "<3-LeftRelease>", "<4-LeftRelease>" }) do
-  vim.keymap.set("x", release,
+for _, release in ipairs({
+  "<LeftRelease>",
+  "<2-LeftRelease>",
+  "<3-LeftRelease>",
+  "<4-LeftRelease>",
+}) do
+  vim.keymap.set(
+    "x",
+    release,
     release .. [[ygv<cmd>echo strchars(@") 'chars copied'<cr>]],
     { desc = "Copy the mouse selection on release" }
   )
@@ -32,7 +39,9 @@ local function resize_window(direction)
   vim.cmd(string.format("%sresize %+d", vertical and "vertical " or "", has_next and step or -step))
 end
 for _, direction in ipairs({ "h", "j", "k", "l" }) do
-  vim.keymap.set("n", "<m-" .. direction .. ">", function() resize_window(direction) end)
+  vim.keymap.set("n", "<m-" .. direction .. ">", function()
+    resize_window(direction)
+  end)
 end
 
 vim.keymap.set("i", "<esc>", function()

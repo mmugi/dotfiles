@@ -16,8 +16,7 @@ local function update_hl_visual_match()
     return
   end
 
-  vim.w.hl_visual_match_id =
-    vim.fn.matchadd("VisualMatch", [[\V\c]] .. vim.fn.escape(text, [[\]]))
+  vim.w.hl_visual_match_id = vim.fn.matchadd("VisualMatch", [[\V\c]] .. vim.fn.escape(text, [[\]]))
 end
 
 vim.api.nvim_create_autocmd({ "CursorMoved", "ModeChanged" }, {

@@ -7,8 +7,7 @@ local function update_hl_trailing_whitespace()
 
   -- normal file buffer only
   if vim.bo.buftype == "" then
-    vim.w.hl_trailing_whitespace_match_id =
-      vim.fn.matchadd("ErrTrailingWhitespace", [[\s\+$]])
+    vim.w.hl_trailing_whitespace_match_id = vim.fn.matchadd("ErrTrailingWhitespace", [[\s\+$]])
   end
 end
 

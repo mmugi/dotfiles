@@ -10,7 +10,7 @@ local state = {
 local default_config = {
   highlights = {
     CursorInfoInsert = { link = "ModeMsg", default = true },
-    CursorInfoVisual = { link = "ModeMsg", default = true},
+    CursorInfoVisual = { link = "ModeMsg", default = true },
     CursorInfoReplace = { link = "ModeMsg", default = true },
   },
 }
@@ -80,7 +80,9 @@ local function update()
   elseif mode:match("^[vV\22]") then
     -- getregion は改行を含まない行のリストを返すので、改行は数えない
     local chars = 0
-    for _, text in ipairs(vim.fn.getregion(vim.fn.getpos("v"), vim.fn.getpos("."), { type = mode:sub(1, 1) })) do
+    for _, text in
+      ipairs(vim.fn.getregion(vim.fn.getpos("v"), vim.fn.getpos("."), { type = mode:sub(1, 1) }))
+    do
       chars = chars + vim.fn.strchars(text)
     end
 
@@ -95,18 +97,12 @@ local function update()
     mode_text = ""
   end
 
-  vim.api.nvim_buf_set_extmark(
-    buf_id,
-    ns_id,
-    line - 1,
-    0,
-    {
-      virt_text = {
-        { mode_text, mode_text_hl },
-      },
-      virt_text_pos = "eol",
-    }
-  )
+  vim.api.nvim_buf_set_extmark(buf_id, ns_id, line - 1, 0, {
+    virt_text = {
+      { mode_text, mode_text_hl },
+    },
+    virt_text_pos = "eol",
+  })
 end
 
 local function override_highlights(user_hls)
@@ -146,25 +142,18 @@ end
 function M.setup(opts)
   opts = opts or {}
 
-  local config = vim.tbl_deep_extend(
-    "force",
-    vim.deepcopy(default_config),
-    opts
-  )
+  local config = vim.tbl_deep_extend("force", vim.deepcopy(default_config), opts)
 
   config.highlights = override_highlights(opts.highlights)
 
-  vim.api.nvim_create_autocmd(
-    {
-      "ModeChanged",
-      "BufEnter",
-      "CursorMoved",
-      "CursorMovedI"
-    },
-    {
-      callback = update,
-    }
-  )
+  vim.api.nvim_create_autocmd({
+    "ModeChanged",
+    "BufEnter",
+    "CursorMoved",
+    "CursorMovedI",
+  }, {
+    callback = update,
+  })
 
   vim.api.nvim_create_user_command("CursorInfoEnable", M.enable, {})
   vim.api.nvim_create_user_command("CursorInfoDisable", M.disable, {})
