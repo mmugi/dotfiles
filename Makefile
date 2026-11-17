@@ -47,10 +47,11 @@ test-sh: ## Run the sh deployment smoke tests on every available shell.
 		echo "--- $$s ---"; \
 		TEST_SH="$$s" "$$s" $(TEST_DIR)/deploy.sh || exit 1; \
 	done
-lint: ## Run shellcheck over the libraries, scripts and distributed hooks.
+lint: ## Run shellcheck over the shell scripts and stylua over the Neovim config.
 	@shellcheck -s bash $(LIB_DIR)/bash/*.sh $(LIB_DIR)/bash/themes/*.sh \
 		$(TEST_DIR)/smoke.sh $(TEST_DIR)/statusline.sh $(SCRIPT_DIR)/*/*.sh \
 		$(CONFIG_DIR)/claude/.claude/*.sh \
 		$(CONFIG_DIR)/claude/.claude/hooks/*.sh
 	@shellcheck -s dash $(DOTFILES_ROOT)/install.sh $(DOTFILES_ROOT)/uninstall.sh \
 		$(LIB_DIR)/shell/*.sh $(TEST_DIR)/deploy.sh
+	@stylua --check $(CONFIG_DIR)/nvim/.config/nvim
