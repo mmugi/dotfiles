@@ -64,7 +64,7 @@ vim.keymap.set('c', '<cr>', function()
   return vim.fn.wildmenumode() == 1 and '<c-y>' or '<cr>'
 end, { expr = true, desc = 'Accept the completion without executing' })
 
-vim.keymap.set('c', '<c-w>', '<c-f>', { desc = 'Open command line winodw' })
+vim.keymap.set('c', '<c-w>', '<c-f>', { desc = 'Open command line window' })
 vim.keymap.set('c', '<c-b>', '<left>', { desc = 'Emacs like left' })
 vim.keymap.set('c', '<c-f>', '<right>', { desc = 'Emacs like right' })
 vim.keymap.set('c', '<c-a>', '<home>', { desc = 'Emacs like home' })
