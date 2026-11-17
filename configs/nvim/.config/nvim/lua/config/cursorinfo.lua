@@ -1,5 +1,3 @@
-local M = {}
-
 local ns_id = vim.api.nvim_create_namespace("cursorinfo")
 
 local state = {
@@ -7,12 +5,10 @@ local state = {
   current_buf_id = nil,
 }
 
-local default_config = {
-  highlights = {
-    CursorInfoInsert = { link = "ModeMsg", default = true },
-    CursorInfoVisual = { link = "ModeMsg", default = true },
-    CursorInfoReplace = { link = "ModeMsg", default = true },
-  },
+local highlights = {
+  CursorInfoInsert = { link = "ModeMsg", default = true },
+  CursorInfoVisual = { link = "ModeMsg", default = true },
+  CursorInfoReplace = { link = "ModeMsg", default = true },
 }
 
 -- 挿入系モードから CTRL-O でノーマルに戻っている間の表示
@@ -105,24 +101,12 @@ local function update()
   })
 end
 
-local function override_highlights(user_hls)
-  user_hls = user_hls or {}
-
-  local hls = vim.deepcopy(default_config.highlights)
-
-  for name, val in pairs(user_hls) do
-    hls[name] = val
-  end
-
-  return hls
-end
-
-function M.enable()
+local function enable()
   state.enabled = true
   update()
 end
 
-function M.disable()
+local function disable()
   state.enabled = false
   for _, buf_id in ipairs(vim.api.nvim_list_bufs()) do
     if vim.api.nvim_buf_is_valid(buf_id) then
@@ -131,37 +115,27 @@ function M.disable()
   end
 end
 
-function M.toggle()
+local function toggle()
   if state.enabled then
-    M.disable()
+    disable()
   else
-    M.enable()
+    enable()
   end
 end
 
-function M.setup(opts)
-  opts = opts or {}
+vim.api.nvim_create_autocmd({
+  "ModeChanged",
+  "BufEnter",
+  "CursorMoved",
+  "CursorMovedI",
+}, {
+  callback = update,
+})
 
-  local config = vim.tbl_deep_extend("force", vim.deepcopy(default_config), opts)
+vim.api.nvim_create_user_command("CursorInfoEnable", enable, {})
+vim.api.nvim_create_user_command("CursorInfoDisable", disable, {})
+vim.api.nvim_create_user_command("CursorInfoToggle", toggle, {})
 
-  config.highlights = override_highlights(opts.highlights)
-
-  vim.api.nvim_create_autocmd({
-    "ModeChanged",
-    "BufEnter",
-    "CursorMoved",
-    "CursorMovedI",
-  }, {
-    callback = update,
-  })
-
-  vim.api.nvim_create_user_command("CursorInfoEnable", M.enable, {})
-  vim.api.nvim_create_user_command("CursorInfoDisable", M.disable, {})
-  vim.api.nvim_create_user_command("CursorInfoToggle", M.toggle, {})
-
-  vim.api.nvim_set_hl(0, "CursorInfoInsert", config.highlights.CursorInfoInsert)
-  vim.api.nvim_set_hl(0, "CursorInfoVisual", config.highlights.CursorInfoVisual)
-  vim.api.nvim_set_hl(0, "CursorInfoReplace", config.highlights.CursorInfoReplace)
+for name, opts in pairs(highlights) do
+  vim.api.nvim_set_hl(0, name, opts)
 end
-
-return M
