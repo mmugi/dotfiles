@@ -66,10 +66,18 @@ silent! set wildoptions=pum,fuzzy
 set cmdwinheight=15
 
 " highlight the cursor only in the current window
+" remember the :set values shared by all windows, since WinEnter would otherwise overwrite them
+let s:cursor_options = #{cursorcolumn: &cursorcolumn, cursorline: &cursorline}
 augroup vimrc_cursor
   autocmd!
+  autocmd OptionSet cursorcolumn,cursorline
+    \ if v:option_type ==# 'global' |
+    \   let s:cursor_options[expand('<amatch>')] = v:option_new |
+    \ endif
   autocmd WinLeave * setlocal nocursorline nocursorcolumn
-  autocmd WinEnter * setlocal cursorline cursorcolumn
+  autocmd WinEnter *
+    \ let &l:cursorcolumn = s:cursor_options.cursorcolumn |
+    \ let &l:cursorline = s:cursor_options.cursorline
 augroup END
 
 " highlight trailing whitespace in normal file buffers
