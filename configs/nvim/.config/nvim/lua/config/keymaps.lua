@@ -8,7 +8,6 @@ vim.keymap.set("x", "p", '"_dP')
 
 vim.keymap.set("n", "<leader>n", "<cmd>tabnext<cr>")
 vim.keymap.set("n", "<leader>p", "<cmd>tabprevious<cr>")
-vim.keymap.set("n", "<leader>bd", "<cmd>enew | bd#<cr>")
 vim.keymap.set("n", "<leader><leader>", "<cmd>buffers<cr>")
 vim.keymap.set("n", "<leader>c", "<cmd>set cursorcolumn!<cr>", { desc = "Toggle cursorcolumn" })
 vim.keymap.set("n", "<esc><esc>", "<cmd>nohlsearch<cr>")
