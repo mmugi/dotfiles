@@ -20,7 +20,7 @@ filetype plugin indent on
 syntax enable
 set background=dark
 set hlsearch
-set cursorcolumn
+set nocursorcolumn
 set cursorline
 silent! colorscheme quiet
 highlight Normal ctermbg=NONE
@@ -109,6 +109,7 @@ xnoremap p "_dP
 nnoremap <silent> <leader>n :tabnext<cr>
 nnoremap <silent> <leader>p :tabprevious<cr>
 nnoremap <silent> <leader><leader> :buffers<cr>
+nnoremap <silent> <leader>c :set cursorcolumn!<cr>
 nnoremap <silent> <leader>m
   \ :exec &mouse!="" ? "set mouse=" : "set mouse=a"<cr>
   \ :echo 'mouse:'.(&mouse!='' ? 'enabled' : 'disabled')<cr>
