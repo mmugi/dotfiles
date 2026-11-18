@@ -61,7 +61,7 @@ set ttimeout ttimeoutlen=50
 
 " 20 command line editing
 set wildmenu
-silent! set wildmode=longest,full:noselect
+silent! set wildmode=longest,full
 silent! set wildoptions=pum,fuzzy
 set cmdwinheight=15
 
