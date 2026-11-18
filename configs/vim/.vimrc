@@ -85,7 +85,7 @@ augroup vimrc_cursor
 augroup END
 
 " highlight trailing whitespace in normal file buffers
-highlight ErrTrailingWhitespace ctermfg=7 ctermbg=1
+highlight default link ErrTrailingWhitespace Error
 augroup vimrc_trailing_whitespace
   autocmd!
   autocmd BufEnter,BufWinEnter,WinEnter *
