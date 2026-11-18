@@ -45,7 +45,7 @@ set noruler
 set belloff=all
 
 " 12 selecting text
-set clipboard=unnamed
+set clipboard=unnamed,unnamedplus
 
 " 13 editing text
 set backspace=indent,eol,start
