@@ -34,6 +34,10 @@ set splitright
 
 " 9 using the mouse
 set mouse=a
+" vim cannot tell that tmux supports sgr and stays at xterm, which reports no drags
+if &term =~# '^tmux'
+  set ttymouse=sgr
+endif
 
 " 11 messages and info
 set showcmd
