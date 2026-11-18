@@ -119,6 +119,14 @@ nnoremap <silent> <leader>m
   \ :echo 'mouse:'.(&mouse!='' ? 'enabled' : 'disabled')<cr>
 nnoremap <silent> <esc><esc> :nohlsearch<cr>
 
+" copy the mouse selection on release
+for s:release in ['<LeftRelease>', '<2-LeftRelease>', '<3-LeftRelease>', '<4-LeftRelease>']
+  execute 'xnoremap' s:release s:release
+    \ .. 'ygv<cmd>call popup_notification(strchars(@") .. " chars copied",'
+    \ .. ' #{line: 1, col: &columns, pos: "topright", border: [0, 0, 0, 0],'
+    \ .. ' minwidth: 0, padding: [1, 2, 1, 2]})<cr>'
+endfor
+
 nnoremap <silent> <c-h> :wincmd h<cr>
 nnoremap <silent> <c-j> :wincmd j<cr>
 nnoremap <silent> <c-k> :wincmd k<cr>
