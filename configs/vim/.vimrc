@@ -24,6 +24,8 @@ set nocursorcolumn
 set cursorline
 silent! colorscheme quiet
 highlight Normal ctermbg=NONE
+highlight CursorLine term=underline cterm=underline ctermbg=NONE gui=underline guibg=NONE
+highlight CursorLineNr ctermbg=NONE guibg=NONE
 
 " 6 multiple windows
 set laststatus=2
