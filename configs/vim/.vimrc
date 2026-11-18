@@ -92,6 +92,32 @@ augroup vimrc_trailing_whitespace
     \ execute &buftype == '' ? 'match ErrTrailingWhitespace /\s\+$/' : 'match none'
 augroup END
 
+" highlight matches of the visual selection
+highlight default link VisualMatch SpellRare
+function! s:update_hl_visual_match() abort
+  if exists('w:hl_visual_match_id')
+    silent! call matchdelete(w:hl_visual_match_id)
+    unlet w:hl_visual_match_id
+  endif
+
+  " only a selection within a line, since a multiline one makes the pattern as large as itself
+  let mode = mode()
+  if mode !~# '^[vV]$' || line('v') != line('.')
+    return
+  endif
+
+  let text = getregion(getpos('v'), getpos('.'), #{type: mode})[0]
+  if text !~# '\S'
+    return
+  endif
+
+  let w:hl_visual_match_id = matchadd('VisualMatch', '\V\c' .. escape(text, '\'))
+endfunction
+augroup vimrc_visual_match
+  autocmd!
+  autocmd CursorMoved,ModeChanged * call s:update_hl_visual_match()
+augroup END
+
 " keymaps
 let mapleader = "\<space>"
 let maplocalleader = "\\"
