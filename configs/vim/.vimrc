@@ -160,18 +160,22 @@ nnoremap <silent> <c-j> :wincmd j<cr>
 nnoremap <silent> <c-k> :wincmd k<cr>
 nnoremap <silent> <c-l> :wincmd l<cr>
 
-" flip the sign when there is no window toward j/l (the border of an edge window moves the other way)
-function! s:resize_window(direction) abort
-  let vertical = a:direction ==# 'h' || a:direction ==# 'l'
-  let step = a:direction ==# 'j' || a:direction ==# 'l' ? 2 : -2
+" flip the sign when there is no window to the right or below (the border of an edge window moves the other way)
+function! s:resize_window_keys(direction) abort
+  let vertical = a:direction ==# 'left' || a:direction ==# 'right'
+  let step = a:direction ==# 'down' || a:direction ==# 'right' ? 2 : -2
   let has_next = winnr(vertical ? 'l' : 'j') != winnr()
-  execute printf('%sresize %+d', vertical ? 'vertical ' : '', has_next ? step : -step)
+  return printf("\<cmd>%sresize %+d\<cr>\<Plug>(resize-window)",
+    \ vertical ? 'vertical ' : '', has_next ? step : -step)
 endfunction
-for s:direction in ['h', 'j', 'k', 'l']
-  " terminals send alt+key as <esc>+key, which vim does not read as <m-key> by itself
-  execute "set <m-" . s:direction . ">=\e" . s:direction
-  execute printf('nnoremap <silent> <m-%s> <cmd>call <sid>resize_window(%s)<cr>',
-    \ s:direction, string(s:direction))
+" keep resizing with <c-hjkl> within timeoutlen after <c-w>
+" each resize leaves <Plug>(resize-window) to wait for the next key, and it ends with <Nop>
+nnoremap <Plug>(resize-window) <Nop>
+for [s:direction, s:key] in items(#{left: '<c-h>', down: '<c-j>', up: '<c-k>', right: '<c-l>'})
+  for s:prefix in ['<c-w>', '<Plug>(resize-window)']
+    execute printf('nmap <silent> <expr> %s%s <sid>resize_window_keys(%s)',
+      \ s:prefix, s:key, string(s:direction))
+  endfor
 endfor
 
 inoremap <expr> <esc> complete_info(['selected']).selected != -1 ? "\<c-e>" : "\<esc>"

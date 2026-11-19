@@ -31,17 +31,26 @@ vim.keymap.set("n", "<c-j>", "<cmd>wincmd j<cr>")
 vim.keymap.set("n", "<c-k>", "<cmd>wincmd k<cr>")
 vim.keymap.set("n", "<c-l>", "<cmd>wincmd l<cr>")
 
--- jl方向にウィンドウがない場合は増減の符号を反転(端のウィンドウは動く境界線が逆になるため)。
-local function resize_window(direction)
-  local vertical = direction == "h" or direction == "l"
-  local step = (direction == "j" or direction == "l") and 2 or -2
+-- 右・下にウィンドウがない場合は増減の符号を反転(端のウィンドウは動く境界線が逆になるため)。
+local function resize_window_keys(direction)
+  local vertical = direction == "left" or direction == "right"
+  local step = (direction == "down" or direction == "right") and 2 or -2
   local has_next = vim.fn.winnr(vertical and "l" or "j") ~= vim.fn.winnr()
-  vim.cmd(string.format("%sresize %+d", vertical and "vertical " or "", has_next and step or -step))
+  return string.format(
+    "<cmd>%sresize %+d<cr>",
+    vertical and "vertical " or "",
+    has_next and step or -step
+  )
 end
-for _, direction in ipairs({ "h", "j", "k", "l" }) do
-  vim.keymap.set("n", "<m-" .. direction .. ">", function()
-    resize_window(direction)
-  end)
+-- <c-w> のあと timeoutlen の間は <c-hjkl> でのリサイズを継続。
+-- 最後に <Plug>(resize-window) を残して次のキーを待ち、来なければ <Nop> で終わる。
+vim.keymap.set("n", "<Plug>(resize-window)", "<Nop>")
+for direction, key in pairs({ left = "<c-h>", down = "<c-j>", up = "<c-k>", right = "<c-l>" }) do
+  for _, prefix in ipairs({ "<c-w>", "<Plug>(resize-window)" }) do
+    vim.keymap.set("n", prefix .. key, function()
+      return resize_window_keys(direction) .. "<Plug>(resize-window)"
+    end, { expr = true, remap = true })
+  end
 end
 
 vim.keymap.set("i", "<esc>", function()
