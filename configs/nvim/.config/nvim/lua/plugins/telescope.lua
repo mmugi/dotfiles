@@ -121,6 +121,7 @@ return {
       pattern = "TelescopePrompt",
       callback = function()
         vim.opt_local.cursorline = false
+        vim.opt_local.autocomplete = false
       end,
     })
   end,

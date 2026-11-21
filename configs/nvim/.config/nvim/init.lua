@@ -1,6 +1,7 @@
 vim.loader.enable()
 require("config.global")
 require("config.options")
+require("config.autocomplete")
 require("config.keymaps")
 require("config.hl_cursor")
 require("config.hl_trailing_whitespace")

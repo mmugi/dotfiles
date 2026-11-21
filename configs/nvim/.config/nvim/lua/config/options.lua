@@ -42,8 +42,9 @@ vim.opt.ruler = false
 vim.opt.clipboard:append({ "unnamedplus" })
 
 -- 13 editing text
+vim.opt.autocomplete = true
 vim.opt.complete:append({ "o" })
-vim.opt.completeopt = { "menu", "menuone", "noinsert", "fuzzy", "popup" }
+vim.opt.completeopt = { "menu", "menuone", "noselect", "fuzzy", "popup" }
 vim.opt.pumborder = "rounded"
 
 -- 14 tabs and indenting
