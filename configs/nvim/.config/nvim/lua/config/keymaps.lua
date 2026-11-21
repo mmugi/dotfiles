@@ -79,8 +79,8 @@ vim.keymap.set("c", "<esc>", function()
   return vim.fn.wildmenumode() == 1 and "<c-e>" or "<c-c>"
 end, { expr = true, desc = "Close the completion" })
 vim.keymap.set("c", "<cr>", function()
-  return vim.fn.wildmenumode() == 1 and "<c-y>" or "<cr>"
-end, { expr = true, desc = "Accept the completion without executing" })
+  return vim.fn.wildmenumode() == 1 and vim.fn.cmdcomplete_info().selected ~= -1 and "<c-y>" or "<cr>"
+end, { expr = true, desc = "Accept the selected completion without executing" })
 
 vim.keymap.set("c", "<c-w>", "<c-f>", { desc = "Open command line window" })
 vim.keymap.set("c", "<c-b>", "<left>", { desc = "Emacs like left" })
