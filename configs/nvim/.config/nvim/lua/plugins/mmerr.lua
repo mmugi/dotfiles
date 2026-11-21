@@ -5,6 +5,7 @@ return {
   init = function()
     vim.g.mmerr_autoreload = true
   end,
+  ---@type mmerr.Config
   opts = {
     transparent_bg = true,
     edit_highlights = function(groups, palette)
