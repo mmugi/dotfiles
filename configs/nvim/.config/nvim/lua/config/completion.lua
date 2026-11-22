@@ -23,6 +23,18 @@ vim.api.nvim_create_autocmd("BufEnter", {
   end,
 })
 
+-- 補完のプレビューポップアップは nvim が内部でフローティングウィンドウで作っているため、
+-- 現状枠がつかず、'winborder' などのオプションから制御できない。
+-- nvim__complete_set は内部用の API のため、nvim の更新で壊れる可能性あり。
+local complete_set = vim.api.nvim__complete_set
+vim.api.nvim__complete_set = function(...)
+  local result = complete_set(...)
+  if result and result.winid and vim.o.winborder ~= "" then
+    pcall(vim.api.nvim_win_set_config, result.winid, { border = vim.o.winborder })
+  end
+  return result
+end
+
 -- コマンドラインモードで打つたびに wildmenu を出し直すことでインクリメンタルに補完する。
 -- <c-e> で閉じるか <c-y> で確定したら、次に <tab> を押すまで止める。
 -- ディレクトリを確定したときは止めずに、その中身を出す。
