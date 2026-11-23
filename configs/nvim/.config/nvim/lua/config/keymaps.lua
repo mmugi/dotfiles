@@ -5,6 +5,7 @@ vim.keymap.set({ "n", "x" }, "S", '"_S')
 vim.keymap.set({ "n", "x" }, "x", '"_x')
 vim.keymap.set({ "n", "x" }, "X", '"_X')
 vim.keymap.set("x", "p", '"_dP')
+vim.keymap.set("n", "<c-z>", "u", { desc = "Undo" })
 
 vim.keymap.set("n", "<leader>n", "<cmd>tabnext<cr>")
 vim.keymap.set("n", "<leader>p", "<cmd>tabprevious<cr>")
