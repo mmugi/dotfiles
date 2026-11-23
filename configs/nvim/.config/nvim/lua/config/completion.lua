@@ -35,6 +35,41 @@ vim.api.nvim_create_autocmd("TextChangedI", {
   end,
 })
 
+-- LSP の候補を優先させるための比較関数。
+-- cmp を渡すと既定の並べ替えが止まるので、LSP 同士は既定を参考に _fuzzy_score 順にする。
+-- _fuzzy_score は vim.lsp の内部用のフィールド。使えなくなった場合 sortText 順になる。
+local function compare_completion(a, b)
+  local lsp_item_a = vim.tbl_get(a, "user_data", "nvim", "lsp", "completion_item")
+  local lsp_item_b = vim.tbl_get(b, "user_data", "nvim", "lsp", "completion_item")
+  if (lsp_item_a == nil) ~= (lsp_item_b == nil) then
+    return lsp_item_a ~= nil
+  end
+  -- a,b どちらも LSP の候補ではない場合
+  if not lsp_item_a then
+    return a.word < b.word
+  end
+  local score_a, score_b = a._fuzzy_score or 0, b._fuzzy_score or 0
+  if score_a ~= score_b then
+    return score_a > score_b
+  end
+  return (lsp_item_a.sortText or lsp_item_a.label) < (lsp_item_b.sortText or lsp_item_b.label)
+end
+
+-- vim.lsp は LSP の候補に dup = 1 を付けるので、バッファの単語と同じ単語が重複して並ぶ。
+-- dup = 0 にして先に並んでいるほうを残して重複を捨てる。
+-- compare_completion で LSP の候補を優先させるため、重複した場合 LSP の候補が残る。
+vim.api.nvim_create_autocmd("LspAttach", {
+  group = vim.api.nvim_create_augroup("lsp_completion_dedup", { clear = true }),
+  callback = function(args)
+    vim.lsp.completion.enable(true, args.data.client_id, args.buf, {
+      convert = function()
+        return { dup = 0 }
+      end,
+      cmp = compare_completion,
+    })
+  end,
+})
+
 -- 補完のプレビューポップアップは nvim が内部でフローティングウィンドウで作っているため、
 -- 現状枠がつかず、'winborder' などのオプションから制御できない。
 -- nvim__complete_set は内部用の API のため、nvim の更新で壊れる可能性あり。
