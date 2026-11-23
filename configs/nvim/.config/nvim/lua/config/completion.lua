@@ -22,6 +22,36 @@ vim.api.nvim_create_autocmd("BufEnter", {
     end
   end,
 })
+-- 一部の単語の入力中は自動補完をオフにする。
+--   - ASCII 以外が入る単語:
+--       日本語は単語の区切りを判定しづらく、入力も確定するまで反映されないためオフにする。
+--       vim.lsp は \k で置き換えの範囲を決めるので、日本語にくっついた英数字で補完すると
+--       日本語ごと書き換わってしまう場合がある。そのため前後を含めて \k の範囲に ASCII 以外
+--       が含まれるかチェックする。
+--   - 数字だけの単語
+local non_ascii = "[^\1-\127]"
+vim.api.nvim_create_autocmd("InsertCharPre", {
+  group = autocomplete_off_group,
+  callback = function()
+    if vim.bo.buftype ~= "" then
+      return
+    end
+    local line = vim.api.nvim_get_current_line()
+    local col = vim.fn.col(".")
+    local keyword = vim.fn.matchstr(line:sub(1, col - 1), [[\k*$]])
+      .. vim.v.char
+      .. vim.fn.matchstr(line:sub(col), [[^\k*]])
+    if keyword:find(non_ascii) or keyword:find("^%d+$") then
+      if vim.bo.autocomplete == nil then
+        vim.opt_local.autocomplete = false
+        vim.b.autocomplete_paused = true
+      end
+    elseif vim.b.autocomplete_paused then
+      vim.cmd("set autocomplete<")
+      vim.b.autocomplete_paused = nil
+    end
+  end,
+})
 
 -- LSP の候補は vim.fn.complete() で届き、そこからはバッファの単語を集め直さない。
 -- LSP の候補が全部外れると、何も出ないまま補完が続くので、止めて <c-n> で集め直す。
@@ -30,7 +60,8 @@ vim.api.nvim_create_autocmd("TextChangedI", {
   group = vim.api.nvim_create_augroup("lsp_completion_empty", { clear = true }),
   callback = function()
     if vim.fn.complete_info({ "mode" }).mode == "eval" and vim.fn.pumvisible() == 0 then
-      vim.api.nvim_feedkeys(vim.keycode("<c-x><c-z><c-n>"), "n", false)
+      local restart = vim.o.autocomplete and "<c-n>" or ""
+      vim.api.nvim_feedkeys(vim.keycode("<c-x><c-z>" .. restart), "n", false)
     end
   end,
 })
