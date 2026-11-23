@@ -63,6 +63,29 @@ return {
       end,
     })
 
+    local diagnostic_labels = {
+      { severity = vim.diagnostic.severity.ERROR, text = "E", group = "DiagnosticError" },
+      { severity = vim.diagnostic.severity.WARN, text = "W", group = "DiagnosticWarn" },
+      { severity = vim.diagnostic.severity.INFO, text = "I", group = "DiagnosticInfo" },
+      { severity = vim.diagnostic.severity.HINT, text = "H", group = "DiagnosticHint" },
+    }
+    local function get_diagnostics(buf)
+      local counts = vim.diagnostic.count(buf)
+      local diagnostics = {}
+      for _, label in ipairs(diagnostic_labels) do
+        if counts[label.severity] then
+          table.insert(diagnostics, { " ", label.text .. counts[label.severity], group = label.group })
+        end
+      end
+      return diagnostics
+    end
+    -- incline は DiagnosticChanged では描き直さないので、件数が変わったら描き直す。
+    vim.api.nvim_create_autocmd("DiagnosticChanged", {
+      callback = function()
+        require("incline").refresh()
+      end,
+    })
+
     opts.render = function(props)
       local filepath = vim.api.nvim_buf_get_name(props.buf)
       local filename = vim.fn.fnamemodify(filepath, ":t")
@@ -77,6 +100,7 @@ return {
         icon and { " ", icon, group = icon_hl } or "",
         { " ", filename, gui = modified and "italic" or "" },
         modified and { "*", group = "InclineModified" } or "",
+        get_diagnostics(props.buf),
         conflict and { " CONFLICT!", group = "InclineConflict" } or "",
       }
     end
