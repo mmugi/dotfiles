@@ -23,6 +23,18 @@ vim.api.nvim_create_autocmd("BufEnter", {
   end,
 })
 
+-- LSP の候補は vim.fn.complete() で届き、そこからはバッファの単語を集め直さない。
+-- LSP の候補が全部外れると、何も出ないまま補完が続くので、止めて <c-n> で集め直す。
+-- <c-e> は補完が終わったあとに届くと下の行の文字を入れるので、文字を変えない <c-x><c-z> で止める。
+vim.api.nvim_create_autocmd("TextChangedI", {
+  group = vim.api.nvim_create_augroup("lsp_completion_empty", { clear = true }),
+  callback = function()
+    if vim.fn.complete_info({ "mode" }).mode == "eval" and vim.fn.pumvisible() == 0 then
+      vim.api.nvim_feedkeys(vim.keycode("<c-x><c-z><c-n>"), "n", false)
+    end
+  end,
+})
+
 -- 補完のプレビューポップアップは nvim が内部でフローティングウィンドウで作っているため、
 -- 現状枠がつかず、'winborder' などのオプションから制御できない。
 -- nvim__complete_set は内部用の API のため、nvim の更新で壊れる可能性あり。
