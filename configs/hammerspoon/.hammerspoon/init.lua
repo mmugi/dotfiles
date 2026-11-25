@@ -473,13 +473,11 @@ for key, direction in pairs(moveKeys) do
     -- free でだけリピートを許可。
     if currentLayout.type == 'free' then pressedfn() end
   end
-  prefixMode:bind({}, key, pressedfn, nil, repeatfn)
-end
-
-for key, direction in pairs(moveKeys) do
   local resizefn = windowAction(function(win)
     -- free でだけリサイズを許可。
     if currentLayout.type == 'free' then resizeFromBottomRight(win, direction) end
   end)
+
+  prefixMode:bind({}, key, pressedfn, nil, repeatfn)
   prefixMode:bind({ 'shift' }, key, resizefn, nil, resizefn)
 end
