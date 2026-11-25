@@ -34,6 +34,22 @@ return {
     { "<leader><leader>", "<cmd>Telescope buffers<cr>", desc = "Telescope buffers", mode = "n" },
     { "<leader>fg", "<cmd>Telescope live_grep<cr>", desc = "Telescope live grep", mode = "n" },
     { "<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Telescope find files", mode = "n" },
+    {
+      "<leader>fF",
+      function()
+        local dir = vim.fn.input({
+          prompt = "Dir: ",
+          default = vim.fn.expand("%:p:h") .. "/",
+          completion = "dir",
+        })
+        if dir ~= "" then
+          require("telescope.builtin").find_files({ cwd = dir })
+        end
+      end,
+      desc = "Telescope find files in dir",
+      mode = "n",
+    },
+    { "<leader>fo", "<cmd>Telescope oldfiles<cr>", desc = "Telescope oldfiles", mode = "n" },
     { "<leader>gc", "<cmd>Telescope git_commits<cr>", desc = "Telescope git commits", mode = "n" },
     { "<leader>gs", "<cmd>Telescope git_status<cr>", desc = "Telescope git status", mode = "n" },
     { "<leader>gS", "<cmd>Telescope git_stash<cr>", desc = "Telescope git stash", mode = "n" },
