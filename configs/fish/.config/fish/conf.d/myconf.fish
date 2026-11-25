@@ -26,3 +26,6 @@ if command -q eza
     alias ls eza
     alias ll "eza -algF=auto --time-style='+%Y-%m-%d %H:%M'"
 end
+
+# zoxide
+command -q zoxide; and zoxide init fish | source

@@ -30,6 +30,7 @@ brew "tty-clock"
 brew "tuios"
 brew "vim"
 brew "wget"
+brew "zoxide"
 brew "felixkratz/formulae/borders", trusted: true
 cask "1password"
 cask "1password-cli"

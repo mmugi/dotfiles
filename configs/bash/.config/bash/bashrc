@@ -71,3 +71,8 @@ else
   fi
   PS1+=' \[\e[38;2;148;140;243m\]\$\[\e[m\] ' # purple #948cf3
 fi
+
+# zoxide
+if command -v zoxide >/dev/null; then
+  eval "$(zoxide init bash)"
+fi
