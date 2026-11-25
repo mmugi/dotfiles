@@ -22,6 +22,7 @@ fi
 
 # fzf
 if command -v fzf >/dev/null; then
+  export FZF_DEFAULT_OPTS_FILE="${HOME}/.config/fzf/fzfrc"
   FZF_ALT_C_COMMAND=''
   source <(fzf --zsh)
 fi

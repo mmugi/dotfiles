@@ -6,6 +6,7 @@ test -x /opt/homebrew/bin/brew; and /opt/homebrew/bin/brew shellenv fish | sourc
 
 # fzf
 if command -q fzf
+    set -gx FZF_DEFAULT_OPTS_FILE ~/.config/fzf/fzfrc
     set -g FZF_ALT_C_COMMAND ''
     fzf --fish | source
 end

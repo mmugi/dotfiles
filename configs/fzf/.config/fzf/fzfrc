@@ -1,0 +1,2 @@
+--bind=ctrl-j:ignore
+--bind=ctrl-k:kill-line
