@@ -1,3 +1,6 @@
+# shared environment variables
+set -gx XDG_CONFIG_HOME ~/.config
+
 # homebrew
 test -x /opt/homebrew/bin/brew; and /opt/homebrew/bin/brew shellenv fish | source
 

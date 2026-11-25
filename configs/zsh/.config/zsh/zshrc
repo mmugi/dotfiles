@@ -1,5 +1,8 @@
 # Sourced from ~/.zshrc. Keep host-specific settings in ~/.zshrc itself.
 
+# shared environment variables
+export XDG_CONFIG_HOME="${HOME}/.config"
+
 # homebrew
 [[ -x /opt/homebrew/bin/brew ]] && eval "$(/opt/homebrew/bin/brew shellenv zsh)"
 
