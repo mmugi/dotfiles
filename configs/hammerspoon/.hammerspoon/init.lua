@@ -415,23 +415,27 @@ local function selectLayout(win, name)
   moveInLayout(win)
 end
 
+-- ---- keys ------------------------------------------------------------------
+
+---@type table<string, Direction>
+local moveKeys = {
+  left = 'left', right = 'right', up = 'up', down = 'down',
+  h = 'left', l = 'right', k = 'up', j = 'down'
+}
+
 -- ---- key bindings ----------------------------------------------------------
 
-hs.hotkey.bind({ 'cmd' }, 'left', windowAction(function(win, entry) snap(win, 'left', entry) end))
-hs.hotkey.bind({ 'cmd' }, 'right', windowAction(function(win, entry) snap(win, 'right', entry) end))
-hs.hotkey.bind({ 'cmd' }, 'up', windowAction(function(win, entry) snap(win, 'up', entry) end))
-hs.hotkey.bind({ 'cmd' }, 'down', windowAction(function(win, entry) snap(win, 'down', entry) end))
-hs.hotkey.bind({ 'ctrl', 'cmd' }, 'h', windowAction(function(win, entry) snap(win, 'left', entry) end))
-hs.hotkey.bind({ 'ctrl', 'cmd' }, 'l', windowAction(function(win, entry) snap(win, 'right', entry) end))
-hs.hotkey.bind({ 'ctrl', 'cmd' }, 'k', windowAction(function(win, entry) snap(win, 'up', entry) end))
-hs.hotkey.bind({ 'ctrl', 'cmd' }, 'j', windowAction(function(win, entry) snap(win, 'down', entry) end))
--- sides の配置を順に巡る。cmd+shift+←/→ は文字の選択とぶつかるので割り当てない。
-hs.hotkey.bind({ 'ctrl', 'cmd', 'shift' }, 'h', windowAction(function(win)
-  moveInHorizontalSpans(win, layouts.sides.horizontalSpans, 'left')
-end))
-hs.hotkey.bind({ 'ctrl', 'cmd', 'shift' }, 'l', windowAction(function(win)
-  moveInHorizontalSpans(win, layouts.sides.horizontalSpans, 'right')
-end))
+for key, direction in pairs(moveKeys) do
+  hs.hotkey.bind({ 'ctrl', 'cmd' }, key, windowAction(function(win, entry)
+    snap(win, direction, entry)
+  end))
+  -- sides の配置を順に巡る。
+  if direction == 'left' or direction == 'right' then
+    hs.hotkey.bind({ 'ctrl', 'cmd', 'shift' }, key, windowAction(function(win)
+      moveInHorizontalSpans(win, layouts.sides.horizontalSpans, direction)
+    end))
+  end
+end
 
 -- ---- prefix mode -----------------------------------------------------------
 
@@ -461,11 +465,6 @@ prefixMode:bind({}, '3', windowAction(function(win) selectLayout(win, 'thirds') 
 prefixMode:bind({}, '4', windowAction(function(win) selectLayout(win, 'quarters') end))
 prefixMode:bind({}, 'w', windowAction(function(win) selectLayout(win, 'move') end))
 
----@type table<string, Direction>
-local moveKeys = {
-  left = 'left', right = 'right', up = 'up', down = 'down',
-  h = 'left', l = 'right', k = 'up', j = 'down'
-}
 for key, direction in pairs(moveKeys) do
   local pressedfn = windowAction(function(win, entry)
     moveInLayout(win, direction, entry)
