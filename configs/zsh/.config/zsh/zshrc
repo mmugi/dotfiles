@@ -20,6 +20,12 @@ if (( ! $+functions[compdef] )); then
   autoload -Uz compinit && compinit
 fi
 
+# fzf
+if command -v fzf >/dev/null; then
+  FZF_ALT_C_COMMAND=''
+  source <(fzf --zsh)
+fi
+
 # prompt
 if command -v starship >/dev/null; then
   eval "$(starship init zsh)"

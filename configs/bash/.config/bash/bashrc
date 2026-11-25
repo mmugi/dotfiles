@@ -31,6 +31,12 @@ if ! complete -p git &>/dev/null; then
   unset f
 fi
 
+# fzf
+if command -v fzf >/dev/null; then
+  FZF_ALT_C_COMMAND=''
+  eval "$(fzf --bash)"
+fi
+
 # prompt
 if command -v starship >/dev/null; then
   eval "$(starship init bash)"

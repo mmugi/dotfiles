@@ -1,13 +1,14 @@
 # decors/fish-ghq
 set -g GHQ_SELECTOR_OPTS '--reverse'
 
-# jethrokuan/fzf
-set -g FZF_DEFAULT_OPTS '--reverse --height 50%'
-command -q fd; and set -g FZF_FIND_FILE_COMMAND \
-        "fd --follow --hidden --exclude .git/ . \$dir | perl -pe 's#^\.\/##'"
-
 # homebrew
 test -x /opt/homebrew/bin/brew; and /opt/homebrew/bin/brew shellenv fish | source
+
+# fzf
+if command -q fzf
+    set -g FZF_ALT_C_COMMAND ''
+    fzf --fish | source
+end
 
 # starship
 command -q starship; and starship init fish | source
