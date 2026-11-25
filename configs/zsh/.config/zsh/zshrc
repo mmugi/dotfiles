@@ -6,21 +6,40 @@ export XDG_CONFIG_HOME="${HOME}/.config"
 # homebrew
 [[ -x /opt/homebrew/bin/brew ]] && eval "$(/opt/homebrew/bin/brew shellenv zsh)"
 
-# eza
-export EZA_CONFIG_DIR="${HOME}/.config/eza"
-
 # aliases
-if command -v eza >/dev/null; then
-  alias l='eza'
-  alias ls='eza'
-  alias ll="eza -algF=auto --time-style='+%Y-%m-%d %H:%M'"
-else
-  alias ll='ls -AFhl'
-fi
+alias l='ls'
+alias la='ls -AF'
+alias ll='ls -AFhl'
 
 # completion
 if (( ! $+functions[compdef] )); then
   autoload -Uz compinit && compinit
+fi
+
+# prompt
+for f in /Library/Developer/CommandLineTools/usr/share/git-core/git-prompt.sh /Applications/Xcode.app/Contents/Developer/usr/share/git-core/git-prompt.sh /opt/homebrew/etc/bash_completion.d/git-prompt.sh /usr/lib/git-core/git-sh-prompt /usr/share/git-core/contrib/completion/git-prompt.sh; do
+  [[ -r $f ]] && { . "$f"; break; }
+done
+unset f
+
+PROMPT='[%D{%FT%T%z}] %n@%m %~'
+if (( $+functions[__git_ps1] )); then
+  setopt PROMPT_SUBST
+  GIT_PS1_SHOWDIRTYSTATE=1
+  GIT_PS1_SHOWSTASHSTATE=1
+  GIT_PS1_SHOWUNTRACKEDFILES=1
+  GIT_PS1_SHOWUPSTREAM=auto
+  PROMPT+=$'%{\e[2m%}$(__git_ps1 " (%s)")%{\e[22m%}'
+fi
+PROMPT+=' %F{#948cf3}%#%f ' # purple #948cf3
+
+# eza
+if command -v eza >/dev/null; then
+  export EZA_CONFIG_DIR="${HOME}/.config/eza"
+  alias l='eza'
+  alias ls='eza'
+  alias la='eza -aF=auto'
+  alias ll="eza -algF=auto --time-style='+%Y-%m-%d %H:%M'"
 fi
 
 # fzf
@@ -40,25 +59,9 @@ if command -v fzf >/dev/null; then
   fi
 fi
 
-# prompt
+# starship
 if command -v starship >/dev/null; then
   eval "$(starship init zsh)"
-else
-  for f in /Library/Developer/CommandLineTools/usr/share/git-core/git-prompt.sh /Applications/Xcode.app/Contents/Developer/usr/share/git-core/git-prompt.sh /opt/homebrew/etc/bash_completion.d/git-prompt.sh /usr/lib/git-core/git-sh-prompt /usr/share/git-core/contrib/completion/git-prompt.sh; do
-    [[ -r $f ]] && { . "$f"; break; }
-  done
-  unset f
-
-  PROMPT='[%D{%FT%T%z}] %n@%m %~'
-  if (( $+functions[__git_ps1] )); then
-    setopt PROMPT_SUBST
-    GIT_PS1_SHOWDIRTYSTATE=1
-    GIT_PS1_SHOWSTASHSTATE=1
-    GIT_PS1_SHOWUNTRACKEDFILES=1
-    GIT_PS1_SHOWUPSTREAM=auto
-    PROMPT+=$'%{\e[2m%}$(__git_ps1 " (%s)")%{\e[22m%}'
-  fi
-  PROMPT+=' %F{#948cf3}%#%f ' # purple #948cf3
 fi
 
 # zoxide
