@@ -319,11 +319,12 @@ local function nextVerticalSpan(unit, direction)
   return toward
 end
 
----@type Mover
-local function moveInSpans(win, direction)
+---@param win hs.window
+---@param horizontalSpans HorizontalSpan[]
+---@param direction Direction?
+local function moveInHorizontalSpans(win, horizontalSpans, direction)
   local screen = win:screen()
   local unit = screen:toUnitRect(win:frame()) --[[@as UnitRect]]
-  local horizontalSpans = currentLayout.horizontalSpans
   local destScreen, horizontalSpan =
     nextPlacement(screen, unit, horizontalSpans, horizontalDistance, direction)
   local verticalSpan = nextVerticalSpan(unit, direction)
@@ -333,6 +334,11 @@ local function moveInSpans(win, direction)
     w = horizontalSpan.w,
     h = verticalSpan.h,
   }))
+end
+
+---@type Mover
+local function moveInSpans(win, direction)
+  moveInHorizontalSpans(win, currentLayout.horizontalSpans, direction)
 end
 
 ---@type Mover
@@ -419,6 +425,13 @@ hs.hotkey.bind({ 'ctrl', 'cmd' }, 'h', windowAction(function(win, entry) snap(wi
 hs.hotkey.bind({ 'ctrl', 'cmd' }, 'l', windowAction(function(win, entry) snap(win, 'right', entry) end))
 hs.hotkey.bind({ 'ctrl', 'cmd' }, 'k', windowAction(function(win, entry) snap(win, 'up', entry) end))
 hs.hotkey.bind({ 'ctrl', 'cmd' }, 'j', windowAction(function(win, entry) snap(win, 'down', entry) end))
+-- sides の配置を順に巡る。cmd+shift+←/→ は文字の選択とぶつかるので割り当てない。
+hs.hotkey.bind({ 'ctrl', 'cmd', 'shift' }, 'h', windowAction(function(win)
+  moveInHorizontalSpans(win, layouts.sides.horizontalSpans, 'left')
+end))
+hs.hotkey.bind({ 'ctrl', 'cmd', 'shift' }, 'l', windowAction(function(win)
+  moveInHorizontalSpans(win, layouts.sides.horizontalSpans, 'right')
+end))
 
 -- ---- prefix mode -----------------------------------------------------------
 
