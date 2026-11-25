@@ -156,8 +156,8 @@ end
 --   rects: rects に位置と大きさ (x, y, w, h) を画面に対する割合で並べる。
 --          左右キーで順に巡り、上キーで最大化、下キーで restore する。
 --   free:  大きさはそのままで、矢印キーの向きに moveStep ずつ動かす。
---          shift と一緒に押すと、中心はそのままで上下キーで高さ、左右キーで幅を
---          scaleStep 倍ずつ変える。
+--          shift と一緒に押すと、右下の角を矢印キーの向きに動かすように、上下キーで高さ、
+--          左右キーで幅を scaleStep 倍ずつ変える。
 ---@type table<string, Layout>
 local layouts = {
   maximized = { type = 'spans', horizontalSpans = { { x = 0, w = 1 } } },
@@ -362,14 +362,24 @@ local scaleStep = 1.05
 local scaleFactors = {
   left = { w = 1 / scaleStep, h = 1 },
   right = { w = scaleStep, h = 1 },
-  up = { w = 1, h = scaleStep },
-  down = { w = 1, h = 1 / scaleStep },
+  up = { w = 1, h = 1 / scaleStep },
+  down = { w = 1, h = scaleStep },
 }
 
+-- 左上の角はそのままで、右下の角を direction の向きに動かして大きさを変える。
+-- 画面からはみ出す場合は、画面の中へ押し戻す。画面より大きくはしない。
+-- (setFrameInScreenBounds は幅か高さが画面を超えると縦横そろえて縮めるので使わない。)
 ---@param win hs.window
 ---@param direction Direction
-local function resizeAroundCenter(win, direction)
-  win:setFrame(win:frame():scale(scaleFactors[direction]))
+local function resizeFromBottomRight(win, direction)
+  local factor = scaleFactors[direction]
+  local screenFrame = win:screen():frame()
+  local winFrame = win:frame()
+  winFrame.w = math.min(winFrame.w * factor.w, screenFrame.w)
+  winFrame.h = math.min(winFrame.h * factor.h, screenFrame.h)
+  winFrame.x = math.max(screenFrame.x, math.min(winFrame.x, screenFrame.x2 - winFrame.w))
+  winFrame.y = math.max(screenFrame.y, math.min(winFrame.y, screenFrame.y2 - winFrame.h))
+  win:setFrame(winFrame)
 end
 
 ---@type table<string, Mover>
@@ -457,7 +467,7 @@ end
 for key, direction in pairs(moveKeys) do
   local resizefn = windowAction(function(win)
     -- free でだけリサイズを許可。
-    if currentLayout.type == 'free' then resizeAroundCenter(win, direction) end
+    if currentLayout.type == 'free' then resizeFromBottomRight(win, direction) end
   end)
   prefixMode:bind({ 'shift' }, key, resizefn, nil, resizefn)
 end
