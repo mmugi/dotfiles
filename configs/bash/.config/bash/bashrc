@@ -36,6 +36,17 @@ if command -v fzf >/dev/null; then
   export FZF_DEFAULT_OPTS_FILE="${HOME}/.config/fzf/fzfrc"
   FZF_ALT_C_COMMAND=''
   eval "$(fzf --bash)"
+
+  if command -v ghq >/dev/null; then
+    __ghq_cd__() {
+      local dir
+      dir=$(ghq list --full-path | fzf) && printf 'builtin cd -- %q' "$dir"
+    }
+    # fzf の ALT-C と同じマクロ。bind -x で cd してもプロンプトが更新されないため、
+    # 入力中の行を退避 → cd を実行 → 行を戻す、をキー操作で並べている。
+    # bash 3.2 の bind -x では READLINE_LINE が使えないが、この方法なら動く。
+    bind '"\C-g": " \C-b\C-k \C-u`__ghq_cd__`\e\C-e\C-\e(\C-m\C-y\C-h\e \C-y\ey\C-x\C-x\C-d\C-y\ey\C-_"'
+  fi
 fi
 
 # prompt

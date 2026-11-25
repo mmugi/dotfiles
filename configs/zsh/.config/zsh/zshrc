@@ -25,6 +25,16 @@ if command -v fzf >/dev/null; then
   export FZF_DEFAULT_OPTS_FILE="${HOME}/.config/fzf/fzfrc"
   FZF_ALT_C_COMMAND=''
   source <(fzf --zsh)
+
+  if command -v ghq >/dev/null; then
+    __ghq_cd() {
+      local dir
+      dir=$(ghq list --full-path | fzf) && builtin cd -- "$dir"
+      zle reset-prompt
+    }
+    zle -N __ghq_cd
+    bindkey '^G' __ghq_cd
+  fi
 fi
 
 # prompt
