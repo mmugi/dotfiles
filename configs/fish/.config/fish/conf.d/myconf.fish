@@ -20,7 +20,7 @@ end
 
 # fzf
 if command -q fzf
-    set -gx FZF_DEFAULT_OPTS_FILE ~/.config/fzf/fzfrc
+    test -r ~/.config/fzf/fzfrc; and set -gx FZF_DEFAULT_OPTS_FILE ~/.config/fzf/fzfrc
     set -g FZF_ALT_C_COMMAND ''
     fzf --fish | source
 
